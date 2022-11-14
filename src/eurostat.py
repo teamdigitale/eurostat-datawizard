@@ -3,6 +3,11 @@ import pandas as pd
 from typing import Mapping, Tuple, Dict, List
 
 
+def list_table_of_contents():
+    URL = "https://ec.europa.eu/eurostat/estat-navtree-portlet-prod/BulkDownloadListing?file=table_of_contents_en.txt"
+    return pd.read_table(URL)
+
+
 def fetch_dataset_and_metadata(
     code: str,
 ) -> Tuple[pd.DataFrame, Mapping[str, pd.DataFrame]]:
@@ -23,6 +28,8 @@ def cast_time_to_datetimeindex(data: pd.DataFrame):
         format = "%YM%m"
     elif "Q" in time_levels[0]:
         raise NotImplementedError("Quarterly data not implemented yet.")
+    elif "W" in time_levels[0]:
+        raise NotImplementedError("Weekly data not implemented yet.")
     else:
         format = None
     assert format, f"Cannot convert {time_levels[0]} into valid date."

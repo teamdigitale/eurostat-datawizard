@@ -4,6 +4,7 @@ import pandas as pd
 import pandas.api.types as ptypes
 from pandas.testing import assert_frame_equal, assert_index_equal
 from src.eurostat import (
+    list_table_of_contents,
     fetch_dataset_and_metadata,
     cast_time_to_datetimeindex,
     split_dimensions_and_attributes_from,
@@ -81,6 +82,29 @@ def quarterly_dataset():
 
 
 @pytest.fixture()
+def weekly_dataset():
+    # Emulate a downloaded dataset from EuroStat
+    df = pd.DataFrame(
+        {
+            "value": {
+                ("CB_EU_FOR", "I_IUG_DKPC", "PC_IND", "AL", "2015W01"): np.nan,
+                ("CB_EU_FOR", "I_IUG_DKPC", "PC_IND", "AL", "2016W12"): 100.0,
+                ("CB_EU_FOR", "I_IUG_DKPC", "PC_IND", "AL", "2021W30"): 100.0,
+                ("CB_EU_FOR", "I_IUG_DKPC", "PC_IND", "AL", "2018W45"): 100.0,
+            },
+            "flag": {
+                ("CB_EU_FOR", "I_IUG_DKPC", "PC_IND", "AL", "2015W01"): np.nan,
+                ("CB_EU_FOR", "I_IUG_DKPC", "PC_IND", "AL", "2016W12"): np.nan,
+                ("CB_EU_FOR", "I_IUG_DKPC", "PC_IND", "AL", "2021W30"): np.nan,
+                ("CB_EU_FOR", "I_IUG_DKPC", "PC_IND", "AL", "2018W45"): "u",
+            },
+        }
+    )
+    df.index = df.index.set_names(["ind_type", "indic_is", "unit", "geo", "time"])
+    return df
+
+
+@pytest.fixture()
 def metadata():
     # Emulate a downloaded metadata from EuroStat
     dimensions = pd.DataFrame(
@@ -134,6 +158,10 @@ def mock_eust(mocker, dataset, metadata):
     )
 
 
+def test_list_table_of_contents():
+    print(list_table_of_contents())
+
+
 def test_fetch_dataset_and_metadata(mock_eust):
     r = fetch_dataset_and_metadata("fake-code")
     assert isinstance(r, tuple)
@@ -143,7 +171,9 @@ def test_fetch_dataset_and_metadata(mock_eust):
     assert len(r[0].index.levels[-1]) == 3  # type: ignore TODO Cannot access member
 
 
-def test_cast_time_to_datetimeindex(dataset, monthly_dataset, quarterly_dataset):
+def test_cast_time_to_datetimeindex(
+    dataset, monthly_dataset, quarterly_dataset, weekly_dataset
+):
     dataset = cast_time_to_datetimeindex(dataset)
     assert ptypes.is_datetime64_dtype(dataset.index.get_level_values("time"))  # type: ignore
     assert dataset.index.is_monotonic_increasing
@@ -153,6 +183,7 @@ def test_cast_time_to_datetimeindex(dataset, monthly_dataset, quarterly_dataset)
 
     with pytest.raises((AssertionError, NotImplementedError)):
         cast_time_to_datetimeindex(quarterly_dataset)
+        cast_time_to_datetimeindex(weekly_dataset)
 
 
 def test_split_dimensions_and_attributes_from(metadata):
