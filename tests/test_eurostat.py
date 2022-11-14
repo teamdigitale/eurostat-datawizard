@@ -35,6 +35,29 @@ def dataset():
 
 
 @pytest.fixture()
+def geo_time_inverted_dataset():
+    # Emulate a downloaded dataset from EuroStat
+    df = pd.DataFrame(
+        {
+            "value": {
+                ("CB_EU_FOR", "I_IUG_DKPC", "PC_IND", "2015", "AL"): np.nan,
+                ("CB_EU_FOR", "I_IUG_DKPC", "PC_IND", "2016", "AL"): 100.0,
+                ("CB_EU_FOR", "I_IUG_DKPC", "PC_IND", "2021", "IT"): 100.0,
+                ("CB_EU_FOR", "I_IUG_DKPC", "PC_IND", "2018", "IT"): 100.0,
+            },
+            "flag": {
+                ("CB_EU_FOR", "I_IUG_DKPC", "PC_IND", "2015", "AL"): np.nan,
+                ("CB_EU_FOR", "I_IUG_DKPC", "PC_IND", "2016", "AL"): np.nan,
+                ("CB_EU_FOR", "I_IUG_DKPC", "PC_IND", "2021", "IT"): np.nan,
+                ("CB_EU_FOR", "I_IUG_DKPC", "PC_IND", "2018", "IT"): "u",
+            },
+        }
+    )
+    df.index = df.index.set_names(["ind_type", "indic_is", "unit", "time", "geo"])
+    return df
+
+
+@pytest.fixture()
 def monthly_dataset():
     # Emulate a downloaded dataset from EuroStat
     df = pd.DataFrame(
@@ -73,6 +96,29 @@ def quarterly_dataset():
                 ("CB_EU_FOR", "I_IUG_DKPC", "PC_IND", "AL", "2016Q2"): np.nan,
                 ("CB_EU_FOR", "I_IUG_DKPC", "PC_IND", "AL", "2021Q3"): np.nan,
                 ("CB_EU_FOR", "I_IUG_DKPC", "PC_IND", "AL", "2018Q4"): "u",
+            },
+        }
+    )
+    df.index = df.index.set_names(["ind_type", "indic_is", "unit", "geo", "time"])
+    return df
+
+
+@pytest.fixture()
+def weekly_dataset():
+    # Emulate a downloaded dataset from EuroStat
+    df = pd.DataFrame(
+        {
+            "value": {
+                ("CB_EU_FOR", "I_IUG_DKPC", "PC_IND", "AL", "2015W01"): np.nan,
+                ("CB_EU_FOR", "I_IUG_DKPC", "PC_IND", "AL", "2016W12"): 100.0,
+                ("CB_EU_FOR", "I_IUG_DKPC", "PC_IND", "AL", "2021W30"): 100.0,
+                ("CB_EU_FOR", "I_IUG_DKPC", "PC_IND", "AL", "2018W45"): 100.0,
+            },
+            "flag": {
+                ("CB_EU_FOR", "I_IUG_DKPC", "PC_IND", "AL", "2015W01"): np.nan,
+                ("CB_EU_FOR", "I_IUG_DKPC", "PC_IND", "AL", "2016W12"): np.nan,
+                ("CB_EU_FOR", "I_IUG_DKPC", "PC_IND", "AL", "2021W30"): np.nan,
+                ("CB_EU_FOR", "I_IUG_DKPC", "PC_IND", "AL", "2018W45"): "u",
             },
         }
     )
@@ -143,8 +189,18 @@ def test_fetch_dataset_and_metadata(mock_eust):
     assert len(r[0].index.levels[-1]) == 3  # type: ignore TODO Cannot access member
 
 
-def test_cast_time_to_datetimeindex(dataset, monthly_dataset, quarterly_dataset):
+def test_cast_time_to_datetimeindex(
+    dataset,
+    geo_time_inverted_dataset,
+    monthly_dataset,
+    quarterly_dataset,
+    weekly_dataset,
+):
     dataset = cast_time_to_datetimeindex(dataset)
+    assert ptypes.is_datetime64_dtype(dataset.index.get_level_values("time"))  # type: ignore
+    assert dataset.index.is_monotonic_increasing
+
+    dataset = cast_time_to_datetimeindex(geo_time_inverted_dataset)
     assert ptypes.is_datetime64_dtype(dataset.index.get_level_values("time"))  # type: ignore
     assert dataset.index.is_monotonic_increasing
 
@@ -153,6 +209,7 @@ def test_cast_time_to_datetimeindex(dataset, monthly_dataset, quarterly_dataset)
 
     with pytest.raises((AssertionError, NotImplementedError)):
         cast_time_to_datetimeindex(quarterly_dataset)
+        cast_time_to_datetimeindex(weekly_dataset)
 
 
 def test_split_dimensions_and_attributes_from(metadata):

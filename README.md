@@ -2,7 +2,7 @@
 A prototype webapp to export easily multiple Eurostat datasets.
 
 # User guide
-1. Input the dataset code of an Eurostat dataset of interest.
+1. Choose an Eurostat dataset of interest (or start typing dataset code or title).
 2. After loading, you can inspect the dataset and filter indexes, flags and time-span with the controls provided in the sidebar.
 3. When done, you can snaphsot the current dataset view with the button _stash_. The current stash will be reported below the current dataset.
 4. You can repeat the process starting from _1_ for as many dataset as you like.
