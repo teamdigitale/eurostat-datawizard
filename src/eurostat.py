@@ -3,9 +3,22 @@ import pandas as pd
 from typing import Mapping, Tuple, Dict, List
 
 
-def list_table_of_contents():
-    URL = "https://ec.europa.eu/eurostat/estat-navtree-portlet-prod/BulkDownloadListing?file=table_of_contents_en.txt"
-    return pd.read_table(URL)
+def fetch_table_of_contents() -> pd.Series:
+    """Returns dataset titles as keys and codes as values."""
+    return (
+        pd.read_table(
+            "https://ec.europa.eu/eurostat/estat-navtree-portlet-prod/BulkDownloadListing?file=table_of_contents_en.txt",
+            usecols=[0, 1, 2],
+            engine="c",
+        )
+        .query("type == 'dataset'")
+        .drop(columns=["type"])
+        .transform(lambda x: x.str.strip())
+        .set_index("title")
+        .squeeze()
+        .sort_index()
+        .drop_duplicates()
+    )
 
 
 def fetch_dataset_and_metadata(
@@ -20,8 +33,7 @@ def fetch_dataset_and_metadata(
 
 
 def cast_time_to_datetimeindex(data: pd.DataFrame):
-    # Access by position it's the most efficient way found to access unique levels
-    time_levels = data.index.levels[-1]  # type: ignore TODO Cannot access member
+    time_levels = data.index.levels[data.index.names.index("time")]  # type: ignore
     if len(str(time_levels[0])) == 4:
         format = "%Y"
     elif "M" in time_levels[0]:

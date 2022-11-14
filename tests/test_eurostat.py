@@ -35,6 +35,29 @@ def dataset():
 
 
 @pytest.fixture()
+def geo_time_inverted_dataset():
+    # Emulate a downloaded dataset from EuroStat
+    df = pd.DataFrame(
+        {
+            "value": {
+                ("CB_EU_FOR", "I_IUG_DKPC", "PC_IND", "2015", "AL"): np.nan,
+                ("CB_EU_FOR", "I_IUG_DKPC", "PC_IND", "2016", "AL"): 100.0,
+                ("CB_EU_FOR", "I_IUG_DKPC", "PC_IND", "2021", "IT"): 100.0,
+                ("CB_EU_FOR", "I_IUG_DKPC", "PC_IND", "2018", "IT"): 100.0,
+            },
+            "flag": {
+                ("CB_EU_FOR", "I_IUG_DKPC", "PC_IND", "2015", "AL"): np.nan,
+                ("CB_EU_FOR", "I_IUG_DKPC", "PC_IND", "2016", "AL"): np.nan,
+                ("CB_EU_FOR", "I_IUG_DKPC", "PC_IND", "2021", "IT"): np.nan,
+                ("CB_EU_FOR", "I_IUG_DKPC", "PC_IND", "2018", "IT"): "u",
+            },
+        }
+    )
+    df.index = df.index.set_names(["ind_type", "indic_is", "unit", "time", "geo"])
+    return df
+
+
+@pytest.fixture()
 def monthly_dataset():
     # Emulate a downloaded dataset from EuroStat
     df = pd.DataFrame(
@@ -167,9 +190,17 @@ def test_fetch_dataset_and_metadata(mock_eust):
 
 
 def test_cast_time_to_datetimeindex(
-    dataset, monthly_dataset, quarterly_dataset, weekly_dataset
+    dataset,
+    geo_time_inverted_dataset,
+    monthly_dataset,
+    quarterly_dataset,
+    weekly_dataset,
 ):
     dataset = cast_time_to_datetimeindex(dataset)
+    assert ptypes.is_datetime64_dtype(dataset.index.get_level_values("time"))  # type: ignore
+    assert dataset.index.is_monotonic_increasing
+
+    dataset = cast_time_to_datetimeindex(geo_time_inverted_dataset)
     assert ptypes.is_datetime64_dtype(dataset.index.get_level_values("time"))  # type: ignore
     assert dataset.index.is_monotonic_increasing
 

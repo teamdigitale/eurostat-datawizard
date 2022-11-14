@@ -1,19 +1,28 @@
+from datetime import datetime
+from io import BytesIO
+from threading import Lock
+
 import pandas as pd
 import streamlit as st
-from io import BytesIO
-from datetime import datetime
+
 from src.eurostat import (
-    fetch_dataset_and_metadata,
     cast_time_to_datetimeindex,
-    split_dimensions_and_attributes_from,
+    fetch_dataset_and_metadata,
+    fetch_table_of_contents,
     filter_dataset,
+    split_dimensions_and_attributes_from,
 )
-from threading import Lock
 
 
 @st.experimental_singleton(show_spinner=False)
 def global_lock():
     return Lock()
+
+
+@st.experimental_memo(show_spinner=False)
+def load_toc() -> pd.Series:
+    toc = fetch_table_of_contents()
+    return toc.values + " | " + toc.index  # type: ignore
 
 
 @st.experimental_memo(show_spinner=False)
@@ -98,15 +107,23 @@ def patch_streamlit_session_state():
 def import_dataset():
     st.sidebar.header("Eurostat Data Wizard")
     st.sidebar.subheader("Import a dataset")
-    dataset_code = st.sidebar.text_input(
-        label="Online data code", placeholder="EI_BSCO_M"
-    )
+
+    dataset_code = "Scroll options or start typing"
+    try:
+        with st.sidebar:
+            with st.spinner(text="Fetching datasets"):
+                toc_list = [dataset_code] + load_toc().to_list()
+                dataset_code = str(st.selectbox("Choose a dataset", toc_list)).split(
+                    " | "
+                )[0]
+    except Exception as e:
+        st.sidebar.error(e)
 
     dataset = pd.DataFrame()
     indexes = dict()
     flags = list()
 
-    if dataset_code != "":
+    if dataset_code != "Scroll options or start typing":
         dataset_code = dataset_code.lower()
         try:
             with st.sidebar:
@@ -131,6 +148,7 @@ def import_dataset():
             indexes[name] = dataset.index.levels[i].to_list()  # type: ignore
             if name == "time":
                 m, M = min(indexes[name]).year, max(indexes[name]).year
+                M = M if m < M else M + 1  # RangeError fix
                 indexes[name] = st.sidebar.slider(
                     f"Select TIME [min: 1 year]",
                     m,
@@ -216,4 +234,4 @@ if __name__ == "__main__":
     show_dataset(dataset, dataset_code, indexes, flags)
     show_stash()
 
-    # show_console()  # For debugging
+    show_console()  # For debugging
