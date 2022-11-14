@@ -4,7 +4,6 @@ import pandas as pd
 import pandas.api.types as ptypes
 from pandas.testing import assert_frame_equal, assert_index_equal
 from src.eurostat import (
-    list_table_of_contents,
     fetch_dataset_and_metadata,
     cast_time_to_datetimeindex,
     split_dimensions_and_attributes_from,
@@ -156,10 +155,6 @@ def mock_eust(mocker, dataset, metadata):
         "src.eurostat.eust.read_table_metadata",
         return_value=metadata,
     )
-
-
-def test_list_table_of_contents():
-    print(list_table_of_contents())
 
 
 def test_fetch_dataset_and_metadata(mock_eust):
