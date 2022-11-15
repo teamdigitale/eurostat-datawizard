@@ -207,7 +207,7 @@ def test_cast_time_to_datetimeindex(
     dataset = cast_time_to_datetimeindex(monthly_dataset)
     assert ptypes.is_datetime64_dtype(monthly_dataset.index.get_level_values("time"))  # type: ignore
 
-    with pytest.raises((AssertionError, NotImplementedError)):
+    with pytest.raises(NotImplementedError):
         cast_time_to_datetimeindex(quarterly_dataset)
         cast_time_to_datetimeindex(weekly_dataset)
 

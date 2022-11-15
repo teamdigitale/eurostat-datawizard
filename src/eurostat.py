@@ -36,13 +36,13 @@ def cast_time_to_datetimeindex(data: pd.DataFrame):
     time_levels = data.index.levels[data.index.names.index("time")]  # type: ignore
     if len(str(time_levels[0])) == 4:
         format = "%Y"
-    # elif "M" in time_levels[0]:
-    #     format = "%YM%m"
-    # # elif "Q" in time_levels[0]:
-    # #     raise NotImplementedError("Quarterly data not implemented yet.")
-    # # elif "W" in time_levels[0]:
-    # #     raise NotImplementedError("Weekly data not implemented yet.")
-    else:
+    elif "M" in time_levels[0]:
+        format = "%YM%m"
+    elif "Q" in time_levels[0]:
+        raise NotImplementedError("Quarterly data not implemented yet.")
+    elif "W" in time_levels[0]:
+        raise NotImplementedError("Weekly data not implemented yet.")
+    else:  # NOTE This should never occured, according to date format specification
         format = None
     assert format, f"Cannot convert {time_levels[0]} into valid date."
     time_index = pd.to_datetime(time_levels, format=format)
