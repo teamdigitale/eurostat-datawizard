@@ -3,19 +3,14 @@ import pandas as pd
 from pandas.testing import assert_index_equal
 from tests.test_eurostat import (
     mock_eust,
-    dataset,  # must be imported in order to let `mock_eust` work
-    metadata,  # must be imported in order to let `mock_eust` work
-)
-from main import load_dataset, load_stash
+    dataset,  # NOTE must be imported in order to let `mock_eust` work
+    metadata,  # NOTE must be imported in order to let `mock_eust` work
+)  # flake8: noqa
+from pages.Stash import load_stash
 
 
-def test_load_dataset(mock_eust):
-    r = load_dataset("fake-code")
-    assert r.index.is_monotonic_increasing
-    assert_index_equal(r.columns, pd.Index(["flag", "value"]))
-
-
-def test_load_stash(mock_eust):
+# NOTE `mock_eust` must appear as parameter in order to be active
+def test_load_stash(mock_eust):  # flake8: noqa
     stash = {
         "fake-code": {
             "indexes": {

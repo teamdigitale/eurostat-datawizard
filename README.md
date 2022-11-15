@@ -2,17 +2,20 @@
 A prototype webapp to export easily multiple Eurostat datasets. You can play with a (resource limited) working version [here](https://lum4chi-app-eurostat-datawizard-main-yaed9w.streamlit.app/).
 
 # User guide
+## Data Import
 1. Choose an Eurostat dataset of interest (or start typing dataset code or title).
 2. After loading, you can inspect the dataset and filter indexes, flags and time-span with the controls provided in the sidebar.
-3. When done, you can snaphsot the current dataset view with the button _stash_. The current stash will be reported below the current dataset.
-4. You can repeat the process starting from _1_ for as many dataset as you like.
-5. When done, you can _download_ the stashed datasets in a convenient gzipped csv.
+3. When done, you can _download_ the current data snapshot in a convenient gzipped csv. You can _stash_ it for further inspection down the line. 
+5. You can repeat the process starting from _1_ for as many dataset as you like.
+
+## Stash
+1. The current stash will be reported here and you can _download_ it too.
 
 # Run the app on localhost
 This is a [streamlit](https://streamlit.io/)-based app. Requirements are managed with [pipenv](https://pipenv.pypa.io/). 
 After cloning, you should be able to run this command:
 ```
-pipenv run streamlit run main.py
+pipenv run streamlit run app.py
 ```
 Based on your environment configuration, you may required to satisfy some system dependencies in order to execute the app smoothly. Please refer to the [FAQ](#FAQ) section to solve common issues.
 

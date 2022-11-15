@@ -42,7 +42,7 @@ def cast_time_to_datetimeindex(data: pd.DataFrame):
         raise NotImplementedError("Quarterly data not implemented yet.")
     elif "W" in time_levels[0]:
         raise NotImplementedError("Weekly data not implemented yet.")
-    else:
+    else:  # NOTE This should never occured, according to date format specification
         format = None
     assert format, f"Cannot convert {time_levels[0]} into valid date."
     time_index = pd.to_datetime(time_levels, format=format)
@@ -76,7 +76,8 @@ def filter_dataset(
     # Make columns time-oriented for easy slicing
     dataset = dataset.unstack("time").swaplevel(axis=1).sort_index(axis=1)  # type: ignore
     dataset = dataset.loc[
-        dataset.index.intersection(complete_index), str(start) : str(end)
+        dataset.index.intersection(complete_index),
+        str(start) : str(end),  # flake8: noqa
     ].dropna(how="all")
     if dataset.empty:
         return pd.DataFrame(

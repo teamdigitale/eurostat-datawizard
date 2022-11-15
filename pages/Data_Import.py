@@ -1,10 +1,12 @@
-from datetime import datetime
-from io import BytesIO
 from threading import Lock
+from typing import List
 
 import pandas as pd
 import streamlit as st
 
+from Home import INITIAL_SIDEBAR_STATE, LAYOUT, MENU_ITEMS, PAGE_ICON
+from widgets.console import show_console
+from widgets.download import download_dataframe_button
 from src.eurostat import (
     cast_time_to_datetimeindex,
     fetch_dataset_and_metadata,
@@ -14,15 +16,26 @@ from src.eurostat import (
 )
 
 
+def page_config():
+    st.set_page_config(
+        page_title="Eurostat Data Wizard • Data Import",
+        page_icon=PAGE_ICON,
+        layout=LAYOUT,
+        initial_sidebar_state=INITIAL_SIDEBAR_STATE,
+        menu_items=MENU_ITEMS,  # type: ignore
+    )
+
+
 @st.experimental_singleton(show_spinner=False)
 def global_lock():
     return Lock()
 
 
 @st.experimental_memo(show_spinner=False)
-def load_toc() -> pd.Series:
+def load_toc() -> List[str]:
     toc = fetch_table_of_contents()
-    return toc.values + " | " + toc.index  # type: ignore
+    toc = toc.values + " | " + toc.index  # type: ignore
+    return toc.to_list()
 
 
 @st.experimental_memo(show_spinner=False)
@@ -37,61 +50,8 @@ def load_dataset(code: str) -> pd.DataFrame:
     return data[["flag", "value"]]
 
 
-# `max_entries=1` because likely just the last call will be the reused one
-@st.experimental_memo(show_spinner=False, max_entries=1)
-def load_stash(stash: dict) -> pd.DataFrame:
-    data = pd.DataFrame()
-    common_cols = ["unit", "geo", "time", "flag", "value"]
-    for code, filters in stash.items():
-        indexes, flags = filters["indexes"], filters["flags"]
-        df = load_dataset(code)
-        df = filter_dataset(df, indexes, flags)
-        # Append dataset code to data as first level
-        df = pd.concat(
-            {code: df},
-            names=["dataset"],
-        )
-        # Merge dataset-specific indexes into one field
-        df = df.reset_index()
-        df = (
-            pd.concat(
-                [
-                    df[["dataset"]],
-                    df[df.columns.difference(["dataset"] + common_cols)].agg(
-                        " - ".join, axis=1
-                    ),
-                    df[common_cols],
-                ],
-                axis=1,
-            )
-            .rename(columns={0: "variable"})
-            .set_index(["dataset", "variable"] + common_cols[:-2])
-        )
-        # Append previous loop datasets
-        data = pd.concat([data, df])
-    return data
-
-
 def update_stash(code, indexes, flags):
     st.session_state.stash.update({code: {"indexes": indexes, "flags": flags}})
-
-
-def clear_stash():
-    st.session_state.stash = {}
-
-
-def app_config():
-    st.set_page_config(
-        page_title="Eurostat Data Wizard",
-        layout="wide",
-        initial_sidebar_state="expanded",
-        menu_items={
-            "About": "Copyright (c) 2022 Presidenza del Consiglio dei Ministri",
-        },
-    )
-
-    if "stash" not in st.session_state:
-        st.session_state.stash = {}
 
 
 def patch_streamlit_session_state():
@@ -105,17 +65,14 @@ def patch_streamlit_session_state():
 
 
 def import_dataset():
-    st.sidebar.header("Eurostat Data Wizard")
-    st.sidebar.subheader("Import a dataset")
 
     dataset_code = "Scroll options or start typing"
     try:
         with st.sidebar:
             with st.spinner(text="Fetching datasets"):
-                toc_list = [dataset_code] + load_toc().to_list()
-                dataset_code = str(st.selectbox("Choose a dataset", toc_list)).split(
-                    " | "
-                )[0]
+                dataset_code = str(
+                    st.selectbox("Choose a dataset", [dataset_code] + load_toc())
+                ).split(" | ")[0]
     except Exception as e:
         st.sidebar.error(e)
 
@@ -150,7 +107,7 @@ def import_dataset():
                 m, M = min(indexes[name]).year, max(indexes[name]).year
                 M = M if m < M else M + 1  # RangeError fix
                 indexes[name] = st.sidebar.slider(
-                    f"Select TIME [min: 1 year]",
+                    "Select TIME [min: 1 year]",
                     m,
                     M,
                     (m, M),
@@ -172,66 +129,31 @@ def import_dataset():
 
 
 def show_dataset(dataset, dataset_code, indexes, flags):
-    st.subheader("Current dataset")
+    st.subheader("Dataset")
     # Dataset is shown with `.reset_index` because MultiIndex are not rendered properly
     view = dataset if dataset.empty else dataset.reset_index()
     st.dataframe(view, use_container_width=True)
     st.write("{} rows x {} columns".format(*view.shape))
 
-    st.button(
-        "Stash",
-        on_click=update_stash,
-        args=(dataset_code, indexes, flags),
-        disabled=dataset.empty,
-    )
-
-
-def show_stash():
-    st.subheader("Stashed datasets")
-
-    dataset = pd.DataFrame()
-    try:
-        with st.spinner(text="Fetching data"):
-            if st.session_state.stash.keys():
-                dataset = load_stash(st.session_state.stash)
-    except ValueError as ve:
-        st.error(ve)
-
-    # Dataset is shown with `.reset_index` because MultiIndex are not rendered properly
-    view = dataset if dataset.empty else dataset.reset_index()
-    st.dataframe(view, use_container_width=True)
-    st.write("{} rows x {} columns".format(*dataset.shape))
-
     with st.container():
         col1, col2 = st.columns(2, gap="small")
         with col1:
-            st.button("Clear", on_click=clear_stash, disabled=dataset.empty)
+            st.button(
+                "Stash",
+                on_click=update_stash,
+                args=(dataset_code, indexes, flags),
+                disabled=dataset.empty,
+            )
         with col2:
-            now = datetime.now().isoformat(timespec="seconds")
-            with BytesIO() as buffer:
-                # Data downloaded is the `view` to be consistent with what user sees
-                view.to_csv(buffer, index=False, compression={"method": "gzip"})
-                st.download_button(
-                    "Download",
-                    buffer.getvalue(),
-                    file_name=f"EurostatDataWizard_{now}.csv.gz",
-                    mime="application/gzip",
-                    disabled=view.empty,
-                )
+            download_dataframe_button(view)
 
-
-def show_console():
-    with st.expander("Session console"):
-        st.write(st.session_state)
 
 
 if __name__ == "__main__":
-    app_config()
+    page_config()
 
     dataset, dataset_code, indexes, flags = import_dataset()
 
-    st.header("Data viewer")
     show_dataset(dataset, dataset_code, indexes, flags)
-    show_stash()
 
     show_console()  # For debugging
