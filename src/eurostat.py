@@ -40,8 +40,8 @@ def cast_time_to_datetimeindex(data: pd.DataFrame):
         format = "%YM%m"
     elif "Q" in time_levels[0]:
         raise NotImplementedError("Quarterly data not implemented yet.")
-    elif "W" in time_levels[0]:
-        raise NotImplementedError("Weekly data not implemented yet.")
+    # elif "W" in time_levels[0]:
+    #     raise NotImplementedError("Weekly data not implemented yet.")
     else:
         format = None
     assert format, f"Cannot convert {time_levels[0]} into valid date."
