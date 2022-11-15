@@ -24,7 +24,7 @@ def global_lock():
 def load_toc() -> List[str]:
     toc = fetch_table_of_contents()
     toc = toc.values + " | " + toc.index  # type: ignore
-    return [dataset_code] + toc.to_list()
+    return toc.to_list()
 
 
 @st.experimental_memo(show_spinner=False)
@@ -118,9 +118,9 @@ def import_dataset():
     try:
         with st.sidebar:
             with st.spinner(text="Fetching datasets"):
-                dataset_code = str(st.selectbox("Choose a dataset", load_toc())).split(
-                    " | "
-                )[0]
+                dataset_code = str(
+                    st.selectbox("Choose a dataset", [dataset_code] + load_toc())
+                ).split(" | ")[0]
     except Exception as e:
         st.sidebar.error(e)
 
