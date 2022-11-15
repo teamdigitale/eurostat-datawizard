@@ -15,7 +15,7 @@ A straightforward webapp to export easily multiple Eurostat datasets. You can pl
 This is a [streamlit](https://streamlit.io/)-based app. Requirements are managed with [pipenv](https://pipenv.pypa.io/). 
 After cloning, you should be able to run this command:
 ```
-pipenv run streamlit run app.py
+pipenv run streamlit run Home.py
 ```
 Based on your environment configuration, you may required to satisfy some system dependencies in order to execute the app smoothly. Please refer to the [FAQ](#FAQ) section to solve common issues.
 
