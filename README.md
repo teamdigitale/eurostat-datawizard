@@ -1,5 +1,5 @@
-# Eurostat Data Wizard
-A straightforward webapp to export easily multiple Eurostat datasets.
+# EuroSTAT DataWizard
+A prototype webapp to export easily multiple Eurostat datasets. You can play with a (resource limited) working version [here](https://lum4chi-app-eurostat-datawizard-main-yaed9w.streamlit.app/).
 
 # User guide
 ## Data Import
