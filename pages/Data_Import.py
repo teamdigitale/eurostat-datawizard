@@ -43,7 +43,7 @@ def load_dataset(code: str) -> pd.DataFrame:
 @st.experimental_memo(show_spinner=False, max_entries=1)
 def load_stash(stash: dict) -> pd.DataFrame:
     data = pd.DataFrame()
-    common_cols = ["unit", "geo", "time", "flag", "value"]
+    common_cols = ["geo", "time", "flag", "value"]
     for code, filters in stash.items():
         indexes, flags = filters["indexes"], filters["flags"]
         df = load_dataset(code)
@@ -62,7 +62,7 @@ def load_stash(stash: dict) -> pd.DataFrame:
                     df[df.columns.difference(["dataset"] + common_cols)].agg(
                         " - ".join, axis=1
                     ),
-                    df[common_cols],
+                    df[df.columns.intersection(["unit"] + common_cols)],
                 ],
                 axis=1,
             )
@@ -82,9 +82,9 @@ def clear_stash():
     st.session_state.stash = {}
 
 
-def app_config():
+def page_config():
     st.set_page_config(
-        page_title="Eurostat Data Wizard",
+        page_title="Eurostat Data Wizard • Data Import",
         page_icon="🇪🇺",
         layout="wide",
         initial_sidebar_state="expanded",
@@ -111,8 +111,6 @@ def patch_streamlit_session_state():
 
 
 def import_dataset():
-    st.sidebar.header("Eurostat Data Wizard")
-    st.sidebar.subheader("Import a dataset")
 
     dataset_code = "Scroll options or start typing"
     try:
@@ -155,7 +153,7 @@ def import_dataset():
                 m, M = min(indexes[name]).year, max(indexes[name]).year
                 M = M if m < M else M + 1  # RangeError fix
                 indexes[name] = st.sidebar.slider(
-                    f"Select TIME [min: 1 year]",
+                    "Select TIME [min: 1 year]",
                     m,
                     M,
                     (m, M),
@@ -231,7 +229,7 @@ def show_console():
 
 
 if __name__ == "__main__":
-    app_config()
+    page_config()
 
     dataset, dataset_code, indexes, flags = import_dataset()
 
