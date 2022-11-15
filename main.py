@@ -1,6 +1,7 @@
 from datetime import datetime
 from io import BytesIO
 from threading import Lock
+from typing import List
 
 import pandas as pd
 import streamlit as st
@@ -20,9 +21,10 @@ def global_lock():
 
 
 @st.experimental_memo(show_spinner=False)
-def load_toc() -> pd.Series:
+def load_toc() -> List[str]:
     toc = fetch_table_of_contents()
-    return toc.values + " | " + toc.index  # type: ignore
+    toc = toc.values + " | " + toc.index  # type: ignore
+    return [dataset_code] + toc.to_list()
 
 
 @st.experimental_memo(show_spinner=False)
@@ -83,10 +85,14 @@ def clear_stash():
 def app_config():
     st.set_page_config(
         page_title="Eurostat Data Wizard",
+        page_icon="🇪🇺",
         layout="wide",
         initial_sidebar_state="expanded",
         menu_items={
-            "About": "Copyright (c) 2022 Presidenza del Consiglio dei Ministri",
+            "About": """
+            Copyright (c) 2022 Presidenza del Consiglio dei Ministri
+            Datasets are provided [free of charge](https://ec.europa.eu/eurostat/en/about-us/policies/copyright) by © European Union, 1995 - today
+            """,
         },
     )
 
@@ -112,8 +118,7 @@ def import_dataset():
     try:
         with st.sidebar:
             with st.spinner(text="Fetching datasets"):
-                toc_list = [dataset_code] + load_toc().to_list()
-                dataset_code = str(st.selectbox("Choose a dataset", toc_list)).split(
+                dataset_code = str(st.selectbox("Choose a dataset", load_toc())).split(
                     " | "
                 )[0]
     except Exception as e:
