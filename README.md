@@ -1,13 +1,15 @@
 # Eurostat Data Wizard
-A prototype webapp to export easily multiple Eurostat datasets.
+A straightforward webapp to export easily multiple Eurostat datasets.
 
 # User guide
 ## Data Import
 1. Choose an Eurostat dataset of interest (or start typing dataset code or title).
 2. After loading, you can inspect the dataset and filter indexes, flags and time-span with the controls provided in the sidebar.
-3. When done, you can snaphsot the current dataset view with the button _stash_. The current stash will be reported below the current dataset.
-4. You can repeat the process starting from _1_ for as many dataset as you like.
-5. When done, you can _download_ the stashed datasets in a convenient gzipped csv.
+3. When done, you can _download_ the current data snapshot in a convenient gzipped csv. You can _stash_ it for further inspection down the line. 
+5. You can repeat the process starting from _1_ for as many dataset as you like.
+
+## Stash
+1. The current stash will be reported here and you can _download_ it too.
 
 # Run the app on localhost
 This is a [streamlit](https://streamlit.io/)-based app. Requirements are managed with [pipenv](https://pipenv.pypa.io/). 
