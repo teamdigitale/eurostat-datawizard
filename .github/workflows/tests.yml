@@ -16,7 +16,7 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install pipenv
+      - name: Install pipenv and requirements
         run: |
           pip install pipenv
           pipenv install --dev
