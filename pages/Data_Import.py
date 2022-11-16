@@ -6,6 +6,7 @@ import streamlit as st
 
 from Home import INITIAL_SIDEBAR_STATE, LAYOUT, MENU_ITEMS, PAGE_ICON
 from widgets.console import show_console
+from widgets.dataframe import st_dataframe_with_index_and_rows_cols_count
 from widgets.download import download_dataframe_button
 from src.eurostat import (
     cast_time_to_datetimeindex,
@@ -130,10 +131,9 @@ def import_dataset():
 
 def show_dataset(dataset, dataset_code, indexes, flags):
     st.subheader("Dataset")
-    # Dataset is shown with `.reset_index` because MultiIndex are not rendered properly
-    view = dataset if dataset.empty else dataset.reset_index()
-    st.dataframe(view, use_container_width=True)
-    st.write("{} rows x {} columns".format(*view.shape))
+    view = st_dataframe_with_index_and_rows_cols_count(
+        dataset, use_container_width=True
+    )
 
     with st.container():
         col1, col2 = st.columns(2, gap="small")
@@ -146,7 +146,6 @@ def show_dataset(dataset, dataset_code, indexes, flags):
             )
         with col2:
             download_dataframe_button(view)
-
 
 
 if __name__ == "__main__":

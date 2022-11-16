@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+from widgets.dataframe import st_dataframe_with_index_and_rows_cols_count
 from widgets.download import download_dataframe_button
 from Home import INITIAL_SIDEBAR_STATE, LAYOUT, MENU_ITEMS, PAGE_ICON
 from widgets.console import show_console
@@ -56,10 +57,9 @@ def show_stash():
     except ValueError as ve:
         st.error(ve)
 
-    # Dataset is shown with `.reset_index` because MultiIndex are not rendered properly
-    view = dataset if dataset.empty else dataset.reset_index()
-    st.dataframe(view, use_container_width=True)
-    st.write("{} rows x {} columns".format(*dataset.shape))
+    view = st_dataframe_with_index_and_rows_cols_count(
+        dataset, use_container_width=True
+    )
 
     with st.container():
         col1, col2 = st.columns(2, gap="small")
