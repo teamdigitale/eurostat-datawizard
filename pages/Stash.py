@@ -5,8 +5,8 @@ from Home import INITIAL_SIDEBAR_STATE, LAYOUT, MENU_ITEMS, PAGE_ICON
 from widgets.console import show_console
 from pages.Data_Import import load_dataset, filter_dataset
 
-# `max_entries=1` because likely just the last call will be the reused one
-@st.experimental_memo(show_spinner=False, max_entries=1)
+
+@st.experimental_memo(show_spinner=False)
 def load_stash(stash: dict) -> pd.DataFrame:
     data = pd.DataFrame()
     common_cols = ["geo", "time", "flag", "value"]
@@ -29,15 +29,12 @@ def load_stash(stash: dict) -> pd.DataFrame:
                     df[df.columns.difference(["dataset"] + common_cols)].agg(
                         " - ".join, axis=1
                     ),
-                    df[df.columns.intersection(["unit"] + common_cols)],
+                    df[df.columns.intersection(common_cols)],
                 ],
                 axis=1,
             )
             .rename(columns={0: "variable"})
-            .set_index(
-                ["dataset", "variable"]
-                + df.columns.intersection(["unit"] + common_cols[:-2]).to_list()
-            )
+            .set_index(["dataset", "variable"] + common_cols[:-2])
         )
         # Append previous loop datasets
         data = pd.concat([data, df])
