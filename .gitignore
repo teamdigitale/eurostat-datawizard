@@ -1,5 +1,8 @@
-# Cache (must match `.eustconf` data-dir setting)
+.gitignore# Cache (must match `.eustconf` data-dir setting)
 eust-data
+
+# pandasdmx cache
+cache/sdmx.sqlite
 
 # Python
 __pycache__
