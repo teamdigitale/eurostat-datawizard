@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 from widgets.dataframe import st_dataframe_with_index_and_rows_cols_count
 from widgets.download import download_dataframe_button
-from Home import INITIAL_SIDEBAR_STATE, LAYOUT, MENU_ITEMS, PAGE_ICON
+from globals import INITIAL_SIDEBAR_STATE, LAYOUT, MENU_ITEMS, PAGE_ICON
 from widgets.console import show_console
 from pages.Data_Import import load_dataset, filter_dataset
 

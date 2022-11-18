@@ -1,10 +1,25 @@
+from datetime import timedelta
+from typing import Dict, List, Mapping, Tuple
+
 import eust
 import pandas as pd
-from typing import Mapping, Tuple, Dict, List
+import pandasdmx as sdmx
+
+
+def eurostat_sdmx_request():
+    return sdmx.Request(
+        "ESTAT",
+        cache_name="cache/sdmx",
+        backend="sqlite",
+        expire_after=timedelta(days=90),
+        stale_if_error=True,
+        stale_while_revalidate=True,
+    )
 
 
 def fetch_table_of_contents() -> pd.Series:
-    """Returns dataset titles as keys and codes as values."""
+    """Returns dataset codes as keys and titles as values."""
+    # NOTE Access to txt seems quicker than a SDMX call
     return (
         pd.read_table(
             "https://ec.europa.eu/eurostat/estat-navtree-portlet-prod/BulkDownloadListing?file=table_of_contents_en.txt",
@@ -14,10 +29,26 @@ def fetch_table_of_contents() -> pd.Series:
         .query("type == 'dataset'")
         .drop(columns=["type"])
         .transform(lambda x: x.str.strip())
-        .set_index("title")
+        .set_index("code")
         .squeeze()
         .sort_index()
         .drop_duplicates()
+    )
+
+
+def fetch_dataset_codelist(
+    request: sdmx.Request, dataset: str
+) -> Tuple[pd.DataFrame, bool]:
+    metadata = request.datastructure(f"DSD_{dataset}")
+    codelist = pd.DataFrame()
+    for codes in metadata.codelist.values():  # type: ignore
+        codes = sdmx.to_pandas(codes)
+        codes.parent = codes.parent.str[3:]  # Trim unnecessary `CL_`
+        codelist = pd.concat([codelist, codes])
+    codelist.index.name = "dimension"
+    return (
+        codelist,
+        metadata.response.from_cache,  # type: ignore
     )
 
 

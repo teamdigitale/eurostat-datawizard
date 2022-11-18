@@ -1,17 +1,7 @@
 import streamlit as st
+from globals import INITIAL_SIDEBAR_STATE, LAYOUT, MENU_ITEMS, PAGE_ICON
 
-PAGE_ICON = "🇪🇺"
-LAYOUT = "wide"
-INITIAL_SIDEBAR_STATE = "expanded"
-MENU_ITEMS = {
-    "About": """
-            Code is [open source](https://github.com/teamdigitale/eurostat-datawizard) by Dipartimento della Trasformazione Digitale.  
-            
-            Datasets are provided [free of charge](https://ec.europa.eu/eurostat/en/about-us/policies/copyright) by © European Union, 1995 - today.  
-            
-            Copyright (c) 2022 Presidenza del Consiglio dei Ministri.  
-            """
-}
+# from pages.Data_Import import load_table_of_contents, load_codelist_reverse_index
 
 
 def page_config():
@@ -23,16 +13,27 @@ def page_config():
         menu_items=MENU_ITEMS,  # type: ignore
     )
 
+
+def initialize_session():
     if "stash" not in st.session_state:
         st.session_state.stash = {}
+
+    # BUG streamlit does not allow caching between multipage.
+    # # Trigger functions to allow caching
+    # with st.sidebar:
+    #     with st.spinner("App initializing, please wait before use:"):
+    #         toc = load_table_of_contents()
+    #         _ = load_codelist_reverse_index(toc.index.to_list())
 
 
 if __name__ == "__main__":
     page_config()
 
     with open("README.md", "r") as readme:
-        app_description = "".join([next(readme) for _ in range(13)])
+        app_description = "".join([next(readme) for _ in range(14)])
 
     app_description = app_description.replace("# Eurostat", "# 🇪🇺 Eurostat")
 
     st.markdown(app_description)
+
+    initialize_session()
