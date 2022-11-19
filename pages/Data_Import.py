@@ -117,7 +117,11 @@ def load_codelist_reverse_index(datasets: List[str]) -> pd.Series:
     status.empty()
 
     # Aggregate datasets dimension for a reverse index
-    codelist = codelist.groupby(["dimension", "name"])["dataset"].unique()
+    codelist = (
+        codelist.assign(name=codelist.name.str.capitalize())
+        .groupby(["dimension", "name"])["dataset"]
+        .unique()
+    )
     codelist = codelist[codelist.apply(len) > 0]
     codelist.index = codelist.index.to_flat_index().str.join(" | ")
     codelist.name = "datasets"
