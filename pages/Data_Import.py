@@ -68,7 +68,8 @@ def api_endpoint():
     return eurostat_sdmx_request()
 
 
-@st.experimental_memo(show_spinner=False)
+# NOTE `persist` preserve caching also when page is left
+@st.experimental_memo(show_spinner=False, persist="disk")
 def load_codelist_reverse_index(datasets: List[str]) -> pd.Series:
     """Obtain codelist and in which dataset is used each."""
     req = api_endpoint()
@@ -128,7 +129,8 @@ def load_codelist_reverse_index(datasets: List[str]) -> pd.Series:
     return codelist.apply(lambda x: x.tolist())
 
 
-@st.experimental_memo(show_spinner=False)
+# NOTE `persist` preserve caching also when page is left
+@st.experimental_memo(show_spinner=False, persist="disk")
 def load_table_of_contents() -> pd.Series:
     return fetch_table_of_contents()
 
