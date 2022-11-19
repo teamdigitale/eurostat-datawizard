@@ -11,7 +11,6 @@ def eurostat_sdmx_request():
         "ESTAT",
         cache_name="cache/sdmx",
         backend="sqlite",
-        fast_save=True,
         expire_after=timedelta(days=90),
         stale_if_error=True,
         stale_while_revalidate=True,
