@@ -1,3 +1,5 @@
+import streamlit as st
+
 PAGE_ICON = "🇪🇺"
 LAYOUT = "wide"
 INITIAL_SIDEBAR_STATE = "expanded"
@@ -10,3 +12,6 @@ MENU_ITEMS = {
             Copyright (c) 2022 Presidenza del Consiglio dei Ministri.  
             """
 }
+
+if "stash" not in st.session_state:
+    st.session_state.stash = {}
