@@ -47,8 +47,6 @@ def clear_stash():
 
 
 def show_stash():
-    st.subheader("Datasets")
-
     dataset = pd.DataFrame()
     try:
         with st.spinner(text="Fetching data"):
@@ -58,7 +56,7 @@ def show_stash():
         st.error(ve)
 
     view = st_dataframe_with_index_and_rows_cols_count(
-        dataset, use_container_width=True
+        dataset, "Stash", use_container_width=True
     )
 
     with st.container():

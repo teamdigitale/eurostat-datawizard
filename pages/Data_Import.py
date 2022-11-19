@@ -153,6 +153,7 @@ def import_dataset():
     dataset_code_title = (
         "Scroll options or start typing"  # ex: ei_bsco_m | Consumers ...
     )
+    dataset_name = ""
     try:
         # with st.sidebar:
         with st.spinner(text="Fetching datasets metadata"):
@@ -168,7 +169,7 @@ def import_dataset():
             # List (filtered) datasets
             dataset_code_title = str(
                 st.sidebar.selectbox("Choose a dataset", dataset_codes_title)  # type: ignore
-            ).split(" | ")[0]
+            )
     except Exception as e:
         st.error(e)
 
@@ -180,7 +181,9 @@ def import_dataset():
         try:
             with st.sidebar:
                 with st.spinner(text="Prepare filters"):
-                    dataset = load_dataset(dataset_code_title)
+                    dataset = load_dataset(
+                        dataset_code_title.split(" | ", maxsplit=1)[0]
+                    )
         except (ValueError, AssertionError, NotImplementedError) as e:
             st.sidebar.error(e)
 
@@ -223,9 +226,9 @@ def import_dataset():
     return dataset, dataset_code_title, indexes, flags
 
 
-def show_dataset(dataset, dataset_code, indexes, flags):
+def show_dataset(dataset, dataset_code_title, indexes, flags):
     view = st_dataframe_with_index_and_rows_cols_count(
-        dataset, dataset_code, use_container_width=True
+        dataset, f"{dataset_code_title}", use_container_width=True
     )
 
     with st.container():
@@ -234,7 +237,7 @@ def show_dataset(dataset, dataset_code, indexes, flags):
             st.button(
                 "Add to Stash",
                 on_click=update_stash,
-                args=(dataset_code, indexes, flags),
+                args=(dataset_code_title.split(" | ", maxsplit=1)[0], indexes, flags),
                 disabled=dataset.empty,
             )
         with col2:
@@ -244,8 +247,8 @@ def show_dataset(dataset, dataset_code, indexes, flags):
 if __name__ == "__main__":
     page_config()
 
-    dataset, dataset_code, indexes, flags = import_dataset()
+    dataset, dataset_code_title, indexes, flags = import_dataset()
 
-    show_dataset(dataset, dataset_code, indexes, flags)
+    show_dataset(dataset, dataset_code_title, indexes, flags)
 
     show_console()  # For debugging
