@@ -74,10 +74,10 @@ def load_codelist_reverse_index(datasets: List[str]) -> pd.Series:
     """Obtain codelist and in which dataset is used each."""
     req = api_endpoint()
     codelist = pd.DataFrame()
-    current_message = st.sidebar.empty()
-    progress_bar = st.sidebar.progress(0.0)
+    current_message = st.empty()
+    progress_bar = st.progress(0.0)
     progress_value = 0.0
-    status = st.sidebar.empty()
+    status = st.empty()
     len_datasets = len(datasets)
     datasets_not_loaded = []
     for n, dataset in enumerate(datasets):
@@ -154,23 +154,23 @@ def import_dataset():
         "Scroll options or start typing"  # ex: ei_bsco_m | Consumers ...
     )
     try:
-        with st.sidebar:
-            with st.spinner(text="Fetching datasets metadata"):
-                toc = load_table_of_contents()
-                dimensions = load_codelist_reverse_index(toc.index.to_list())
-                dimension_code_name = st.sidebar.selectbox(
-                    "Filter datasets by dimension",
-                    build_dimension_list(dimensions, dimension_code_name),
-                )
-                # Get a toc subsets or the entire toc list
-                dataset_codes = dimensions.get(dimension_code_name, default=None)
-                dataset_codes_title = build_toc_list(toc.loc[toc.index.intersection(dataset_codes)] if dataset_codes else toc, dataset_code_title)  # type: ignore
-                # List (filtered) datasets
-                dataset_code_title = str(
-                    st.sidebar.selectbox("Choose a dataset", dataset_codes_title)  # type: ignore
-                ).split(" | ")[0]
+        # with st.sidebar:
+        with st.spinner(text="Fetching datasets metadata"):
+            toc = load_table_of_contents()
+            dimensions = load_codelist_reverse_index(toc.index.to_list())
+            dimension_code_name = st.sidebar.selectbox(
+                "Filter datasets by dimension",
+                build_dimension_list(dimensions, dimension_code_name),
+            )
+            # Get a toc subsets or the entire toc list
+            dataset_codes = dimensions.get(dimension_code_name, default=None)
+            dataset_codes_title = build_toc_list(toc.loc[toc.index.intersection(dataset_codes)] if dataset_codes else toc, dataset_code_title)  # type: ignore
+            # List (filtered) datasets
+            dataset_code_title = str(
+                st.sidebar.selectbox("Choose a dataset", dataset_codes_title)  # type: ignore
+            ).split(" | ")[0]
     except Exception as e:
-        st.sidebar.error(e)
+        st.error(e)
 
     dataset = pd.DataFrame()
     indexes = dict()
@@ -179,7 +179,7 @@ def import_dataset():
     if dataset_code_title != "Scroll options or start typing":
         try:
             with st.sidebar:
-                with st.spinner(text="Fetching data"):
+                with st.spinner(text="Prepare filters"):
                     dataset = load_dataset(dataset_code_title)
         except (ValueError, AssertionError, NotImplementedError) as e:
             st.sidebar.error(e)
@@ -224,9 +224,8 @@ def import_dataset():
 
 
 def show_dataset(dataset, dataset_code, indexes, flags):
-    st.subheader("Dataset")
     view = st_dataframe_with_index_and_rows_cols_count(
-        dataset, use_container_width=True
+        dataset, dataset_code, use_container_width=True
     )
 
     with st.container():
