@@ -1,4 +1,5 @@
 import os
+from threading import Lock
 import pandas as pd
 import streamlit as st
 from requests import ConnectionError, HTTPError
@@ -31,9 +32,15 @@ def page_config():
         st.session_state.stash = {}
 
 
-@st.experimental_singleton
+@st.experimental_singleton(show_spinner=False)
 def api_endpoint():
     return eurostat_sdmx_request()
+
+
+@st.experimental_singleton(show_spinner=False)
+def index_lock():
+    """A shared lock amongst sessions to prevent concurrent index write."""
+    return Lock()
 
 
 def save_index_file():
@@ -101,7 +108,7 @@ def get_last_index_update() -> datetime | None:
     return None
 
 
-def index_helper():
+def index_helper(message_widget):
     last_update = get_last_index_update()
 
     col1, col2 = st.sidebar.columns(2, gap="large")
@@ -111,8 +118,12 @@ def index_helper():
         )
     with col2:
         if st.button("Refresh" if last_update else "Create"):
-            save_index_file()
-            st.experimental_rerun()
+            with index_lock():
+                message_widget.empty()
+                save_index_file()
+                st.experimental_rerun()
+        else:
+            message_widget.empty()
 
 
 if __name__ == "__main__":
@@ -127,4 +138,6 @@ if __name__ == "__main__":
     )
     st.markdown(app_description)
 
-    index_helper()
+    message = st.sidebar.empty()
+    message.markdown("💤 A previous indexing is still running.")
+    index_helper(message)
