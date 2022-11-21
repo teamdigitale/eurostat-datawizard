@@ -1,4 +1,5 @@
 import os
+from threading import Lock
 import pandas as pd
 import streamlit as st
 from requests import ConnectionError, HTTPError
@@ -31,9 +32,15 @@ def page_config():
         st.session_state.stash = {}
 
 
-@st.experimental_singleton
+@st.experimental_singleton(show_spinner=False)
 def api_endpoint():
     return eurostat_sdmx_request()
+
+
+@st.experimental_singleton(show_spinner=False)
+def index_lock():
+    """A shared lock amongst sessions to prevent concurrent index write."""
+    return Lock()
 
 
 def save_index_file():
@@ -127,4 +134,9 @@ if __name__ == "__main__":
     )
     st.markdown(app_description)
 
-    index_helper()
+    message = st.sidebar.empty()
+    message.markdown("💤 Indexing is running, come check later.")
+
+    with index_lock():
+        message.empty()
+        index_helper()
