@@ -2,11 +2,14 @@
 A straightforward webapp to export easily multiple Eurostat datasets. You can play with a (resource limited) working version [here](https://eurostat-datawizard.streamlit.app).
 
 # User guide
+## Home
+1. [Optional] In order to gain advanced variable search, app must index Eurostat data. This step requires a considerable amount of time but should be done just once. While running, do not leave or refresh page. When ready, index is persisted on disk and cam be used by anyone. Bear in mind that index can become too old but it can be refreshed.
+
 ## Data Import
-0. Wait for app to be initialized (this should take quite a lot at first run).
-1. Choose an Eurostat dataset of interest (or start typing dataset code or title).
-2. After loading, you can inspect the dataset and filter indexes, flags and time-span with the controls provided in the sidebar.
-3. When done, you can _download_ the current data snapshot in a convenient gzipped csv. You can _stash_ it for further inspection down the line. 
+1. [Optional] Filter Eurostat datasets list by a variable of interest. This option appears only if an index was created.
+2. Choose an Eurostat dataset of interest (or start typing dataset code or title).
+3. After loading, you can inspect the dataset and filter indexes, flags and time-span with the controls provided in the sidebar.
+4. When done, you can _download_ the current data snapshot in a convenient gzipped csv. You can _stash_ it for further inspection down the line. 
 5. You can repeat the process starting from _1_ for as many dataset as you like.
 
 ## Stash

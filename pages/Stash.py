@@ -59,12 +59,11 @@ def show_stash():
         dataset, "Stash", use_container_width=True
     )
 
-    with st.container():
-        col1, col2 = st.columns(2, gap="small")
-        with col1:
-            st.button("Clear", on_click=clear_stash, disabled=dataset.empty)
-        with col2:
-            download_dataframe_button(view)
+    col1, col2 = st.columns(2, gap="large")
+    with col1:
+        st.button("Clear", on_click=clear_stash, disabled=dataset.empty)
+    with col2:
+        download_dataframe_button(view)
 
 
 def page_config():

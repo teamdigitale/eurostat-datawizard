@@ -1,17 +1,20 @@
-import time
+import os
 from threading import Lock
-from typing import List, Mapping
-
+from typing import List
 import pandas as pd
 import streamlit as st
-from requests import ConnectionError, HTTPError
 
-from globals import INITIAL_SIDEBAR_STATE, LAYOUT, MENU_ITEMS, PAGE_ICON
+
+from globals import (
+    INITIAL_SIDEBAR_STATE,
+    LAYOUT,
+    MENU_ITEMS,
+    PAGE_ICON,
+    VARS_INDEX_PATH,
+)
 from src.eurostat import (
-    eurostat_sdmx_request,
     cast_time_to_datetimeindex,
     fetch_dataset_and_metadata,
-    fetch_dataset_codelist,
     fetch_table_of_contents,
     filter_dataset,
     split_dimensions_and_attributes_from,
@@ -32,14 +35,16 @@ def page_config():
 
 
 @st.experimental_singleton(show_spinner=False)
-def global_lock():
-    """A shared lock amongst sessions to prevent concurrent write."""
+def eust_lock():
+    """A shared lock amongst sessions to prevent concurrent dataset write."""
+    # NOTE Because it can't be assessed from outside `eust` package if fetching
+    # is coming from internet (and so writing a file) or internal cache.
     return Lock()
 
 
 @st.experimental_memo(show_spinner=False)
 def load_dataset(code: str) -> pd.DataFrame:
-    with global_lock():
+    with eust_lock():
         data, meta = fetch_dataset_and_metadata(code)
     dims, attrs = split_dimensions_and_attributes_from(meta, code)
     data = cast_time_to_datetimeindex(data)
@@ -63,70 +68,12 @@ def patch_streamlit_session_state():
             del st.session_state[k]
 
 
-@st.experimental_singleton
-def api_endpoint():
-    return eurostat_sdmx_request()
-
-
 # NOTE `persist` preserve caching also when page is left
 @st.experimental_memo(show_spinner=False, persist="disk")
-def load_codelist_reverse_index(datasets: List[str]) -> pd.Series:
-    """Obtain codelist and in which dataset is used each."""
-    req = api_endpoint()
-    codelist = pd.DataFrame()
-    current_message = st.empty()
-    progress_bar = st.progress(0.0)
-    progress_value = 0.0
-    status = st.empty()
-    len_datasets = len(datasets)
-    datasets_not_loaded = []
-    for n, dataset in enumerate(datasets):
-        current_message.text(f"Loading {dataset} ({n}/{len_datasets})")
-        try:
-            codes, cached = fetch_dataset_codelist(req, dataset)
-            codes = codes.assign(dataset=dataset)
-            codelist = pd.concat([codelist, codes])
-            status.success(
-                f"Loaded{' from cache' if cached else ' from Eurostat'}",
-                icon="♻️" if cached else "✅",
-            )
-        except HTTPError as e:
-            # NOTE Usually happens if a dataset was not found
-            status.warning(e, icon="⚠️")
-            datasets_not_loaded.append(dataset)
-        except ConnectionError as e:
-            # NOTE Usually happens when Eurostat reset connection
-            status.warning(e, icon="⚠️")
-            datasets_not_loaded.append(dataset)
-            time.sleep(1)  # Cooldown before resume requests
-        progress_value = n / len_datasets
-        progress_bar.progress(progress_value)
-
-    current_message.empty()
-    progress_bar.empty()
-    if len(datasets_not_loaded) > 0:
-        status.warning(
-            f"Unable to load: {datasets_not_loaded}. Retry only if it is mandatory.",
-            icon="⚠️",
-        )
-    else:
-        status.success(
-            f"All datasets were loaded.",
-            icon="✅",
-        )
-    # time.sleep(3)  # NOTE This would allow user to get a report but slows execution
-    status.empty()
-
-    # Aggregate datasets dimension for a reverse index
-    codelist = (
-        codelist.assign(name=codelist.name.str.capitalize())
-        .groupby(["dimension", "name"])["dataset"]
-        .unique()
-    )
-    codelist = codelist[codelist.apply(len) > 0]
-    codelist.index = codelist.index.to_flat_index().str.join(" | ")
-    codelist.name = "datasets"
-    return codelist.apply(lambda x: x.tolist())
+def load_codelist_reverse_index() -> pd.Series | None:
+    if os.path.exists(VARS_INDEX_PATH):
+        return pd.read_pickle(VARS_INDEX_PATH)
+    return None
 
 
 # NOTE `persist` preserve caching also when page is left
@@ -153,25 +100,30 @@ def import_dataset():
     dataset_code_title = (
         "Scroll options or start typing"  # ex: ei_bsco_m | Consumers ...
     )
-    dataset_name = ""
     try:
-        # with st.sidebar:
-        with st.spinner(text="Fetching datasets metadata"):
-            toc = load_table_of_contents()
-            dimensions = load_codelist_reverse_index(toc.index.to_list())
-            dimension_code_name = st.sidebar.selectbox(
-                "Filter datasets by dimension",
-                build_dimension_list(dimensions, dimension_code_name),
-            )
-            # Get a toc subsets or the entire toc list
-            dataset_codes = dimensions.get(dimension_code_name, default=None)
-            dataset_codes_title = build_toc_list(toc.loc[toc.index.intersection(dataset_codes)] if dataset_codes else toc, dataset_code_title)  # type: ignore
-            # List (filtered) datasets
-            dataset_code_title = str(
-                st.sidebar.selectbox("Choose a dataset", dataset_codes_title)  # type: ignore
-            )
+        with st.sidebar:
+            with st.spinner(text="Fetching datasets metadata"):
+                toc = load_table_of_contents()
+                dimensions = load_codelist_reverse_index()
+                if dimensions is not None:
+                    dimension_code_name = st.sidebar.selectbox(
+                        "Filter datasets by variable",
+                        build_dimension_list(dimensions, dimension_code_name),
+                    )
+                # Get a toc subsets or the entire toc list
+                dataset_codes = (
+                    dimensions.get(dimension_code_name, default=None)
+                    if dimensions is not None
+                    else None
+                )
+                st.write(dataset_codes)
+                dataset_codes_title = build_toc_list(toc.loc[toc.index.intersection(dataset_codes)] if dataset_codes else toc, dataset_code_title)  # type: ignore
+                # List (filtered) datasets
+                dataset_code_title = str(
+                    st.sidebar.selectbox("Choose a dataset", dataset_codes_title)  # type: ignore
+                )
     except Exception as e:
-        st.error(e)
+        st.sidebar.error(e)
 
     dataset = pd.DataFrame()
     indexes = dict()
@@ -231,17 +183,16 @@ def show_dataset(dataset, dataset_code_title, indexes, flags):
         dataset, f"{dataset_code_title}", use_container_width=True
     )
 
-    with st.container():
-        col1, col2 = st.columns(2, gap="small")
-        with col1:
-            st.button(
-                "Add to Stash",
-                on_click=update_stash,
-                args=(dataset_code_title.split(" | ", maxsplit=1)[0], indexes, flags),
-                disabled=dataset.empty,
-            )
-        with col2:
-            download_dataframe_button(view)
+    col1, col2 = st.columns(2, gap="large")
+    with col1:
+        st.button(
+            "Add to Stash",
+            on_click=update_stash,
+            args=(dataset_code_title.split(" | ", maxsplit=1)[0], indexes, flags),
+            disabled=dataset.empty,
+        )
+    with col2:
+        download_dataframe_button(view)
 
 
 if __name__ == "__main__":

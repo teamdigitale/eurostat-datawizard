@@ -12,6 +12,7 @@ MENU_ITEMS = {
             Copyright (c) 2022 Presidenza del Consiglio dei Ministri.  
             """
 }
+VARS_INDEX_PATH = "cache/vars_index.csv"
 
 if "stash" not in st.session_state:
     st.session_state.stash = {}
