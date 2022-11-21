@@ -4,7 +4,7 @@ A straightforward webapp to export easily multiple Eurostat datasets. You can pl
 # User guide
 ## Home
 1. [Optional] In order to gain advanced variable search, app must create an index for Eurostat data. This step requires a considerable amount of time but should be done just once. 
-2. While running, do not leave or refresh page. If connection is resetted for some reason, you can resume index creation: previous API requests are cached and will be faster to process.
+2. While running, do not leave or refresh page. If connection is reset for some reason, you can resume index creation: previous API requests are cached and will be faster to process.
 3. When ready, index is persisted on disk and all app users can benefit from it. Bear in mind that index can become too old but it can be refreshed.
 
 ## Data Import
