@@ -71,8 +71,7 @@ def patch_streamlit_session_state():
             del st.session_state[k]
 
 
-# NOTE `persist` preserve caching also when page is left
-@st.experimental_memo(show_spinner=False, persist="disk")
+# NOTE Caching is managed manually, do not cache with streamlit
 def load_codelist_reverse_index() -> pd.Series | None:
     if os.path.exists(VARS_INDEX_PATH):
         return pd.read_pickle(VARS_INDEX_PATH)
