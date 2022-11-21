@@ -108,7 +108,7 @@ def get_last_index_update() -> datetime | None:
     return None
 
 
-def index_helper():
+def index_helper(message_widget):
     last_update = get_last_index_update()
 
     col1, col2 = st.sidebar.columns(2, gap="large")
@@ -118,8 +118,12 @@ def index_helper():
         )
     with col2:
         if st.button("Refresh" if last_update else "Create"):
-            save_index_file()
-            st.experimental_rerun()
+            with index_lock():
+                message_widget.empty()
+                save_index_file()
+                st.experimental_rerun()
+        else:
+            message_widget.empty()
 
 
 if __name__ == "__main__":
@@ -135,8 +139,5 @@ if __name__ == "__main__":
     st.markdown(app_description)
 
     message = st.sidebar.empty()
-    message.markdown("💤 Indexing is running, come check later.")
-
-    with index_lock():
-        message.empty()
-        index_helper()
+    message.markdown("💤 A previous indexing is still running.")
+    index_helper(message)
