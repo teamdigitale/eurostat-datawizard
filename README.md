@@ -3,7 +3,7 @@ A straightforward webapp to export easily multiple Eurostat datasets. You can pl
 
 # User guide
 ## Home
-1. [Optional] In order to gain advanced variable search, app must index Eurostat data. This step requires a considerable amount of time but should be done just once. While running, do not leave or refresh page. When ready, index is persisted on disk and cam be used by anyone. Bear in mind that index can become too old but it can be refreshed.
+1. [Optional] In order to gain advanced variable search, app must index Eurostat data. This step requires a considerable amount of time but should be done just once. While running, do not leave or refresh page. When ready, index is persisted on disk and all app users can benefit from it. Bear in mind that index can become too old but it can be refreshed.
 
 ## Data Import
 1. [Optional] Filter Eurostat datasets list by a variable of interest. This option appears only if an index was created.
