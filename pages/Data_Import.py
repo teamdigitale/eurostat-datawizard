@@ -33,6 +33,9 @@ def page_config():
         menu_items=MENU_ITEMS,  # type: ignore
     )
 
+    if "stash" not in st.session_state:
+        st.session_state.stash = {}
+
 
 @st.experimental_singleton(show_spinner=False)
 def eust_lock():

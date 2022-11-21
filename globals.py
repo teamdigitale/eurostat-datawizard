@@ -13,6 +13,3 @@ MENU_ITEMS = {
             """
 }
 VARS_INDEX_PATH = "cache/vars_index.csv"
-
-if "stash" not in st.session_state:
-    st.session_state.stash = {}
