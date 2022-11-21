@@ -45,17 +45,19 @@ def index_lock():
 
 def save_index_file():
     """Obtain codelist and in which dataset is used each."""
-    datasets = load_table_of_contents().index.to_list()
-    req = api_endpoint()
+    message = st.sidebar.empty()
+    message.text("Initializing indexing...")
+
     codelist = pd.DataFrame()
-    current_message = st.sidebar.empty()
     progress_bar = st.sidebar.progress(0.0)
     progress_value = 0.0
     status = st.sidebar.empty()
+    req = api_endpoint()
+    datasets = load_table_of_contents().index.to_list()
     len_datasets = len(datasets)
     datasets_not_loaded = []
     for n, dataset in enumerate(datasets):
-        current_message.text(f"Loading {dataset} ({n}/{len_datasets})")
+        message.text(f"Loading {dataset} ({n}/{len_datasets})")
         try:
             codes, cached = fetch_dataset_codelist(req, dataset)
             codes = codes.assign(dataset=dataset)
@@ -76,7 +78,6 @@ def save_index_file():
         progress_value = n / len_datasets
         progress_bar.progress(progress_value)
 
-    current_message.empty()
     progress_bar.empty()
     if len(datasets_not_loaded) > 0:
         status.warning(
@@ -90,6 +91,7 @@ def save_index_file():
         )
 
     # Aggregate datasets dimension for a reverse index
+    message.text("Finalizing indexing...")
     codelist = (
         codelist.assign(name=codelist.name.str.capitalize())
         .groupby(["dimension", "name"])["dataset"]
@@ -100,6 +102,7 @@ def save_index_file():
     codelist.name = "datasets"
     codelist.index.name = "code"
     codelist.apply(lambda x: x.tolist()).to_pickle(VARS_INDEX_PATH)
+    message.empty()
 
 
 def get_last_index_update() -> datetime | None:
