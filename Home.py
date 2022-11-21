@@ -133,7 +133,7 @@ if __name__ == "__main__":
     page_config()
 
     with open("README.md", "r") as readme:
-        app_description = "".join([next(readme) for _ in range(17)])
+        app_description = "".join([next(readme) for _ in range(19)])
     app_description = app_description.replace("# Eurostat", "# 🇪🇺 Eurostat")
     app_description = app_description.replace(
         "You can play with a (resource limited) working version [here](https://eurostat-datawizard.streamlit.app).",
