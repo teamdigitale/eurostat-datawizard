@@ -2,13 +2,30 @@ import pytest
 import numpy as np
 import pandas as pd
 import pandas.api.types as ptypes
-from pandas.testing import assert_frame_equal, assert_index_equal
+from pandas.testing import assert_series_equal, assert_frame_equal, assert_index_equal
 from src.eurostat import (
+    fetch_table_of_contents,
     fetch_dataset_and_metadata,
     cast_time_to_datetimeindex,
     split_dimensions_and_attributes_from,
     filter_dataset,
 )
+
+
+@pytest.fixture()
+def table_of_contents():
+    # Emulate toc from EuroStat
+    return pd.DataFrame(
+        {
+            "title": {
+                4: "                Consumer surveys (source: DG ECFIN)",
+                5: "                    Consumers - monthly data",
+                6: "                    Consumers - quarterly data",
+            },
+            "code": {4: "ei_bcs_cs", 5: "ei_bsco_m", 6: "ei_bsco_q"},
+            "type": {4: "folder", 5: "dataset", 6: "dataset"},
+        }
+    )
 
 
 @pytest.fixture()
@@ -178,6 +195,24 @@ def mock_eust(mocker, dataset, metadata):
         "src.eurostat.eust.read_table_metadata",
         return_value=metadata,
     )
+
+
+def test_fetch_table_of_contents(mocker, table_of_contents):
+    mocker.patch(
+        "src.eurostat.pd.read_table",
+        return_value=table_of_contents,
+    )
+
+    toc = fetch_table_of_contents()
+    expected = pd.Series(
+        {
+            "ei_bsco_m": "Consumers - monthly data",
+            "ei_bsco_q": "Consumers - quarterly data",
+        }
+    )
+    expected.index.name = "code"
+    expected.name = "title"
+    assert_series_equal(toc, expected)
 
 
 def test_fetch_dataset_and_metadata(mock_eust):

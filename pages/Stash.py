@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 from widgets.dataframe import st_dataframe_with_index_and_rows_cols_count
 from widgets.download import download_dataframe_button
-from Home import INITIAL_SIDEBAR_STATE, LAYOUT, MENU_ITEMS, PAGE_ICON
+from globals import INITIAL_SIDEBAR_STATE, LAYOUT, MENU_ITEMS, PAGE_ICON
 from widgets.console import show_console
 from pages.Data_Import import load_dataset, filter_dataset
 
@@ -47,8 +47,6 @@ def clear_stash():
 
 
 def show_stash():
-    st.subheader("Datasets")
-
     dataset = pd.DataFrame()
     try:
         with st.spinner(text="Fetching data"):
@@ -58,15 +56,14 @@ def show_stash():
         st.error(ve)
 
     view = st_dataframe_with_index_and_rows_cols_count(
-        dataset, use_container_width=True
+        dataset, "Stash", use_container_width=True
     )
 
-    with st.container():
-        col1, col2 = st.columns(2, gap="small")
-        with col1:
-            st.button("Clear", on_click=clear_stash, disabled=dataset.empty)
-        with col2:
-            download_dataframe_button(view)
+    col1, col2 = st.columns(2, gap="large")
+    with col1:
+        st.button("Clear", on_click=clear_stash, disabled=dataset.empty)
+    with col2:
+        download_dataframe_button(view)
 
 
 def page_config():

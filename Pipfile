@@ -9,6 +9,7 @@ pandas = "*"
 streamlit = "*"
 requests-cache = "*"
 watchdog = "*"
+pandasdmx = "*"
 
 [dev-packages]
 pytest = "*"
