@@ -116,7 +116,6 @@ def import_dataset():
                     if dimensions is not None
                     else None
                 )
-                st.write(dataset_codes)
                 dataset_codes_title = build_toc_list(toc.loc[toc.index.intersection(dataset_codes)] if dataset_codes else toc, dataset_code_title)  # type: ignore
                 # List (filtered) datasets
                 dataset_code_title = str(
