@@ -104,7 +104,7 @@ def index_helper():
     col1, col2 = st.sidebar.columns(2, gap="large")
     with col1:
         st.markdown(
-            f"""Index @ {last_update.isoformat(sep=' ', timespec='seconds') if last_update else 'Never created'}"""
+            f"""Index @ {last_update.isoformat(sep=' ', timespec='seconds') if last_update else 'never created'}"""
         )
     with col2:
         if st.button("Refresh" if last_update else "Create"):
