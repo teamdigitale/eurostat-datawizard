@@ -12,4 +12,4 @@ MENU_ITEMS = {
             Copyright (c) 2022 Presidenza del Consiglio dei Ministri.  
             """
 }
-VARS_INDEX_PATH = "cache/vars_index.csv"
+VARS_INDEX_PATH = "cache/vars_index.pickle"
