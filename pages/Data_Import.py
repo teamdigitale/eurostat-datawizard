@@ -68,43 +68,38 @@ def load_table_of_contents() -> pd.Series:
 
 
 @st.experimental_memo(show_spinner=False)
-def build_toc_list(toc: pd.Series, first_value: str) -> List[str]:
+def build_toc_list(toc: pd.Series) -> List[str]:
     toc = toc.index + " | " + toc.values  # type: ignore
-    return [first_value] + toc.to_list()
+    return ["Scroll options or start typing"] + toc.to_list()
 
 
 @st.experimental_memo(show_spinner=False)
-def build_dimension_list(dimensions: pd.Series, first_value: str) -> List[str]:
-    return [first_value] + dimensions.index.to_list()
+def build_dimension_list(dimensions: pd.Series) -> List[str]:
+    return ["Scroll options or start typing"] + dimensions.index.to_list()
 
 
 def import_dataset():
-    dimension_code_name = (
-        "Scroll options or start typing"  # ex: I_IUIF | Internet use: ...
-    )
-    dataset_code_title = (
-        "Scroll options or start typing"  # ex: ei_bsco_m | Consumers ...
-    )
     try:
         with st.sidebar:
             with st.spinner(text="Fetching datasets metadata"):
                 toc = load_table_of_contents()
                 dimensions = load_codelist_reverse_index()
                 if dimensions is not None:
-                    dimension_code_name = st.sidebar.selectbox(
+                    st.sidebar.selectbox(
                         "Filter datasets by variable",
-                        build_dimension_list(dimensions, dimension_code_name),
+                        build_dimension_list(dimensions),
+                        key="selected_variable",
                     )
                 # Get a toc subsets or the entire toc list
                 dataset_codes = (
-                    dimensions.get(dimension_code_name, default=None)
+                    dimensions.get(st.session_state.selected_variable, default=None)
                     if dimensions is not None
                     else None
                 )
-                dataset_codes_title = build_toc_list(toc.loc[toc.index.intersection(dataset_codes)] if dataset_codes else toc, dataset_code_title)  # type: ignore
+                dataset_codes_title = build_toc_list(toc.loc[toc.index.intersection(dataset_codes)] if dataset_codes else toc)  # type: ignore
                 # List (filtered) datasets
-                dataset_code_title = str(
-                    st.sidebar.selectbox("Choose a dataset", dataset_codes_title)  # type: ignore
+                st.sidebar.selectbox(
+                    "Choose a dataset", dataset_codes_title, key="selected_dataset"
                 )
     except Exception as e:
         st.sidebar.error(e)
@@ -113,6 +108,7 @@ def import_dataset():
     indexes = dict()
     flags = list()
 
+    dataset_code_title = st.session_state.selected_dataset
     if dataset_code_title != "Scroll options or start typing":
         try:
             with st.sidebar:
@@ -179,8 +175,21 @@ def show_dataset(dataset, dataset_code_title, indexes, flags):
         download_dataframe_button(view)
 
 
+def page_state():
+    if "selected_variable" not in st.session_state:
+        st.session_state.selected_variable = (
+            "Scroll options or start typing"  # ex: I_IUIF | Internet use: ...
+        )
+
+    if "selected_dataset" not in st.session_state:
+        st.session_state.selected_dataset = (
+            "Scroll options or start typing"  # ex: ei_bsco_m | Consumers ...
+        )
+
+
 if __name__ == "__main__":
     app_config("Data Import")
+    page_state()
 
     dataset, dataset_code_title, indexes, flags = import_dataset()
 
