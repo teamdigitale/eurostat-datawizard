@@ -4,14 +4,8 @@ from typing import List
 import pandas as pd
 import streamlit as st
 
-
-from globals import (
-    INITIAL_SIDEBAR_STATE,
-    LAYOUT,
-    MENU_ITEMS,
-    PAGE_ICON,
-    VARS_INDEX_PATH,
-)
+from widgets.session import page_config
+from globals import VARS_INDEX_PATH
 from src.eurostat import (
     cast_time_to_datetimeindex,
     fetch_dataset_and_metadata,
@@ -23,22 +17,6 @@ from src.utils import concat_keys_to_values
 from widgets.console import show_console
 from widgets.dataframe import st_dataframe_with_index_and_rows_cols_count
 from widgets.download import download_dataframe_button
-
-
-def page_config():
-    st.set_page_config(
-        page_title="Eurostat Data Wizard • Data Import",
-        page_icon=PAGE_ICON,
-        layout=LAYOUT,
-        initial_sidebar_state=INITIAL_SIDEBAR_STATE,
-        menu_items=MENU_ITEMS,  # type: ignore
-    )
-
-    if "stash" not in st.session_state:
-        st.session_state.stash = {}
-
-    if "user" not in st.session_state:
-        st.session_state.user = dict(st.experimental_user)
 
 
 @st.experimental_singleton(show_spinner=False)
@@ -202,7 +180,7 @@ def show_dataset(dataset, dataset_code_title, indexes, flags):
 
 
 if __name__ == "__main__":
-    page_config()
+    page_config("Data Import")
 
     dataset, dataset_code_title, indexes, flags = import_dataset()
 

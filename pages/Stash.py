@@ -2,25 +2,9 @@ import streamlit as st
 import pandas as pd
 from widgets.dataframe import st_dataframe_with_index_and_rows_cols_count
 from widgets.download import download_dataframe_button
-from globals import INITIAL_SIDEBAR_STATE, LAYOUT, MENU_ITEMS, PAGE_ICON
+from widgets.session import page_config
 from widgets.console import show_console
 from pages.Data_Import import load_dataset, filter_dataset
-
-
-def page_config():
-    st.set_page_config(
-        page_title="Eurostat Data Wizard • Stash",
-        page_icon=PAGE_ICON,
-        layout=LAYOUT,
-        initial_sidebar_state=INITIAL_SIDEBAR_STATE,
-        menu_items=MENU_ITEMS,  # type: ignore
-    )
-
-    if "stash" not in st.session_state:
-        st.session_state.stash = {}
-
-    if "user" not in st.session_state:
-        st.session_state.user = dict(st.experimental_user)
 
 
 @st.experimental_memo(show_spinner=False)
@@ -83,7 +67,7 @@ def show_stash():
 
 
 if __name__ == "__main__":
-    page_config()
+    page_config("Stash")
 
     show_stash()
 
