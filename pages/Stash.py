@@ -28,7 +28,7 @@ def load_stash(stash: dict) -> pd.DataFrame:
                 [
                     df[["dataset"]],
                     df[df.columns.difference(["dataset"] + common_cols)].agg(
-                        " - ".join, axis=1
+                        " • ".join, axis=1
                     ),
                     df[df.columns.intersection(common_cols)],
                 ],

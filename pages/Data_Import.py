@@ -19,6 +19,7 @@ from src.eurostat import (
     filter_dataset,
     split_dimensions_and_attributes_from,
 )
+from src.utils import concat_keys_to_values
 from widgets.console import show_console
 from widgets.dataframe import st_dataframe_with_index_and_rows_cols_count
 from widgets.download import download_dataframe_button
@@ -51,7 +52,8 @@ def load_dataset(code: str) -> pd.DataFrame:
         data, meta = fetch_dataset_and_metadata(code)
     dims, attrs = split_dimensions_and_attributes_from(meta, code)
     data = cast_time_to_datetimeindex(data)
-    data = data.rename(index=dims.to_dict()).sort_index()
+    dims = concat_keys_to_values(dims.to_dict())
+    data = data.rename(index=dims).sort_index()
     data = data.assign(flag=data.flag.map(attrs.to_dict()))
     # `flag` shown before `value` to make it more readable as filterable
     return data[["flag", "value"]]
