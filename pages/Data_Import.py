@@ -3,7 +3,6 @@ from threading import Lock
 from typing import List
 import pandas as pd
 import streamlit as st
-
 from widgets.session import app_config
 from globals import VARS_INDEX_PATH
 from src.eurostat import (
@@ -17,6 +16,9 @@ from src.utils import concat_keys_to_values
 from widgets.console import show_console
 from widgets.dataframe import st_dataframe_with_index_and_rows_cols_count
 from widgets.download import download_dataframe_button
+
+
+session = st.session_state
 
 
 @st.experimental_singleton(show_spinner=False)
@@ -41,7 +43,7 @@ def load_dataset(code: str) -> pd.DataFrame:
 
 
 def update_stash(code, indexes, flags):
-    st.session_state.stash.update({code: {"indexes": indexes, "flags": flags}})
+    session.stash.update({code: {"indexes": indexes, "flags": flags}})
 
 
 def patch_streamlit_session_state():
@@ -49,9 +51,9 @@ def patch_streamlit_session_state():
     # `Exception in thread ScriptRunner.scriptThread:`
     # [...]
     # `streamlit.errors.StreamlitAPIException: Every Multiselect default value must exist in options`
-    for k in st.session_state:
+    for k in session:
         if k.startswith("_"):
-            del st.session_state[k]
+            del session[k]
 
 
 # NOTE Caching is managed manually, do not cache with streamlit
@@ -81,32 +83,28 @@ def build_dimension_list(dimensions: pd.Series) -> List[str]:
 
 
 def update_variable_idx(variables: List[str]):
-    st.session_state.selected_variable_idx = variables.index(
-        st.session_state.selected_variable
-    )
+    session.selected_variable_idx = variables.index(session.selected_variable)
 
 
 def update_dataset_idx(datasets: List[str]):
-    st.session_state.selected_dataset_idx = datasets.index(
-        st.session_state.selected_dataset
-    )
+    session.selected_dataset_idx = datasets.index(session.selected_dataset)
 
 
 def import_dataset():
-    toc = st.session_state.toc
-    codelist = st.session_state.codelist
+    toc = session.toc
+    codelist = session.codelist
 
     variables = build_dimension_list(codelist)
     st.sidebar.selectbox(
         label="Filter datasets by variable",
         options=variables,
-        index=st.session_state.selected_variable_idx,
+        index=session.selected_variable_idx,
         key="selected_variable",
         on_change=update_variable_idx,
         args=(variables,),
     )
     # Get a toc subsets or the entire toc list
-    dataset_codes = codelist.get(st.session_state.selected_variable, default=None)
+    dataset_codes = codelist.get(session.selected_variable, default=None)
     datasets = build_toc_list(
         toc.loc[toc.index.intersection(dataset_codes)] if dataset_codes else toc
     )
@@ -114,41 +112,39 @@ def import_dataset():
     st.sidebar.selectbox(
         label="Choose a dataset",
         options=datasets,
-        index=st.session_state.selected_dataset_idx,
+        index=session.selected_dataset_idx,
         key="selected_dataset",
         on_change=update_dataset_idx,
         args=(datasets,),
     )
 
-    dataset = pd.DataFrame()
     indexes = dict()
     flags = list()
 
-    dataset_code_title = st.session_state.selected_dataset
+    dataset_code_title = session.selected_dataset
     if dataset_code_title != "Scroll options or start typing":
         try:
             with st.sidebar:
                 with st.spinner(text="Prepare filters"):
-                    dataset = load_dataset(
+                    session.dataset = load_dataset(
                         dataset_code_title.split(" | ", maxsplit=1)[0]
                     )
         except (ValueError, AssertionError, NotImplementedError) as e:
             st.sidebar.error(e)
 
-    if not dataset.empty:
+    if not session.dataset.empty:
         st.sidebar.subheader("Filter dataset")
 
-        flags = dataset.flag.unique().tolist()
-        flags = st.sidebar.multiselect(
-            "Select FLAG",
-            flags,
-            flags,
-            key="_flags",  # Required by `patch_session_state`
+        st.sidebar.multiselect(
+            label="Select FLAG",
+            options=session.dataset.flag.unique().tolist(),
+            default=session.dataset.flag.unique().tolist(),
+            key="selected_flags",
         )
 
         indexes = dict()
-        for i, name in enumerate(dataset.index.names):
-            indexes[name] = dataset.index.levels[i].to_list()  # type: ignore
+        for i, name in enumerate(session.dataset.index.names):
+            indexes[name] = session.dataset.index.levels[i].to_list()  # type: ignore
             if name == "time":
                 m, M = min(indexes[name]).year, max(indexes[name]).year
                 M = M if m < M else M + 1  # RangeError fix
@@ -168,10 +164,12 @@ def import_dataset():
                     key=f"_indexes_{name}",  # Required by `patch_session_state`
                 )
 
-        patch_streamlit_session_state()
+        # patch_streamlit_session_state()
 
-        dataset = filter_dataset(dataset, indexes, flags)
-    return dataset, dataset_code_title, indexes, flags
+        session.dataset = filter_dataset(
+            session.dataset, indexes, session.selected_flags
+        )
+    return session.dataset, dataset_code_title, indexes, session.selected_flags
 
 
 def show_dataset(dataset, dataset_code_title, indexes, flags):
@@ -192,27 +190,39 @@ def show_dataset(dataset, dataset_code_title, indexes, flags):
 
 
 def page_init():
-    if "toc" not in st.session_state:
+    if "toc" not in session:
         try:
             with st.sidebar:
                 with st.spinner(text="Fetching table of contents"):
-                    st.session_state.toc = load_table_of_contents()
+                    session.toc = load_table_of_contents()
         except Exception as e:
             st.sidebar.error(e)
 
-    if "codelist" not in st.session_state:
+    if "codelist" not in session:
         try:
             with st.sidebar:
                 with st.spinner(text="Fetching codelist"):
-                    st.session_state.codelist = load_codelist_reverse_index()
+                    session.codelist = load_codelist_reverse_index()
         except Exception as e:
             st.sidebar.error(e)
 
-    if "selected_variable_idx" not in st.session_state:
-        st.session_state.selected_variable_idx = 0
+    if "selected_variable_idx" not in session:
+        session.selected_variable_idx = 0
 
-    if "selected_dataset_idx" not in st.session_state:
-        st.session_state.selected_dataset_idx = 0
+    if "selected_dataset_idx" not in session:
+        session.selected_dataset_idx = 0
+
+    if "dataset" not in session:
+        session.dataset = pd.DataFrame.from_dict(
+            {
+                "index": [],
+                "columns": ["flag", "value"],
+                "data": None,
+                "index_names": ["geo", "time"],
+                "column_names": [None],
+            },
+            orient="tight",
+        )
 
 
 if __name__ == "__main__":
