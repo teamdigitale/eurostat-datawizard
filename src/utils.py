@@ -20,7 +20,7 @@ class PandasJSONEncoder(JSONEncoder):
     ```
     """
 
-    # Source: https://rymc.io/blog/2019/using-a-custom-jsonencoder-for-pandas-and-numpy/
+    # Credits: https://rymc.io/blog/2019/using-a-custom-jsonencoder-for-pandas-and-numpy/
     def default(self, obj_to_encode):
         """Pandas and Numpy have some specific types that we want to ensure
         are coerced to Python types, for JSON generation purposes. This attempts
