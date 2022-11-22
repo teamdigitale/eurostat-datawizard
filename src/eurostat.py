@@ -114,7 +114,7 @@ def filter_dataset(
         return pd.DataFrame(
             columns=["flag", "value"],
             index=pd.MultiIndex(
-                levels=[[], [], []], codes=[[], [], []], names=["unit", "geo", "time"]
+                levels=[[], [], []], codes=[[], [], []], names=["geo", "time"]
             ),
         )
     # Restore index orientation

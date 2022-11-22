@@ -1,6 +1,6 @@
 import os
 from threading import Lock
-from typing import List
+from typing import Dict, List
 import pandas as pd
 import streamlit as st
 from widgets.session import app_config
@@ -46,16 +46,6 @@ def update_stash(code, indexes, flags):
     session.stash.update({code: {"indexes": indexes, "flags": flags}})
 
 
-def patch_streamlit_session_state():
-    # Reset filter widget was needed to prevent the following to be raised:
-    # `Exception in thread ScriptRunner.scriptThread:`
-    # [...]
-    # `streamlit.errors.StreamlitAPIException: Every Multiselect default value must exist in options`
-    for k in session:
-        if k.startswith("_"):
-            del session[k]
-
-
 # NOTE Caching is managed manually, do not cache with streamlit
 def load_codelist_reverse_index() -> pd.Series | None:
     if os.path.exists(VARS_INDEX_PATH):
@@ -90,6 +80,10 @@ def update_dataset_idx(datasets: List[str]):
     session.selected_dataset_idx = datasets.index(session.selected_dataset)
 
 
+def update_indexes(name: str):
+    session.selected_indexes[name] = session[f"selected_indexes_{name}"]
+
+
 def import_dataset():
     toc = session.toc
     codelist = session.codelist
@@ -118,9 +112,6 @@ def import_dataset():
         args=(datasets,),
     )
 
-    indexes = dict()
-    flags = list()
-
     dataset_code_title = session.selected_dataset
     if dataset_code_title != "Scroll options or start typing":
         try:
@@ -142,37 +133,40 @@ def import_dataset():
             key="selected_flags",
         )
 
-        indexes = dict()
         for i, name in enumerate(session.dataset.index.names):
-            indexes[name] = session.dataset.index.levels[i].to_list()  # type: ignore
             if name == "time":
-                m, M = min(indexes[name]).year, max(indexes[name]).year
+                times = session.dataset.index.levels[i].to_list()  # type: ignore
+                m, M = min(times).year, max(times).year
                 M = M if m < M else M + 1  # RangeError fix
-                indexes[name] = st.sidebar.slider(
-                    "Select TIME [min: 1 year]",
-                    m,
-                    M,
-                    (m, M),
-                    1,
-                    key=f"_indexes_{name}",  # Required by `patch_session_state`
+                st.sidebar.slider(
+                    label="Select TIME [min: 1 year]",
+                    min_value=m,
+                    max_value=M,
+                    value=(m, M),
+                    step=1,
+                    key=f"selected_indexes_{name}",
+                    on_change=update_indexes,
+                    args=(name,),
                 )
             else:
-                indexes[name] = st.sidebar.multiselect(
-                    f"Select {name.upper()}",
-                    indexes[name],
-                    indexes[name],
-                    key=f"_indexes_{name}",  # Required by `patch_session_state`
+                st.sidebar.multiselect(
+                    label=f"Select {name.upper()}",
+                    options=session.dataset.index.levels[i].to_list(),  # type: ignore
+                    default=session.dataset.index.levels[i].to_list(),  # type: ignore
+                    key=f"selected_indexes_{name}",
+                    on_change=update_indexes,
+                    args=(name,),
                 )
-
-        # patch_streamlit_session_state()
+            # NOTE First value must be set manually
+            update_indexes(name)
 
         session.dataset = filter_dataset(
-            session.dataset, indexes, session.selected_flags
+            session.dataset, session.selected_indexes, session.selected_flags
         )
-    return session.dataset, dataset_code_title, indexes, session.selected_flags
+    return (session.dataset, dataset_code_title, session.selected_indexes)
 
 
-def show_dataset(dataset, dataset_code_title, indexes, flags):
+def show_dataset(dataset, dataset_code_title, indexes):
     view = st_dataframe_with_index_and_rows_cols_count(
         dataset, f"{dataset_code_title}", use_container_width=True
     )
@@ -182,7 +176,11 @@ def show_dataset(dataset, dataset_code_title, indexes, flags):
         st.button(
             "Add to Stash",
             on_click=update_stash,
-            args=(dataset_code_title.split(" | ", maxsplit=1)[0], indexes, flags),
+            args=(
+                dataset_code_title.split(" | ", maxsplit=1)[0],
+                indexes,
+                session.dataset.flag.unique().tolist(),
+            ),
             disabled=dataset.empty,
         )
     with col2:
@@ -224,13 +222,16 @@ def page_init():
             orient="tight",
         )
 
+    if "selected_indexes" not in session:
+        session.selected_indexes = {}
+
 
 if __name__ == "__main__":
     app_config("Data Import")
     page_init()
 
-    dataset, dataset_code_title, indexes, flags = import_dataset()
+    dataset, dataset_code_title, indexes = import_dataset()
 
-    show_dataset(dataset, dataset_code_title, indexes, flags)
+    show_dataset(dataset, dataset_code_title, indexes)
 
     show_console()  # For debugging
