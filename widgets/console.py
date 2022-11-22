@@ -1,13 +1,14 @@
 import json
 import streamlit as st
 from datetime import datetime
+from src.utils import PandasJSONEncoder
 
 
 def download_session_state():
     now = datetime.now().isoformat(timespec="seconds")
     st.download_button(
         "Download",
-        json.dumps(st.session_state.to_dict()),
+        json.dumps(st.session_state.to_dict(), cls=PandasJSONEncoder),
         file_name=f"EurostatDataWizard_session_{now}.json",
         mime="application/json",
     )
