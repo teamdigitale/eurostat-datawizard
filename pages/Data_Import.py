@@ -1,6 +1,7 @@
 import os
+import numpy as np
 from threading import Lock
-from typing import Dict, List
+from typing import List
 import pandas as pd
 import streamlit as st
 from widgets.session import app_config
@@ -80,6 +81,10 @@ def update_dataset_idx(datasets: List[str]):
     session.selected_dataset_idx = datasets.index(session.selected_dataset)
 
 
+def update_default_flags():
+    session.default_flags = session.selected_flags
+
+
 def update_indexes(name: str):
     session.selected_indexes[name] = session[f"selected_indexes_{name}"]
 
@@ -125,12 +130,15 @@ def import_dataset():
 
     if not session.dataset.empty:
         st.sidebar.subheader("Filter dataset")
-
+        flags = session.dataset.flag.unique().tolist()
+        if "default_flags" not in session:
+            session.default_flags = list(flags)
         st.sidebar.multiselect(
             label="Select FLAG",
-            options=session.dataset.flag.unique().tolist(),
-            default=session.dataset.flag.unique().tolist(),
+            options=flags,
+            default=session.default_flags,
             key="selected_flags",
+            on_change=update_default_flags,
         )
 
         for i, name in enumerate(session.dataset.index.names):
