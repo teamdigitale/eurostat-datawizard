@@ -15,6 +15,8 @@ def download_session_state():
 
 
 def upload_session_state():
+    # TODO StreamlitAPIException: st.session_state.selected_variable cannot be
+    # modified after the widget with key selected_variable is instantiated.
     json_str = st.file_uploader("Upload & overwrite existing session", "json")
     if json_str:
         st.session_state.update(json.loads(json_str.getvalue()))
@@ -24,4 +26,4 @@ def show_console():
     with st.expander("Session console"):
         download_session_state()
         st.write(st.session_state)
-        upload_session_state()
+        # upload_session_state()
