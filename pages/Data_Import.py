@@ -69,40 +69,56 @@ def load_table_of_contents() -> pd.Series:
 
 @st.experimental_memo(show_spinner=False)
 def build_toc_list(toc: pd.Series) -> List[str]:
+    # ex: I_IUIF | Internet use: ...
     toc = toc.index + " | " + toc.values  # type: ignore
     return ["Scroll options or start typing"] + toc.to_list()
 
 
 @st.experimental_memo(show_spinner=False)
 def build_dimension_list(dimensions: pd.Series) -> List[str]:
+    # ex: ei_bsco_m | Consumers ...
     return ["Scroll options or start typing"] + dimensions.index.to_list()
 
 
+def update_variable_idx(variables: List[str]):
+    st.session_state.selected_variable_idx = variables.index(
+        st.session_state.selected_variable
+    )
+
+
+def update_dataset_idx(datasets: List[str]):
+    st.session_state.selected_dataset_idx = datasets.index(
+        st.session_state.selected_dataset
+    )
+
+
 def import_dataset():
-    try:
-        with st.sidebar:
-            with st.spinner(text="Fetching datasets metadata"):
-                toc = load_table_of_contents()
-                dimensions = load_codelist_reverse_index()
-                if dimensions is not None:
-                    st.sidebar.selectbox(
-                        "Filter datasets by variable",
-                        build_dimension_list(dimensions),
-                        key="selected_variable",
-                    )
-                # Get a toc subsets or the entire toc list
-                dataset_codes = (
-                    dimensions.get(st.session_state.selected_variable, default=None)
-                    if dimensions is not None
-                    else None
-                )
-                dataset_codes_title = build_toc_list(toc.loc[toc.index.intersection(dataset_codes)] if dataset_codes else toc)  # type: ignore
-                # List (filtered) datasets
-                st.sidebar.selectbox(
-                    "Choose a dataset", dataset_codes_title, key="selected_dataset"
-                )
-    except Exception as e:
-        st.sidebar.error(e)
+    toc = st.session_state.toc
+    codelist = st.session_state.codelist
+
+    variables = build_dimension_list(codelist)
+    st.sidebar.selectbox(
+        label="Filter datasets by variable",
+        options=variables,
+        index=st.session_state.selected_variable_idx,
+        key="selected_variable",
+        on_change=update_variable_idx,
+        args=(variables,),
+    )
+    # Get a toc subsets or the entire toc list
+    dataset_codes = codelist.get(st.session_state.selected_variable, default=None)
+    datasets = build_toc_list(
+        toc.loc[toc.index.intersection(dataset_codes)] if dataset_codes else toc
+    )
+    # List (filtered) datasets
+    st.sidebar.selectbox(
+        label="Choose a dataset",
+        options=datasets,
+        index=st.session_state.selected_dataset_idx,
+        key="selected_dataset",
+        on_change=update_dataset_idx,
+        args=(datasets,),
+    )
 
     dataset = pd.DataFrame()
     indexes = dict()
@@ -175,21 +191,33 @@ def show_dataset(dataset, dataset_code_title, indexes, flags):
         download_dataframe_button(view)
 
 
-def page_state():
-    if "selected_variable" not in st.session_state:
-        st.session_state.selected_variable = (
-            "Scroll options or start typing"  # ex: I_IUIF | Internet use: ...
-        )
+def page_init():
+    if "toc" not in st.session_state:
+        try:
+            with st.sidebar:
+                with st.spinner(text="Fetching table of contents"):
+                    st.session_state.toc = load_table_of_contents()
+        except Exception as e:
+            st.sidebar.error(e)
 
-    if "selected_dataset" not in st.session_state:
-        st.session_state.selected_dataset = (
-            "Scroll options or start typing"  # ex: ei_bsco_m | Consumers ...
-        )
+    if "codelist" not in st.session_state:
+        try:
+            with st.sidebar:
+                with st.spinner(text="Fetching codelist"):
+                    st.session_state.codelist = load_codelist_reverse_index()
+        except Exception as e:
+            st.sidebar.error(e)
+
+    if "selected_variable_idx" not in st.session_state:
+        st.session_state.selected_variable_idx = 0
+
+    if "selected_dataset_idx" not in st.session_state:
+        st.session_state.selected_dataset_idx = 0
 
 
 if __name__ == "__main__":
     app_config("Data Import")
-    page_state()
+    page_init()
 
     dataset, dataset_code_title, indexes, flags = import_dataset()
 
