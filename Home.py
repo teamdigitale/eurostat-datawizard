@@ -5,35 +5,14 @@ import streamlit as st
 from requests import ConnectionError, HTTPError
 from datetime import datetime
 import time
-from globals import (
-    INITIAL_SIDEBAR_STATE,
-    LAYOUT,
-    MENU_ITEMS,
-    PAGE_ICON,
-    VARS_INDEX_PATH,
-)
+from globals import VARS_INDEX_PATH
 from pages.Data_Import import load_table_of_contents
 from src.eurostat import (
     eurostat_sdmx_request,
     fetch_dataset_codelist,
 )
 from widgets.console import show_console
-
-
-def page_config():
-    st.set_page_config(
-        page_title="Eurostat Data Wizard • Home",
-        page_icon=PAGE_ICON,
-        layout=LAYOUT,
-        initial_sidebar_state=INITIAL_SIDEBAR_STATE,
-        menu_items=MENU_ITEMS,  # type: ignore
-    )
-
-    if "stash" not in st.session_state:
-        st.session_state.stash = {}
-
-    if "user" not in st.session_state:
-        st.session_state.user = dict(st.experimental_user)
+from widgets.session import app_config
 
 
 @st.experimental_singleton(show_spinner=False)
@@ -152,7 +131,7 @@ def show_cache_uploader():
 
 
 if __name__ == "__main__":
-    page_config()
+    app_config("Home")
 
     with open("README.md", "r") as readme:
         app_description = "".join([next(readme) for _ in range(19)])

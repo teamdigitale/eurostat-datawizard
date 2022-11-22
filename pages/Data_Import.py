@@ -4,14 +4,8 @@ from typing import List
 import pandas as pd
 import streamlit as st
 
-
-from globals import (
-    INITIAL_SIDEBAR_STATE,
-    LAYOUT,
-    MENU_ITEMS,
-    PAGE_ICON,
-    VARS_INDEX_PATH,
-)
+from widgets.session import app_config
+from globals import VARS_INDEX_PATH
 from src.eurostat import (
     cast_time_to_datetimeindex,
     fetch_dataset_and_metadata,
@@ -23,22 +17,6 @@ from src.utils import concat_keys_to_values
 from widgets.console import show_console
 from widgets.dataframe import st_dataframe_with_index_and_rows_cols_count
 from widgets.download import download_dataframe_button
-
-
-def page_config():
-    st.set_page_config(
-        page_title="Eurostat Data Wizard • Data Import",
-        page_icon=PAGE_ICON,
-        layout=LAYOUT,
-        initial_sidebar_state=INITIAL_SIDEBAR_STATE,
-        menu_items=MENU_ITEMS,  # type: ignore
-    )
-
-    if "stash" not in st.session_state:
-        st.session_state.stash = {}
-
-    if "user" not in st.session_state:
-        st.session_state.user = dict(st.experimental_user)
 
 
 @st.experimental_singleton(show_spinner=False)
@@ -90,51 +68,63 @@ def load_table_of_contents() -> pd.Series:
 
 
 @st.experimental_memo(show_spinner=False)
-def build_toc_list(toc: pd.Series, first_value: str) -> List[str]:
+def build_toc_list(toc: pd.Series) -> List[str]:
+    # ex: I_IUIF | Internet use: ...
     toc = toc.index + " | " + toc.values  # type: ignore
-    return [first_value] + toc.to_list()
+    return ["Scroll options or start typing"] + toc.to_list()
 
 
 @st.experimental_memo(show_spinner=False)
-def build_dimension_list(dimensions: pd.Series, first_value: str) -> List[str]:
-    return [first_value] + dimensions.index.to_list()
+def build_dimension_list(dimensions: pd.Series) -> List[str]:
+    # ex: ei_bsco_m | Consumers ...
+    return ["Scroll options or start typing"] + dimensions.index.to_list()
+
+
+def update_variable_idx(variables: List[str]):
+    st.session_state.selected_variable_idx = variables.index(
+        st.session_state.selected_variable
+    )
+
+
+def update_dataset_idx(datasets: List[str]):
+    st.session_state.selected_dataset_idx = datasets.index(
+        st.session_state.selected_dataset
+    )
 
 
 def import_dataset():
-    dimension_code_name = (
-        "Scroll options or start typing"  # ex: I_IUIF | Internet use: ...
+    toc = st.session_state.toc
+    codelist = st.session_state.codelist
+
+    variables = build_dimension_list(codelist)
+    st.sidebar.selectbox(
+        label="Filter datasets by variable",
+        options=variables,
+        index=st.session_state.selected_variable_idx,
+        key="selected_variable",
+        on_change=update_variable_idx,
+        args=(variables,),
     )
-    dataset_code_title = (
-        "Scroll options or start typing"  # ex: ei_bsco_m | Consumers ...
+    # Get a toc subsets or the entire toc list
+    dataset_codes = codelist.get(st.session_state.selected_variable, default=None)
+    datasets = build_toc_list(
+        toc.loc[toc.index.intersection(dataset_codes)] if dataset_codes else toc
     )
-    try:
-        with st.sidebar:
-            with st.spinner(text="Fetching datasets metadata"):
-                toc = load_table_of_contents()
-                dimensions = load_codelist_reverse_index()
-                if dimensions is not None:
-                    dimension_code_name = st.sidebar.selectbox(
-                        "Filter datasets by variable",
-                        build_dimension_list(dimensions, dimension_code_name),
-                    )
-                # Get a toc subsets or the entire toc list
-                dataset_codes = (
-                    dimensions.get(dimension_code_name, default=None)
-                    if dimensions is not None
-                    else None
-                )
-                dataset_codes_title = build_toc_list(toc.loc[toc.index.intersection(dataset_codes)] if dataset_codes else toc, dataset_code_title)  # type: ignore
-                # List (filtered) datasets
-                dataset_code_title = str(
-                    st.sidebar.selectbox("Choose a dataset", dataset_codes_title)  # type: ignore
-                )
-    except Exception as e:
-        st.sidebar.error(e)
+    # List (filtered) datasets
+    st.sidebar.selectbox(
+        label="Choose a dataset",
+        options=datasets,
+        index=st.session_state.selected_dataset_idx,
+        key="selected_dataset",
+        on_change=update_dataset_idx,
+        args=(datasets,),
+    )
 
     dataset = pd.DataFrame()
     indexes = dict()
     flags = list()
 
+    dataset_code_title = st.session_state.selected_dataset
     if dataset_code_title != "Scroll options or start typing":
         try:
             with st.sidebar:
@@ -201,8 +191,33 @@ def show_dataset(dataset, dataset_code_title, indexes, flags):
         download_dataframe_button(view)
 
 
+def page_init():
+    if "toc" not in st.session_state:
+        try:
+            with st.sidebar:
+                with st.spinner(text="Fetching table of contents"):
+                    st.session_state.toc = load_table_of_contents()
+        except Exception as e:
+            st.sidebar.error(e)
+
+    if "codelist" not in st.session_state:
+        try:
+            with st.sidebar:
+                with st.spinner(text="Fetching codelist"):
+                    st.session_state.codelist = load_codelist_reverse_index()
+        except Exception as e:
+            st.sidebar.error(e)
+
+    if "selected_variable_idx" not in st.session_state:
+        st.session_state.selected_variable_idx = 0
+
+    if "selected_dataset_idx" not in st.session_state:
+        st.session_state.selected_dataset_idx = 0
+
+
 if __name__ == "__main__":
-    page_config()
+    app_config("Data Import")
+    page_init()
 
     dataset, dataset_code_title, indexes, flags = import_dataset()
 
