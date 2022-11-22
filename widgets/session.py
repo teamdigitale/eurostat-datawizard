@@ -2,7 +2,8 @@ import streamlit as st
 from globals import INITIAL_SIDEBAR_STATE, LAYOUT, MENU_ITEMS, PAGE_ICON
 
 
-def page_config(title: str):
+def app_config(title: str):
+    """Setup page & session state. Must be the first script instruction called."""
     st.set_page_config(
         page_title=f"Eurostat Data Wizard • {title}",
         page_icon=PAGE_ICON,

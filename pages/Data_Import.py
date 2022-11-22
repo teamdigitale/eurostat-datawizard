@@ -4,7 +4,7 @@ from typing import List
 import pandas as pd
 import streamlit as st
 
-from widgets.session import page_config
+from widgets.session import app_config
 from globals import VARS_INDEX_PATH
 from src.eurostat import (
     cast_time_to_datetimeindex,
@@ -180,7 +180,7 @@ def show_dataset(dataset, dataset_code_title, indexes, flags):
 
 
 if __name__ == "__main__":
-    page_config("Data Import")
+    app_config("Data Import")
 
     dataset, dataset_code_title, indexes, flags = import_dataset()
 

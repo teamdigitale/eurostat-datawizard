@@ -12,7 +12,7 @@ from src.eurostat import (
     fetch_dataset_codelist,
 )
 from widgets.console import show_console
-from widgets.session import page_config
+from widgets.session import app_config
 
 
 @st.experimental_singleton(show_spinner=False)
@@ -131,7 +131,7 @@ def show_cache_uploader():
 
 
 if __name__ == "__main__":
-    page_config("Home")
+    app_config("Home")
 
     with open("README.md", "r") as readme:
         app_description = "".join([next(readme) for _ in range(19)])

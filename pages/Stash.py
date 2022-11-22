@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 from widgets.dataframe import st_dataframe_with_index_and_rows_cols_count
 from widgets.download import download_dataframe_button
-from widgets.session import page_config
+from widgets.session import app_config
 from widgets.console import show_console
 from pages.Data_Import import load_dataset, filter_dataset
 
@@ -67,7 +67,7 @@ def show_stash():
 
 
 if __name__ == "__main__":
-    page_config("Stash")
+    app_config("Stash")
 
     show_stash()
 
