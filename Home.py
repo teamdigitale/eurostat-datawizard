@@ -140,7 +140,8 @@ def show_cache_uploader():
         if cache:
             os.makedirs(os.path.dirname(cachename), exist_ok=True)
             os.remove(cachename)
-            os.remove(VARS_INDEX_PATH)
+            if not os.path.exists(VARS_INDEX_PATH):
+                os.remove(VARS_INDEX_PATH)
             with open(cachename, "wb") as f:
                 f.write(cache.getbuffer())
 
