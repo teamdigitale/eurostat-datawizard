@@ -1,6 +1,6 @@
 import numpy
 import pandas as pd
-from json import JSONEncoder
+from json import JSONEncoder, JSONDecoder
 
 
 def concat_keys_to_values(d: dict, sep=" | "):
