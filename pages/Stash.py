@@ -7,6 +7,22 @@ from widgets.console import show_console
 from pages.Data_Import import load_dataset, filter_dataset
 
 
+def page_config():
+    st.set_page_config(
+        page_title="Eurostat Data Wizard • Stash",
+        page_icon=PAGE_ICON,
+        layout=LAYOUT,
+        initial_sidebar_state=INITIAL_SIDEBAR_STATE,
+        menu_items=MENU_ITEMS,  # type: ignore
+    )
+
+    if "stash" not in st.session_state:
+        st.session_state.stash = {}
+
+    if "user" not in st.session_state:
+        st.session_state.user = dict(st.experimental_user)
+
+
 @st.experimental_memo(show_spinner=False)
 def load_stash(stash: dict) -> pd.DataFrame:
     data = pd.DataFrame()
@@ -64,19 +80,6 @@ def show_stash():
         st.button("Clear", on_click=clear_stash, disabled=dataset.empty)
     with col2:
         download_dataframe_button(view)
-
-
-def page_config():
-    st.set_page_config(
-        page_title="Eurostat Data Wizard • Stash",
-        page_icon=PAGE_ICON,
-        layout=LAYOUT,
-        initial_sidebar_state=INITIAL_SIDEBAR_STATE,
-        menu_items=MENU_ITEMS,  # type: ignore
-    )
-
-    if "stash" not in st.session_state:
-        st.session_state.stash = {}
 
 
 if __name__ == "__main__":

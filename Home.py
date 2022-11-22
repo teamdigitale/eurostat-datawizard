@@ -17,6 +17,7 @@ from src.eurostat import (
     eurostat_sdmx_request,
     fetch_dataset_codelist,
 )
+from widgets.console import show_console
 
 
 def page_config():
@@ -30,6 +31,9 @@ def page_config():
 
     if "stash" not in st.session_state:
         st.session_state.stash = {}
+
+    if "user" not in st.session_state:
+        st.session_state.user = dict(st.experimental_user)
 
 
 @st.experimental_singleton(show_spinner=False)
@@ -164,3 +168,5 @@ if __name__ == "__main__":
     index_helper(message)
 
     show_cache_uploader()
+
+    show_console()  # For debugging
