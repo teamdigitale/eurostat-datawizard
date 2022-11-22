@@ -136,7 +136,7 @@ def show_cache_uploader():
     cachename = f"cache/sdmx.{ext}"
     # NOTE Available only at first run, without a cache
     if not os.path.exists(cachename):
-        cache = st.sidebar.file_uploader("Preload a cache", ext)
+        cache = st.sidebar.file_uploader("Preload a cache, then press 'Create'", ext)
         if cache:
             os.makedirs(os.path.dirname(cachename), exist_ok=True)
             os.remove(cachename)
