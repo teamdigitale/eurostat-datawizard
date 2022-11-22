@@ -129,6 +129,22 @@ def index_helper(message_widget):
             message_widget.empty()
 
 
+def show_cache_uploader():
+    # NOTE coul be simpler upload directly the varsname but choosen to not do, in order
+    # to mitigate security problems in uploading a `pickled` file.
+    ext = "sqlite"
+    cachename = f"cache/sdmx.{ext}"
+    # NOTE Available only at first run, without a cache
+    if not os.path.exists(cachename):
+        cache = st.sidebar.file_uploader("Preload a cache", ext)
+        if cache:
+            os.makedirs(os.path.dirname(cachename), exist_ok=True)
+            os.remove(cachename)
+            os.remove(VARS_INDEX_PATH)
+            with open(cachename, "wb") as f:
+                f.write(cache.getbuffer())
+
+
 if __name__ == "__main__":
     page_config()
 
@@ -144,3 +160,5 @@ if __name__ == "__main__":
     message = st.sidebar.empty()
     message.markdown("💤 A previous indexing is still running.")
     index_helper(message)
+
+    show_cache_uploader()
