@@ -37,6 +37,9 @@ def page_config():
     if "stash" not in st.session_state:
         st.session_state.stash = {}
 
+    if "user" not in st.session_state:
+        st.session_state.user = dict(st.experimental_user)
+
 
 @st.experimental_singleton(show_spinner=False)
 def eust_lock():
