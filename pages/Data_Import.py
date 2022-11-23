@@ -147,7 +147,7 @@ def import_dataset():
         dataset_code = dataset_code_title.split(" | ", maxsplit=1)[0]
         try:
             with st.sidebar:
-                with st.spinner(text="Prepare filters"):
+                with st.spinner(text="Downloading data"):
                     dataset = load_dataset(dataset_code)
 
                     # Create or reuse a filtering history for this code
