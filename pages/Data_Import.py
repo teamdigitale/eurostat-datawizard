@@ -76,6 +76,8 @@ def build_dimension_list(dimensions: pd.Series) -> List[str]:
 
 def update_variable_idx(variables: List[str]):
     session.selected_variable_idx = variables.index(session.selected_variable)
+    # NOTE Because datasets list change, reset the selected idx
+    session.selected_dataset_idx = 0
 
 
 def update_dataset_idx(datasets: List[str]):
