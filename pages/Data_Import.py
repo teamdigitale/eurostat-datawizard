@@ -82,7 +82,7 @@ def update_dataset_idx(datasets: List[str]):
 
 
 def update_default_flags():
-    session.default_flags = session.selected_flags
+    session.default_flag = session.selected_flags
 
 
 def update_indexes(name: str):
@@ -125,58 +125,66 @@ def import_dataset():
                     session.dataset = load_dataset(
                         dataset_code_title.split(" | ", maxsplit=1)[0]
                     )
+
+                    if "flag_options" not in session:
+                        session.flag_options = session.dataset.flag.unique().tolist()
+                    if "default_flag" not in session:
+                        session.default_flag = session.dataset.flag.unique().tolist()
+                        if "selected_flags" in session:
+                            session.default_flag = session.selected_flags
+
+                    st.sidebar.subheader("Filter dataset")
+                    st.sidebar.multiselect(
+                        label="Select FLAG",
+                        options=session.flag_options,
+                        default=session.default_flag,
+                        key="selected_flags",
+                        on_change=update_default_flags,
+                    )
+
+                    for i, name in enumerate(session.dataset.index.names):
+                        if name == "time":
+                            times = session.dataset.index.levels[i].to_list()  # type: ignore
+                            m, M = min(times).year, max(times).year
+                            M = M if m < M else M + 1  # RangeError fix
+                            st.sidebar.slider(
+                                label="Select TIME [min: 1 year]",
+                                min_value=m,
+                                max_value=M,
+                                value=(m, M),
+                                step=1,
+                                key=f"selected_indexes_{name}",
+                                on_change=update_indexes,
+                                args=(name,),
+                            )
+                        else:
+                            st.sidebar.multiselect(
+                                label=f"Select {name.upper()}",
+                                options=session.dataset.index.levels[i].to_list(),  # type: ignore
+                                default=session.dataset.index.levels[i].to_list(),  # type: ignore
+                                key=f"selected_indexes_{name}",
+                                on_change=update_indexes,
+                                args=(name,),
+                            )
+                        # NOTE First value must be set manually
+                        update_indexes(name)
+
         except (ValueError, AssertionError, NotImplementedError) as e:
             st.sidebar.error(e)
 
+
+def show_dataset():
+    dataset_code_title = session.selected_dataset
+
     if not session.dataset.empty:
-        st.sidebar.subheader("Filter dataset")
-        flags = session.dataset.flag.unique().tolist()
-        if "default_flags" not in session:
-            session.default_flags = list(flags)
-        st.sidebar.multiselect(
-            label="Select FLAG",
-            options=flags,
-            default=session.default_flags,
-            key="selected_flags",
-            on_change=update_default_flags,
-        )
-
-        for i, name in enumerate(session.dataset.index.names):
-            if name == "time":
-                times = session.dataset.index.levels[i].to_list()  # type: ignore
-                m, M = min(times).year, max(times).year
-                M = M if m < M else M + 1  # RangeError fix
-                st.sidebar.slider(
-                    label="Select TIME [min: 1 year]",
-                    min_value=m,
-                    max_value=M,
-                    value=(m, M),
-                    step=1,
-                    key=f"selected_indexes_{name}",
-                    on_change=update_indexes,
-                    args=(name,),
-                )
-            else:
-                st.sidebar.multiselect(
-                    label=f"Select {name.upper()}",
-                    options=session.dataset.index.levels[i].to_list(),  # type: ignore
-                    default=session.dataset.index.levels[i].to_list(),  # type: ignore
-                    key=f"selected_indexes_{name}",
-                    on_change=update_indexes,
-                    args=(name,),
-                )
-            # NOTE First value must be set manually
-            update_indexes(name)
-
-        session.dataset = filter_dataset(
+        view = filter_dataset(
             session.dataset, session.selected_indexes, session.selected_flags
         )
-    return (session.dataset, dataset_code_title, session.selected_indexes)
+    else:
+        view = session.dataset
 
-
-def show_dataset(dataset, dataset_code_title, indexes):
     view = st_dataframe_with_index_and_rows_cols_count(
-        dataset, f"{dataset_code_title}", use_container_width=True
+        view, f"{dataset_code_title}", use_container_width=True
     )
 
     col1, col2 = st.columns(2, gap="large")
@@ -186,10 +194,10 @@ def show_dataset(dataset, dataset_code_title, indexes):
             on_click=update_stash,
             args=(
                 dataset_code_title.split(" | ", maxsplit=1)[0],
-                indexes,
+                session.selected_indexes,
                 session.dataset.flag.unique().tolist(),
             ),
-            disabled=dataset.empty,
+            disabled=session.dataset.empty,
         )
     with col2:
         download_dataframe_button(view)
@@ -238,8 +246,8 @@ if __name__ == "__main__":
     app_config("Data Import")
     page_init()
 
-    dataset, dataset_code_title, indexes = import_dataset()
+    import_dataset()
 
-    show_dataset(dataset, dataset_code_title, indexes)
+    show_dataset()
 
     show_console()  # For debugging
