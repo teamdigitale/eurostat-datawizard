@@ -27,6 +27,8 @@ def upload_session_state(widget):
             py_dict["toc"] = pd.read_json(py_dict["toc"], typ="series")
         if "codelist" in py_dict:
             py_dict["codelist"] = pd.read_json(py_dict["codelist"], typ="series")
+        if "time" in py_dict:
+            py_dict["time"] = pd.to_datetime(py_dict["time"])
         st.session_state.update(py_dict)
         widget.write(st.session_state)
 
