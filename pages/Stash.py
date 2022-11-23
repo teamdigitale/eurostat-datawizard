@@ -1,10 +1,14 @@
 import streamlit as st
+import numpy as np
 import pandas as pd
-from widgets.dataframe import st_dataframe_with_index_and_rows_cols_count
+from widgets.dataframe import (
+    st_dataframe_with_index_and_rows_cols_count,
+    filter_dataset_replacing_NA,
+)
 from widgets.download import download_dataframe_button
 from widgets.session import app_config
 from widgets.console import show_console
-from pages.Data_Import import load_dataset, filter_dataset
+from pages.Data_Import import load_dataset
 
 
 @st.experimental_memo(show_spinner=False)
@@ -14,7 +18,11 @@ def load_stash(stash: dict) -> pd.DataFrame:
     for code, filters in stash.items():
         indexes, flags = filters["indexes"], filters["flags"]
         df = load_dataset(code)
-        df = filter_dataset(df, indexes, flags)
+        df = filter_dataset_replacing_NA(
+            df,
+            indexes,
+            flags,
+        )
         # Append dataset code to data as first level
         df = pd.concat(
             {code: df},

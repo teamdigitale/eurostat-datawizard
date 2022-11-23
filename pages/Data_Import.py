@@ -3,20 +3,24 @@ from threading import Lock
 from typing import List
 import pandas as pd
 import streamlit as st
-
 from widgets.session import app_config
 from globals import VARS_INDEX_PATH
 from src.eurostat import (
     cast_time_to_datetimeindex,
     fetch_dataset_and_metadata,
     fetch_table_of_contents,
-    filter_dataset,
     split_dimensions_and_attributes_from,
 )
 from src.utils import concat_keys_to_values
 from widgets.console import show_console
-from widgets.dataframe import st_dataframe_with_index_and_rows_cols_count
+from widgets.dataframe import (
+    st_dataframe_with_index_and_rows_cols_count,
+    filter_dataset_replacing_NA,
+)
 from widgets.download import download_dataframe_button
+
+
+session = st.session_state
 
 
 @st.experimental_singleton(show_spinner=False)
@@ -41,24 +45,12 @@ def load_dataset(code: str) -> pd.DataFrame:
 
 
 def update_stash(code, indexes, flags):
-    st.session_state.stash.update({code: {"indexes": indexes, "flags": flags}})
-
-
-def patch_streamlit_session_state():
-    # Reset filter widget was needed to prevent the following to be raised:
-    # `Exception in thread ScriptRunner.scriptThread:`
-    # [...]
-    # `streamlit.errors.StreamlitAPIException: Every Multiselect default value must exist in options`
-    for k in st.session_state:
-        if k.startswith("_"):
-            del st.session_state[k]
+    session.stash.update({code: {"indexes": indexes, "flags": flags}})
 
 
 # NOTE Caching is managed manually, do not cache with streamlit
-def load_codelist_reverse_index() -> pd.Series | None:
-    if os.path.exists(VARS_INDEX_PATH):
-        return pd.read_pickle(VARS_INDEX_PATH)
-    return None
+def load_codelist_reverse_index() -> pd.Series:
+    return pd.read_pickle(VARS_INDEX_PATH)
 
 
 # NOTE `persist` preserve caching also when page is left
@@ -81,102 +73,174 @@ def build_dimension_list(dimensions: pd.Series) -> List[str]:
 
 
 def update_variable_idx(variables: List[str]):
-    st.session_state.selected_variable_idx = variables.index(
-        st.session_state.selected_variable
-    )
+    session.selected_variable_idx = variables.index(session.selected_variable)
+    # NOTE Because datasets list change, reset the selected idx
+    session.selected_dataset_idx = 0
 
 
 def update_dataset_idx(datasets: List[str]):
-    st.session_state.selected_dataset_idx = datasets.index(
-        st.session_state.selected_dataset
-    )
+    session.selected_dataset_idx = datasets.index(session.selected_dataset)
+
+
+def update_default_flags(dataset_code: str):
+    session.history[dataset_code]["default_flag"] = session.history[dataset_code][
+        "selected_flags"
+    ]
+
+
+def update_default_indexes(dataset_code: str, name: str):
+    session.history[dataset_code]["default_indexes"][name] = session.history[
+        dataset_code
+    ]["selected_indexes"][name]
 
 
 def import_dataset():
-    toc = st.session_state.toc
-    codelist = st.session_state.codelist
+    try:
+        with st.sidebar:
+            with st.spinner(text="Fetching table of contents"):
+                toc = load_table_of_contents()
+    except Exception as e:
+        st.sidebar.error(e)
+        return
+
+    try:
+        with st.sidebar:
+            with st.spinner(text="Fetching codelist"):
+                codelist = load_codelist_reverse_index()
+    except Exception as e:
+        st.sidebar.error(e)
+        return
 
     variables = build_dimension_list(codelist)
     st.sidebar.selectbox(
         label="Filter datasets by variable",
         options=variables,
-        index=st.session_state.selected_variable_idx,
+        index=session.selected_variable_idx,
         key="selected_variable",
         on_change=update_variable_idx,
         args=(variables,),
     )
     # Get a toc subsets or the entire toc list
-    dataset_codes = codelist.get(st.session_state.selected_variable, default=None)
+    dataset_codes = codelist.get(session.selected_variable, default=None)
     datasets = build_toc_list(
-        toc.loc[toc.index.intersection(dataset_codes)] if dataset_codes else toc
+        toc.loc[toc.index.intersection(dataset_codes)] if dataset_codes else toc  # type: ignore
     )
     # List (filtered) datasets
     st.sidebar.selectbox(
         label="Choose a dataset",
         options=datasets,
-        index=st.session_state.selected_dataset_idx,
+        index=session.selected_dataset_idx,
         key="selected_dataset",
         on_change=update_dataset_idx,
         args=(datasets,),
     )
 
-    dataset = pd.DataFrame()
-    indexes = dict()
-    flags = list()
-
-    dataset_code_title = st.session_state.selected_dataset
+    dataset_code_title = session.selected_dataset
     if dataset_code_title != "Scroll options or start typing":
+        dataset_code = dataset_code_title.split(" | ", maxsplit=1)[0]
         try:
             with st.sidebar:
                 with st.spinner(text="Prepare filters"):
-                    dataset = load_dataset(
-                        dataset_code_title.split(" | ", maxsplit=1)[0]
+                    dataset = load_dataset(dataset_code)
+
+                    # Create or reuse a filtering history for this code
+                    if dataset_code not in session.history:
+                        session.history[dataset_code] = dict()
+                    history = session.history[dataset_code]
+
+                    # Flags management
+                    flags = dataset.flag.fillna("<NA>").unique().tolist()
+                    if "default_flag" not in history:
+                        history["default_flag"] = (
+                            flags
+                            if "selected_flags" not in history
+                            else history["selected_flags"]
+                        )
+
+                    st.sidebar.subheader("Filter dataset")
+                    history["selected_flags"] = st.sidebar.multiselect(
+                        label="Select FLAG",
+                        options=flags,
+                        default=history["default_flag"],
+                        # on_change=update_default_flags,
+                        # args=(dataset_code,),
                     )
+                    update_default_flags(dataset_code)
+
+                    # Indexes management
+                    indexes = {n: dataset.index.levels[i].to_list() for i, n in enumerate(dataset.index.names)}  # type: ignore
+                    if "time" in indexes:
+                        indexes["time"] = (
+                            min(indexes["time"]).year,
+                            max(indexes["time"]).year,
+                        )
+
+                    if "default_indexes" not in history:
+                        history["default_indexes"] = (
+                            indexes
+                            if "selected_indexes" not in history
+                            else history["selected_indexes"]
+                        )
+
+                    if "selected_indexes" not in history:
+                        # NOTE managed manually because `key` can be only a string and callback
+                        # execution order happens before widget return value.
+                        history["selected_indexes"] = dict()
+                    for name in dataset.index.names:
+                        if name == "time":
+                            m, M = indexes[name][0], indexes[name][1]
+                            M = M if m < M else M + 1  # RangeError fix
+                            history["selected_indexes"][name] = st.sidebar.slider(
+                                label="Select TIME [min: 1 year]",
+                                min_value=m,
+                                max_value=M,
+                                value=history["default_indexes"][name],
+                                step=1,
+                                # on_change=update_default_indexes,
+                                # args=(name,),
+                            )
+                        else:
+                            history["selected_indexes"][name] = st.sidebar.multiselect(
+                                label=f"Select {name.upper()}",
+                                options=indexes[name],
+                                default=history["default_indexes"][name],
+                                # on_change=update_default_indexes,
+                                # args=(name,),
+                            )
+                        update_default_indexes(dataset_code, name)
+
+                    return dataset
+
         except (ValueError, AssertionError, NotImplementedError) as e:
             st.sidebar.error(e)
 
+    return pd.DataFrame.from_dict(
+        {
+            "index": [],
+            "columns": ["flag", "value"],
+            "data": None,
+            "index_names": ["geo", "time"],
+            "column_names": [None],
+        },
+        orient="tight",
+    )
+
+
+def show_dataset(dataset):
+    dataset_code_title = session.selected_dataset
+    dataset_code = dataset_code_title.split(" | ", maxsplit=1)[0]
+
     if not dataset.empty:
-        st.sidebar.subheader("Filter dataset")
-
-        flags = dataset.flag.unique().tolist()
-        flags = st.sidebar.multiselect(
-            "Select FLAG",
-            flags,
-            flags,
-            key="_flags",  # Required by `patch_session_state`
+        view = filter_dataset_replacing_NA(
+            dataset,
+            session.history[dataset_code]["selected_indexes"],
+            session.history[dataset_code]["selected_flags"],
         )
+    else:
+        view = dataset
 
-        indexes = dict()
-        for i, name in enumerate(dataset.index.names):
-            indexes[name] = dataset.index.levels[i].to_list()  # type: ignore
-            if name == "time":
-                m, M = min(indexes[name]).year, max(indexes[name]).year
-                M = M if m < M else M + 1  # RangeError fix
-                indexes[name] = st.sidebar.slider(
-                    "Select TIME [min: 1 year]",
-                    m,
-                    M,
-                    (m, M),
-                    1,
-                    key=f"_indexes_{name}",  # Required by `patch_session_state`
-                )
-            else:
-                indexes[name] = st.sidebar.multiselect(
-                    f"Select {name.upper()}",
-                    indexes[name],
-                    indexes[name],
-                    key=f"_indexes_{name}",  # Required by `patch_session_state`
-                )
-
-        patch_streamlit_session_state()
-
-        dataset = filter_dataset(dataset, indexes, flags)
-    return dataset, dataset_code_title, indexes, flags
-
-
-def show_dataset(dataset, dataset_code_title, indexes, flags):
     view = st_dataframe_with_index_and_rows_cols_count(
-        dataset, f"{dataset_code_title}", use_container_width=True
+        view, f"{dataset_code_title}", use_container_width=True
     )
 
     col1, col2 = st.columns(2, gap="large")
@@ -184,43 +248,38 @@ def show_dataset(dataset, dataset_code_title, indexes, flags):
         st.button(
             "Add to Stash",
             on_click=update_stash,
-            args=(dataset_code_title.split(" | ", maxsplit=1)[0], indexes, flags),
-            disabled=dataset.empty,
+            args=(
+                dataset_code,
+                session.history[dataset_code]["selected_indexes"]
+                if not dataset.empty
+                else None,
+                session.history[dataset_code]["selected_flags"]
+                if not dataset.empty
+                else None,
+            ),
+            disabled=view.empty,
         )
     with col2:
         download_dataframe_button(view)
 
 
 def page_init():
-    if "toc" not in st.session_state:
-        try:
-            with st.sidebar:
-                with st.spinner(text="Fetching table of contents"):
-                    st.session_state.toc = load_table_of_contents()
-        except Exception as e:
-            st.sidebar.error(e)
+    if "selected_variable_idx" not in session:
+        session.selected_variable_idx = 0
 
-    if "codelist" not in st.session_state:
-        try:
-            with st.sidebar:
-                with st.spinner(text="Fetching codelist"):
-                    st.session_state.codelist = load_codelist_reverse_index()
-        except Exception as e:
-            st.sidebar.error(e)
+    if "selected_dataset_idx" not in session:
+        session.selected_dataset_idx = 0
 
-    if "selected_variable_idx" not in st.session_state:
-        st.session_state.selected_variable_idx = 0
-
-    if "selected_dataset_idx" not in st.session_state:
-        st.session_state.selected_dataset_idx = 0
+    if "history" not in session:
+        session.history = dict()
 
 
 if __name__ == "__main__":
     app_config("Data Import")
     page_init()
 
-    dataset, dataset_code_title, indexes, flags = import_dataset()
+    dataset = import_dataset()
 
-    show_dataset(dataset, dataset_code_title, indexes, flags)
+    show_dataset(dataset)
 
     show_console()  # For debugging
