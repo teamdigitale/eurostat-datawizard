@@ -26,8 +26,7 @@ class PandasJSONEncoder(JSONEncoder):
         are coerced to Python types, for JSON generation purposes. This attempts
         to do so where applicable.
         """
-        # Pandas dataframes have a to_json() method, so we'll check for that and
-        # return it if so.
+        # Pandas dataframes have a to_json() method
         if hasattr(obj_to_encode, "to_json"):
             return obj_to_encode.to_json()
 
@@ -36,10 +35,11 @@ class PandasJSONEncoder(JSONEncoder):
         if isinstance(obj_to_encode, numpy.generic):
             return numpy.asscalar(obj_to_encode)  # type: ignore
 
-        # ndarray -> list, pretty straightforward.
         if isinstance(obj_to_encode, numpy.ndarray):
             return obj_to_encode.to_list()  # type: ignore
 
-        # If none of the above apply, we'll default back to the standard JSON encoding
-        # routines and let it work normally.
+        if isinstance(obj_to_encode, pd.Timestamp):
+            return str(obj_to_encode)
+
+        # If none of the above apply, fall back to the standard JSON encoding
         return super().default(obj_to_encode)
