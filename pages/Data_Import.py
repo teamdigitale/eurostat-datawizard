@@ -82,12 +82,16 @@ def update_dataset_idx(datasets: List[str]):
     session.selected_dataset_idx = datasets.index(session.selected_dataset)
 
 
-def update_default_flags():
-    session.default_flag = session.selected_flags
+def update_default_flags(dataset_code: str):
+    session.history[dataset_code]["default_flag"] = session.history[dataset_code][
+        "selected_flags"
+    ]
 
 
-def update_default_indexes(name: str):
-    session.default_indexes[name] = session.selected_indexes[name]
+def update_default_indexes(dataset_code: str, name: str):
+    session.history[dataset_code]["default_indexes"][name] = session.history[
+        dataset_code
+    ]["selected_indexes"][name]
 
 
 def import_dataset():
@@ -120,29 +124,35 @@ def import_dataset():
 
     dataset_code_title = session.selected_dataset
     if dataset_code_title != "Scroll options or start typing":
+        dataset_code = dataset_code_title.split(" | ", maxsplit=1)[0]
         try:
             with st.sidebar:
                 with st.spinner(text="Prepare filters"):
-                    dataset = load_dataset(
-                        dataset_code_title.split(" | ", maxsplit=1)[0]
-                    )
+                    dataset = load_dataset(dataset_code)
+
+                    # Create or reuse a filtering history for this code
+                    if dataset_code not in session.history:
+                        session.history[dataset_code] = dict()
+                    history = session.history[dataset_code]
+
                     # Flags management
                     flags = dataset.flag.fillna("<NA>").unique().tolist()
-                    if "default_flag" not in session:
-                        session.default_flag = (
+                    if "default_flag" not in history:
+                        history["default_flag"] = (
                             flags
-                            if "selected_flags" not in session
-                            else session.selected_flags
+                            if "selected_flags" not in history
+                            else history["selected_flags"]
                         )
 
                     st.sidebar.subheader("Filter dataset")
-                    st.sidebar.multiselect(
+                    history["selected_flags"] = st.sidebar.multiselect(
                         label="Select FLAG",
                         options=flags,
-                        default=session.default_flag,
-                        key="selected_flags",
-                        on_change=update_default_flags,
+                        default=history["default_flag"],
+                        # on_change=update_default_flags,
+                        # args=(dataset_code,),
                     )
+                    update_default_flags(dataset_code)
 
                     # Indexes management
                     indexes = {n: dataset.index.levels[i].to_list() for i, n in enumerate(dataset.index.names)}  # type: ignore
@@ -152,39 +162,39 @@ def import_dataset():
                             max(indexes["time"]).year,
                         )
 
-                    if "default_indexes" not in session:
-                        session.default_indexes = (
+                    if "default_indexes" not in history:
+                        history["default_indexes"] = (
                             indexes
-                            if "selected_indexes" not in session
-                            else session.selected_indexes
+                            if "selected_indexes" not in history
+                            else history["selected_indexes"]
                         )
 
-                    if "selected_indexes" not in session:
+                    if "selected_indexes" not in history:
                         # NOTE managed manually because `key` can be only a string and callback
                         # execution order happens before widget return value.
-                        session.selected_indexes = dict()
+                        history["selected_indexes"] = dict()
                     for name in dataset.index.names:
                         if name == "time":
                             m, M = indexes[name][0], indexes[name][1]
                             M = M if m < M else M + 1  # RangeError fix
-                            session.selected_indexes[name] = st.sidebar.slider(
+                            history["selected_indexes"][name] = st.sidebar.slider(
                                 label="Select TIME [min: 1 year]",
                                 min_value=m,
                                 max_value=M,
-                                value=session.default_indexes[name],
+                                value=history["default_indexes"][name],
                                 step=1,
                                 # on_change=update_default_indexes,
                                 # args=(name,),
                             )
                         else:
-                            session.selected_indexes[name] = st.sidebar.multiselect(
+                            history["selected_indexes"][name] = st.sidebar.multiselect(
                                 label=f"Select {name.upper()}",
                                 options=indexes[name],
-                                default=session.default_indexes[name],
+                                default=history["default_indexes"][name],
                                 # on_change=update_default_indexes,
                                 # args=(name,),
                             )
-                        update_default_indexes(name)
+                        update_default_indexes(dataset_code, name)
 
                     return dataset
 
@@ -205,12 +215,13 @@ def import_dataset():
 
 def show_dataset(dataset):
     dataset_code_title = session.selected_dataset
+    dataset_code = dataset_code_title.split(" | ", maxsplit=1)[0]
 
     if not dataset.empty:
         view = filter_dataset_replacing_NA(
             dataset,
-            session.selected_indexes,
-            session.selected_flags,
+            session.history[dataset_code]["selected_indexes"],
+            session.history[dataset_code]["selected_flags"],
         )
     else:
         view = dataset
@@ -225,9 +236,13 @@ def show_dataset(dataset):
             "Add to Stash",
             on_click=update_stash,
             args=(
-                dataset_code_title.split(" | ", maxsplit=1)[0],
-                session.selected_indexes if not dataset.empty else None,
-                session.selected_flags if not dataset.empty else None,
+                dataset_code,
+                session.history[dataset_code]["selected_indexes"]
+                if not dataset.empty
+                else None,
+                session.history[dataset_code]["selected_flags"]
+                if not dataset.empty
+                else None,
             ),
             disabled=view.empty,
         )
@@ -257,6 +272,9 @@ def page_init():
 
     if "selected_dataset_idx" not in session:
         session.selected_dataset_idx = 0
+
+    if "history" not in session:
+        session.history = dict()
 
 
 if __name__ == "__main__":
