@@ -82,15 +82,15 @@ def update_dataset_idx(datasets: List[str]):
     session.selected_dataset_idx = datasets.index(session.selected_dataset)
 
 
-def update_history_default_flags(dataset_code: str):
-    session.history[dataset_code]["default_flag"] = session[
-        f"{dataset_code}_selected_flags"
+def update_history_selected_flags(dataset_code: str):
+    session.history[dataset_code]["selected_flags"] = session[
+        f"_{dataset_code}.selected_flags"
     ]
 
 
-def update_history_default_indexes(dataset_code: str, name: str):
-    session.history[dataset_code]["default_indexes"][name] = session[
-        f"{dataset_code}_selected_indexes_{name}"
+def update_history_selected_indexes(dataset_code: str, name: str):
+    session.history[dataset_code]["selected_indexes"][name] = session[
+        f"_{dataset_code}.selected_indexes.{name}"
     ]
 
 
@@ -112,6 +112,9 @@ def import_dataset():
         return
 
     variables = build_dimension_list(codelist)
+
+    if "selected_variable_idx" not in session:
+        session.selected_variable_idx = 0
     st.sidebar.selectbox(
         label="Filter datasets by variable",
         options=variables,
@@ -120,12 +123,16 @@ def import_dataset():
         on_change=update_variable_idx,
         args=(variables,),
     )
+
     # Get a toc subsets or the entire toc list
     dataset_codes = codelist.get(session.selected_variable, default=None)
     datasets = build_toc_list(
         toc.loc[toc.index.intersection(dataset_codes)] if dataset_codes else toc  # type: ignore
     )
+
     # List (filtered) datasets
+    if "selected_dataset_idx" not in session:
+        session.selected_dataset_idx = 0
     st.sidebar.selectbox(
         label="Choose a dataset",
         options=datasets,
@@ -150,20 +157,16 @@ def import_dataset():
 
                     # Flags management
                     flags = dataset.flag.fillna("<NA>").unique().tolist()
-                    if "default_flag" not in history:
-                        history["default_flag"] = (
-                            flags
-                            if "selected_flags" not in history
-                            else history["selected_flags"]
-                        )
+                    if "selected_flags" not in history:
+                        history["selected_flags"] = flags
 
                     st.sidebar.subheader("Filter dataset")
                     history["selected_flags"] = st.sidebar.multiselect(
                         label="Select FLAG",
                         options=flags,
-                        default=history["default_flag"],
-                        key=f"{dataset_code}_selected_flags",
-                        on_change=update_history_default_flags,
+                        default=history["selected_flags"],
+                        key=f"_{dataset_code}.selected_flags",
+                        on_change=update_history_selected_flags,
                         args=(dataset_code,),
                     )
 
@@ -175,16 +178,9 @@ def import_dataset():
                             max(indexes["time"]).year,
                         )
 
-                    if "default_indexes" not in history:
-                        history["default_indexes"] = (
-                            indexes
-                            if "selected_indexes" not in history
-                            else history["selected_indexes"]
-                        )
-
                     if "selected_indexes" not in history:
-                        # NOTE managed manually because `key` can be only a string and callback do not host returned value
-                        history["selected_indexes"] = dict()
+                        history["selected_indexes"] = indexes
+
                     for name in dataset.index.names:
                         if name == "time":
                             m, M = indexes[name][0], indexes[name][1]
@@ -193,10 +189,10 @@ def import_dataset():
                                 label="Select TIME [min: 1 year]",
                                 min_value=m,
                                 max_value=M,
-                                value=history["default_indexes"][name],
+                                value=history["selected_indexes"][name],
                                 step=1,
-                                key=f"{dataset_code}_selected_indexes_{name}",
-                                on_change=update_history_default_indexes,
+                                key=f"_{dataset_code}.selected_indexes.{name}",
+                                on_change=update_history_selected_indexes,
                                 args=(
                                     dataset_code,
                                     name,
@@ -206,9 +202,9 @@ def import_dataset():
                             history["selected_indexes"][name] = st.sidebar.multiselect(
                                 label=f"Select {name.upper()}",
                                 options=indexes[name],
-                                default=history["default_indexes"][name],
-                                key=f"{dataset_code}_selected_indexes_{name}",
-                                on_change=update_history_default_indexes,
+                                default=history["selected_indexes"][name],
+                                key=f"_{dataset_code}.selected_indexes.{name}",
+                                on_change=update_history_selected_indexes,
                                 args=(
                                     dataset_code,
                                     name,
@@ -270,12 +266,6 @@ def show_dataset(dataset):
 
 
 def page_init():
-    if "selected_variable_idx" not in session:
-        session.selected_variable_idx = 0
-
-    if "selected_dataset_idx" not in session:
-        session.selected_dataset_idx = 0
-
     if "history" not in session:
         session.history = dict()
 
