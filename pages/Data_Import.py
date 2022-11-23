@@ -122,29 +122,29 @@ def import_dataset():
         try:
             with st.sidebar:
                 with st.spinner(text="Prepare filters"):
-                    session.dataset = load_dataset(
+                    dataset = load_dataset(
                         dataset_code_title.split(" | ", maxsplit=1)[0]
                     )
 
                     if "flag_options" not in session:
-                        session.flag_options = session.dataset.flag.unique().tolist()
+                        session.flag_options = dataset.flag.unique().tolist()
                     if "default_flag" not in session:
-                        session.default_flag = session.dataset.flag.unique().tolist()
+                        session.default_flag = dataset.flag.unique().tolist()
                         if "selected_flags" in session:
                             session.default_flag = session.selected_flags
 
                     st.sidebar.subheader("Filter dataset")
                     st.sidebar.multiselect(
                         label="Select FLAG",
-                        options=session.flag_options,
+                        options=dataset.flag.unique().tolist(),
                         default=session.default_flag,
                         key="selected_flags",
                         on_change=update_default_flags,
                     )
 
-                    for i, name in enumerate(session.dataset.index.names):
+                    for i, name in enumerate(dataset.index.names):
                         if name == "time":
-                            times = session.dataset.index.levels[i].to_list()  # type: ignore
+                            times = dataset.index.levels[i].to_list()  # type: ignore
                             m, M = min(times).year, max(times).year
                             M = M if m < M else M + 1  # RangeError fix
                             st.sidebar.slider(
@@ -160,8 +160,8 @@ def import_dataset():
                         else:
                             st.sidebar.multiselect(
                                 label=f"Select {name.upper()}",
-                                options=session.dataset.index.levels[i].to_list(),  # type: ignore
-                                default=session.dataset.index.levels[i].to_list(),  # type: ignore
+                                options=dataset.index.levels[i].to_list(),  # type: ignore
+                                default=dataset.index.levels[i].to_list(),  # type: ignore
                                 key=f"selected_indexes_{name}",
                                 on_change=update_indexes,
                                 args=(name,),
@@ -169,19 +169,30 @@ def import_dataset():
                         # NOTE First value must be set manually
                         update_indexes(name)
 
+                    return dataset
+
         except (ValueError, AssertionError, NotImplementedError) as e:
             st.sidebar.error(e)
 
+    return pd.DataFrame.from_dict(
+        {
+            "index": [],
+            "columns": ["flag", "value"],
+            "data": None,
+            "index_names": ["geo", "time"],
+            "column_names": [None],
+        },
+        orient="tight",
+    )
 
-def show_dataset():
+
+def show_dataset(dataset):
     dataset_code_title = session.selected_dataset
 
-    if not session.dataset.empty:
-        view = filter_dataset(
-            session.dataset, session.selected_indexes, session.selected_flags
-        )
+    if not dataset.empty:
+        view = filter_dataset(dataset, session.selected_indexes, session.selected_flags)
     else:
-        view = session.dataset
+        view = dataset
 
     view = st_dataframe_with_index_and_rows_cols_count(
         view, f"{dataset_code_title}", use_container_width=True
@@ -195,9 +206,9 @@ def show_dataset():
             args=(
                 dataset_code_title.split(" | ", maxsplit=1)[0],
                 session.selected_indexes,
-                session.dataset.flag.unique().tolist(),
+                dataset.flag.unique().tolist(),
             ),
-            disabled=session.dataset.empty,
+            disabled=dataset.empty,
         )
     with col2:
         download_dataframe_button(view)
@@ -226,18 +237,6 @@ def page_init():
     if "selected_dataset_idx" not in session:
         session.selected_dataset_idx = 0
 
-    if "dataset" not in session:
-        session.dataset = pd.DataFrame.from_dict(
-            {
-                "index": [],
-                "columns": ["flag", "value"],
-                "data": None,
-                "index_names": ["geo", "time"],
-                "column_names": [None],
-            },
-            orient="tight",
-        )
-
     if "selected_indexes" not in session:
         session.selected_indexes = {}
 
@@ -246,8 +245,8 @@ if __name__ == "__main__":
     app_config("Data Import")
     page_init()
 
-    import_dataset()
+    dataset = import_dataset()
 
-    show_dataset()
+    show_dataset(dataset)
 
     show_console()  # For debugging
