@@ -49,10 +49,8 @@ def update_stash(code, indexes, flags):
 
 
 # NOTE Caching is managed manually, do not cache with streamlit
-def load_codelist_reverse_index() -> pd.Series | None:
-    if os.path.exists(VARS_INDEX_PATH):
-        return pd.read_pickle(VARS_INDEX_PATH)
-    return None
+def load_codelist_reverse_index() -> pd.Series:
+    return pd.read_pickle(VARS_INDEX_PATH)
 
 
 # NOTE `persist` preserve caching also when page is left
@@ -97,8 +95,21 @@ def update_default_indexes(dataset_code: str, name: str):
 
 
 def import_dataset():
-    toc = session.toc
-    codelist = session.codelist
+    try:
+        with st.sidebar:
+            with st.spinner(text="Fetching table of contents"):
+                toc = load_table_of_contents()
+    except Exception as e:
+        st.sidebar.error(e)
+        return
+
+    try:
+        with st.sidebar:
+            with st.spinner(text="Fetching codelist"):
+                codelist = load_codelist_reverse_index()
+    except Exception as e:
+        st.sidebar.error(e)
+        return
 
     variables = build_dimension_list(codelist)
     st.sidebar.selectbox(
@@ -112,7 +123,7 @@ def import_dataset():
     # Get a toc subsets or the entire toc list
     dataset_codes = codelist.get(session.selected_variable, default=None)
     datasets = build_toc_list(
-        toc.loc[toc.index.intersection(dataset_codes)] if dataset_codes else toc
+        toc.loc[toc.index.intersection(dataset_codes)] if dataset_codes else toc  # type: ignore
     )
     # List (filtered) datasets
     st.sidebar.selectbox(
@@ -253,22 +264,6 @@ def show_dataset(dataset):
 
 
 def page_init():
-    if "toc" not in session:
-        try:
-            with st.sidebar:
-                with st.spinner(text="Fetching table of contents"):
-                    session.toc = load_table_of_contents()
-        except Exception as e:
-            st.sidebar.error(e)
-
-    if "codelist" not in session:
-        try:
-            with st.sidebar:
-                with st.spinner(text="Fetching codelist"):
-                    session.codelist = load_codelist_reverse_index()
-        except Exception as e:
-            st.sidebar.error(e)
-
     if "selected_variable_idx" not in session:
         session.selected_variable_idx = 0
 
