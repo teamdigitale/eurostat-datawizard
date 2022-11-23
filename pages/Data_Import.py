@@ -145,11 +145,13 @@ def import_dataset():
                     )
 
                     # Indexes management
-                    if "selected_indexes" not in session:
-                        # NOTE managed manually because `key` can be only a string
-                        session.selected_indexes = dict()
-
                     indexes = {n: dataset.index.levels[i].to_list() for i, n in enumerate(dataset.index.names)}  # type: ignore
+                    if "time" in indexes:
+                        indexes["time"] = (
+                            min(indexes["time"]).year,
+                            max(indexes["time"]).year,
+                        )
+
                     if "default_indexes" not in session:
                         session.default_indexes = (
                             indexes
@@ -157,29 +159,32 @@ def import_dataset():
                             else session.selected_indexes
                         )
 
-                    for i, name in enumerate(dataset.index.names):
-                        level_indexes = dataset.index.levels[i].to_list()  # type: ignore
-
+                    if "selected_indexes" not in session:
+                        # NOTE managed manually because `key` can be only a string and callback
+                        # execution order happens before widget return value.
+                        session.selected_indexes = dict()
+                    for name in dataset.index.names:
                         if name == "time":
-                            m, M = min(level_indexes).year, max(level_indexes).year
+                            m, M = indexes[name][0], indexes[name][1]
                             M = M if m < M else M + 1  # RangeError fix
                             session.selected_indexes[name] = st.sidebar.slider(
                                 label="Select TIME [min: 1 year]",
                                 min_value=m,
                                 max_value=M,
-                                value=(m, M),
+                                value=session.default_indexes[name],
                                 step=1,
-                                on_change=update_default_indexes,
-                                args=(name,),
+                                # on_change=update_default_indexes,
+                                # args=(name,),
                             )
                         else:
                             session.selected_indexes[name] = st.sidebar.multiselect(
                                 label=f"Select {name.upper()}",
-                                options=level_indexes,
-                                default=dataset.index.levels[i].to_list(),  # type: ignore
-                                on_change=update_default_indexes,
-                                args=(name,),
+                                options=indexes[name],
+                                default=session.default_indexes[name],
+                                # on_change=update_default_indexes,
+                                # args=(name,),
                             )
+                        update_default_indexes(name)
 
                     return dataset
 
