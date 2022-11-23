@@ -82,16 +82,16 @@ def update_dataset_idx(datasets: List[str]):
     session.selected_dataset_idx = datasets.index(session.selected_dataset)
 
 
-def update_default_flags(dataset_code: str):
-    session.history[dataset_code]["default_flag"] = session.history[dataset_code][
-        "selected_flags"
+def update_history_default_flags(dataset_code: str):
+    session.history[dataset_code]["default_flag"] = session[
+        f"{dataset_code}_selected_flags"
     ]
 
 
-def update_default_indexes(dataset_code: str, name: str):
-    session.history[dataset_code]["default_indexes"][name] = session.history[
-        dataset_code
-    ]["selected_indexes"][name]
+def update_history_default_indexes(dataset_code: str, name: str):
+    session.history[dataset_code]["default_indexes"][name] = session[
+        f"{dataset_code}_selected_indexes_{name}"
+    ]
 
 
 def import_dataset():
@@ -162,10 +162,10 @@ def import_dataset():
                         label="Select FLAG",
                         options=flags,
                         default=history["default_flag"],
-                        # on_change=update_default_flags,
-                        # args=(dataset_code,),
+                        key=f"{dataset_code}_selected_flags",
+                        on_change=update_history_default_flags,
+                        args=(dataset_code,),
                     )
-                    update_default_flags(dataset_code)
 
                     # Indexes management
                     indexes = {n: dataset.index.levels[i].to_list() for i, n in enumerate(dataset.index.names)}  # type: ignore
@@ -183,8 +183,7 @@ def import_dataset():
                         )
 
                     if "selected_indexes" not in history:
-                        # NOTE managed manually because `key` can be only a string and callback
-                        # execution order happens before widget return value.
+                        # NOTE managed manually because `key` can be only a string and callback do not host returned value
                         history["selected_indexes"] = dict()
                     for name in dataset.index.names:
                         if name == "time":
@@ -196,18 +195,25 @@ def import_dataset():
                                 max_value=M,
                                 value=history["default_indexes"][name],
                                 step=1,
-                                # on_change=update_default_indexes,
-                                # args=(name,),
+                                key=f"{dataset_code}_selected_indexes_{name}",
+                                on_change=update_history_default_indexes,
+                                args=(
+                                    dataset_code,
+                                    name,
+                                ),
                             )
                         else:
                             history["selected_indexes"][name] = st.sidebar.multiselect(
                                 label=f"Select {name.upper()}",
                                 options=indexes[name],
                                 default=history["default_indexes"][name],
-                                # on_change=update_default_indexes,
-                                # args=(name,),
+                                key=f"{dataset_code}_selected_indexes_{name}",
+                                on_change=update_history_default_indexes,
+                                args=(
+                                    dataset_code,
+                                    name,
+                                ),
                             )
-                        update_default_indexes(dataset_code, name)
 
                     return dataset
 
