@@ -280,4 +280,4 @@ def test_filter_dataset(dataset):
     dataset = filter_dataset(original, indexes, flags)
     assert dataset.empty
     assert_index_equal(dataset.columns, pd.Index(["flag", "value"]))
-    assert dataset.index.names == ["unit", "geo", "time"]
+    assert dataset.index.names == ["geo", "time"]

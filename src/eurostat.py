@@ -101,7 +101,9 @@ def filter_dataset(
     indexes: Dict[str, List[str]],
     flags: list,
 ) -> pd.DataFrame:
-    indexes = dict(indexes)  # Use a copy in order to leave the original untouched
+    # Using copies in order to leave the original untouched
+    dataset = dataset.copy()
+    indexes = dict(indexes)
     start, end = indexes.pop("time")
     complete_index = pd.MultiIndex.from_product(indexes.values(), names=indexes.keys())
     # Make columns time-oriented for easy slicing
@@ -111,13 +113,13 @@ def filter_dataset(
         str(start) : str(end),  # flake8: noqa
     ].dropna(how="all")
     if dataset.empty:
+        # TODO use pandas `orient=tight` syntax
         return pd.DataFrame(
             columns=["flag", "value"],
-            index=pd.MultiIndex(
-                levels=[[], [], []], codes=[[], [], []], names=["geo", "time"]
-            ),
+            index=pd.MultiIndex(levels=[[], []], codes=[[], []], names=["geo", "time"]),
         )
     # Restore index orientation
     dataset = dataset.stack("time")  # type: ignore
     dataset = dataset.loc[dataset.flag.isin(flags)]
+    dataset.index = dataset.index.remove_unused_levels()  # type: ignore TODO Cannot access member
     return dataset

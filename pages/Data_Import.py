@@ -1,5 +1,4 @@
 import os
-import numpy as np
 from threading import Lock
 from typing import List
 import pandas as pd
@@ -10,12 +9,14 @@ from src.eurostat import (
     cast_time_to_datetimeindex,
     fetch_dataset_and_metadata,
     fetch_table_of_contents,
-    filter_dataset,
     split_dimensions_and_attributes_from,
 )
 from src.utils import concat_keys_to_values
 from widgets.console import show_console
-from widgets.dataframe import st_dataframe_with_index_and_rows_cols_count
+from widgets.dataframe import (
+    st_dataframe_with_index_and_rows_cols_count,
+    filter_dataset_replacing_NA,
+)
 from widgets.download import download_dataframe_button
 
 
@@ -85,8 +86,8 @@ def update_default_flags():
     session.default_flag = session.selected_flags
 
 
-def update_indexes(name: str):
-    session.selected_indexes[name] = session[f"selected_indexes_{name}"]
+def update_default_indexes(name: str):
+    session.default_indexes[name] = session.selected_indexes[name]
 
 
 def import_dataset():
@@ -125,49 +126,60 @@ def import_dataset():
                     dataset = load_dataset(
                         dataset_code_title.split(" | ", maxsplit=1)[0]
                     )
-
-                    if "flag_options" not in session:
-                        session.flag_options = dataset.flag.unique().tolist()
+                    # Flags management
+                    flags = dataset.flag.fillna("<NA>").unique().tolist()
                     if "default_flag" not in session:
-                        session.default_flag = dataset.flag.unique().tolist()
-                        if "selected_flags" in session:
-                            session.default_flag = session.selected_flags
+                        session.default_flag = (
+                            flags
+                            if "selected_flags" not in session
+                            else session.selected_flags
+                        )
 
                     st.sidebar.subheader("Filter dataset")
                     st.sidebar.multiselect(
                         label="Select FLAG",
-                        options=dataset.flag.unique().tolist(),
+                        options=flags,
                         default=session.default_flag,
                         key="selected_flags",
                         on_change=update_default_flags,
                     )
 
+                    # Indexes management
+                    if "selected_indexes" not in session:
+                        # NOTE managed manually because `key` can be only a string
+                        session.selected_indexes = dict()
+
+                    indexes = {n: dataset.index.levels[i].to_list() for i, n in enumerate(dataset.index.names)}  # type: ignore
+                    if "default_indexes" not in session:
+                        session.default_indexes = (
+                            indexes
+                            if "selected_indexes" not in session
+                            else session.selected_indexes
+                        )
+
                     for i, name in enumerate(dataset.index.names):
+                        level_indexes = dataset.index.levels[i].to_list()  # type: ignore
+
                         if name == "time":
-                            times = dataset.index.levels[i].to_list()  # type: ignore
-                            m, M = min(times).year, max(times).year
+                            m, M = min(level_indexes).year, max(level_indexes).year
                             M = M if m < M else M + 1  # RangeError fix
-                            st.sidebar.slider(
+                            session.selected_indexes[name] = st.sidebar.slider(
                                 label="Select TIME [min: 1 year]",
                                 min_value=m,
                                 max_value=M,
                                 value=(m, M),
                                 step=1,
-                                key=f"selected_indexes_{name}",
-                                on_change=update_indexes,
+                                on_change=update_default_indexes,
                                 args=(name,),
                             )
                         else:
-                            st.sidebar.multiselect(
+                            session.selected_indexes[name] = st.sidebar.multiselect(
                                 label=f"Select {name.upper()}",
-                                options=dataset.index.levels[i].to_list(),  # type: ignore
+                                options=level_indexes,
                                 default=dataset.index.levels[i].to_list(),  # type: ignore
-                                key=f"selected_indexes_{name}",
-                                on_change=update_indexes,
+                                on_change=update_default_indexes,
                                 args=(name,),
                             )
-                        # NOTE First value must be set manually
-                        update_indexes(name)
 
                     return dataset
 
@@ -190,7 +202,11 @@ def show_dataset(dataset):
     dataset_code_title = session.selected_dataset
 
     if not dataset.empty:
-        view = filter_dataset(dataset, session.selected_indexes, session.selected_flags)
+        view = filter_dataset_replacing_NA(
+            dataset,
+            session.selected_indexes,
+            session.selected_flags,
+        )
     else:
         view = dataset
 
@@ -205,10 +221,10 @@ def show_dataset(dataset):
             on_click=update_stash,
             args=(
                 dataset_code_title.split(" | ", maxsplit=1)[0],
-                session.selected_indexes,
-                dataset.flag.unique().tolist(),
+                session.selected_indexes if not dataset.empty else None,
+                session.selected_flags if not dataset.empty else None,
             ),
-            disabled=dataset.empty,
+            disabled=view.empty,
         )
     with col2:
         download_dataframe_button(view)
@@ -236,9 +252,6 @@ def page_init():
 
     if "selected_dataset_idx" not in session:
         session.selected_dataset_idx = 0
-
-    if "selected_indexes" not in session:
-        session.selected_indexes = {}
 
 
 if __name__ == "__main__":
