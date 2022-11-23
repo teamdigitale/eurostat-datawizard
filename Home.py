@@ -64,7 +64,7 @@ def save_index_file():
     progress_bar.empty()
     if len(datasets_not_loaded) > 0:
         status.warning(
-            f"Unable to load: {datasets_not_loaded}. Refresh only if you find it useful. All the metadata succesfully received will be loaded from cache.",
+            f"Unable to load: {datasets_not_loaded}. Refresh only if you find it useful. All the metadata successfully received will be loaded from cache.",
             icon="⚠️",
         )
     else:
@@ -119,9 +119,7 @@ def show_cache_uploader():
     cachename = f"cache/sdmx.{ext}"
     # NOTE Available only at first run, without a cache
     if not os.path.exists(cachename):
-        cache = st.sidebar.file_uploader(
-            "'Create' index, or preload a cache first", ext
-        )
+        cache = st.sidebar.file_uploader("Create index or preload a cache first", ext)
         if cache:
             os.makedirs(os.path.dirname(cachename), exist_ok=True)
             if os.path.exists(VARS_INDEX_PATH):
