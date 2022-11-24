@@ -3,10 +3,13 @@ from threading import Lock
 import pandas as pd
 import streamlit as st
 from requests import ConnectionError, HTTPError
-from datetime import datetime
 import time
 from globals import VARS_INDEX_PATH
-from pages.Data_Import import load_table_of_contents
+from widgets.index import (
+    get_last_index_update,
+    load_table_of_contents,
+    load_codelist_reverse_index,
+)
 from src.eurostat import (
     eurostat_sdmx_request,
     fetch_dataset_codelist,
@@ -64,7 +67,7 @@ def save_index_file():
     progress_bar.empty()
     if len(datasets_not_loaded) > 0:
         status.warning(
-            f"Unable to load: {datasets_not_loaded}. Refresh only if you find it useful. All the metadata succesfully received will be loaded from cache.",
+            f"Unable to load: {datasets_not_loaded}. Refresh only if you find it useful. All the metadata successfully received will be loaded from cache.",
             icon="⚠️",
         )
     else:
@@ -88,12 +91,6 @@ def save_index_file():
     message.empty()
 
 
-def get_last_index_update() -> datetime | None:
-    if os.path.exists(VARS_INDEX_PATH):
-        return datetime.fromtimestamp(os.path.getmtime(VARS_INDEX_PATH))
-    return None
-
-
 def index_helper(message_widget):
     last_update = get_last_index_update()
 
@@ -107,9 +104,26 @@ def index_helper(message_widget):
             with index_lock():
                 message_widget.empty()
                 save_index_file()
-                st.experimental_rerun()
+                st.experimental_rerun()  # In order to load newly updated index
         else:
             message_widget.empty()
+
+
+def index_describer():
+    if get_last_index_update():
+        try:
+            with st.sidebar:
+                with st.spinner(text="Fetching index"):
+                    toc = load_table_of_contents()
+                    codelist = load_codelist_reverse_index()
+                    st.markdown(
+                        f"""
+                    - Indexed dataset: {len(toc)}
+                    - Indexed unique variables: {len(codelist)}
+                    """
+                    )
+        except Exception as e:
+            st.sidebar.error(e)
 
 
 def show_cache_uploader():
@@ -119,9 +133,7 @@ def show_cache_uploader():
     cachename = f"cache/sdmx.{ext}"
     # NOTE Available only at first run, without a cache
     if not os.path.exists(cachename):
-        cache = st.sidebar.file_uploader(
-            "'Create' index, or preload a cache first", ext
-        )
+        cache = st.sidebar.file_uploader("Create index or preload a cache first", ext)
         if cache:
             os.makedirs(os.path.dirname(cachename), exist_ok=True)
             if os.path.exists(VARS_INDEX_PATH):
@@ -137,14 +149,15 @@ if __name__ == "__main__":
         app_description = "".join([next(readme) for _ in range(19)])
     app_description = app_description.replace("# Eurostat", "# 🇪🇺 Eurostat")
     app_description = app_description.replace(
-        "You can play with a (resource limited) working version [here](https://eurostat-datawizard.streamlit.app).",
-        "",
-    )
+        "[here](https://eurostat-datawizard.streamlit.app)", "here"
+    ).replace("repo", "[repo](https://github.com/teamdigitale/eurostat-datawizard)")
     st.markdown(app_description)
 
     message = st.sidebar.empty()
     message.markdown("💤 A previous indexing is still running.")
     index_helper(message)
+
+    index_describer()
 
     show_cache_uploader()
 

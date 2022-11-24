@@ -1,23 +1,22 @@
-import os
 from threading import Lock
 from typing import List
 import pandas as pd
 import streamlit as st
 from widgets.session import app_config
-from globals import VARS_INDEX_PATH
 from src.eurostat import (
     cast_time_to_datetimeindex,
     fetch_dataset_and_metadata,
-    fetch_table_of_contents,
     split_dimensions_and_attributes_from,
 )
 from src.utils import concat_keys_to_values
 from widgets.console import show_console
 from widgets.dataframe import (
+    empty_eurostat_dataframe,
     st_dataframe_with_index_and_rows_cols_count,
     filter_dataset_replacing_NA,
 )
 from widgets.download import download_dataframe_button
+from widgets.index import load_table_of_contents, load_codelist_reverse_index
 
 
 session = st.session_state
@@ -46,17 +45,6 @@ def load_dataset(code: str) -> pd.DataFrame:
 
 def update_stash(code, indexes, flags):
     session.stash.update({code: {"indexes": indexes, "flags": flags}})
-
-
-# NOTE Caching is managed manually, do not cache with streamlit
-def load_codelist_reverse_index() -> pd.Series:
-    return pd.read_pickle(VARS_INDEX_PATH)
-
-
-# NOTE `persist` preserve caching also when page is left
-@st.experimental_memo(show_spinner=False, persist="disk")
-def load_table_of_contents() -> pd.Series:
-    return fetch_table_of_contents()
 
 
 @st.experimental_memo(show_spinner=False)
@@ -97,19 +85,12 @@ def update_history_selected_indexes(dataset_code: str, name: str):
 def import_dataset():
     try:
         with st.sidebar:
-            with st.spinner(text="Fetching table of contents"):
+            with st.spinner(text="Fetching index"):
                 toc = load_table_of_contents()
-    except Exception as e:
-        st.sidebar.error(e)
-        return
-
-    try:
-        with st.sidebar:
-            with st.spinner(text="Fetching codelist"):
                 codelist = load_codelist_reverse_index()
     except Exception as e:
         st.sidebar.error(e)
-        return
+        return empty_eurostat_dataframe()
 
     variables = build_dimension_list(codelist)
 
@@ -147,7 +128,7 @@ def import_dataset():
         dataset_code = dataset_code_title.split(" | ", maxsplit=1)[0]
         try:
             with st.sidebar:
-                with st.spinner(text="Prepare filters"):
+                with st.spinner(text="Downloading data"):
                     dataset = load_dataset(dataset_code)
 
                     # Create or reuse a filtering history for this code
@@ -216,16 +197,7 @@ def import_dataset():
         except (ValueError, AssertionError, NotImplementedError) as e:
             st.sidebar.error(e)
 
-    return pd.DataFrame.from_dict(
-        {
-            "index": [],
-            "columns": ["flag", "value"],
-            "data": None,
-            "index_names": ["geo", "time"],
-            "column_names": [None],
-        },
-        orient="tight",
-    )
+    return empty_eurostat_dataframe()
 
 
 def show_dataset(dataset):

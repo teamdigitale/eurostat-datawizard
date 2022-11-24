@@ -5,6 +5,19 @@ from typing import Dict, List
 from src.eurostat import filter_dataset
 
 
+def empty_eurostat_dataframe():
+    return pd.DataFrame.from_dict(
+        {
+            "index": [],
+            "columns": ["flag", "value"],
+            "data": None,
+            "index_names": ["geo", "time"],
+            "column_names": [None],
+        },
+        orient="tight",
+    )
+
+
 def filter_dataset_replacing_NA(
     dataset: pd.DataFrame,
     indexes: Dict[str, List[str]],

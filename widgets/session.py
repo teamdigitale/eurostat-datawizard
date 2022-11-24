@@ -17,3 +17,12 @@ def app_config(title: str):
 
     if "user" not in st.session_state:
         st.session_state.user = dict(st.experimental_user)
+
+
+def remove_temporary_session_vars():
+    """Some variables were marked with a starting `_` because are not intended to
+    be retained but rather as throw-away variable.
+    """
+    for k in st.session_state:
+        if k.startswith("_"):
+            del st.session_state[k]
