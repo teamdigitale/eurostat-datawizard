@@ -19,7 +19,7 @@ The current stash will be reported here and you can _download_ it too.
 
 # Run the app on localhost
 This is a [streamlit](https://streamlit.io/)-based app. Requirements are managed with [pipenv](https://pipenv.pypa.io/). 
-Clone the repo (pay attention to have [Git-LFS](https://git-lfs.github.com/) installed) and you should be able to run this command:
+Clone the repo and you should be able to run this command:
 ```
 pipenv run streamlit run Home.py
 ```
@@ -34,11 +34,6 @@ pipenv install --dev
 
 # FAQ
 ## System requirements
-### Git-LFS
-This repo provides a cache to speed-up app initialization process. Be sure to support [Git-LFS](https://git-lfs.github.com/) on your system. On a Mac, you can install it using [Homebrew](https://brew.sh/) and this command:
-```
-brew install git-lfs
-```
 ### Package [eust](https://github.com/rasmuse/eust)
 If you find this error:
 ```
