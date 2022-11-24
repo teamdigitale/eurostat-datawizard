@@ -11,6 +11,7 @@ from src.eurostat import (
 from src.utils import concat_keys_to_values
 from widgets.console import show_console
 from widgets.dataframe import (
+    empty_eurostat_dataframe,
     st_dataframe_with_index_and_rows_cols_count,
     filter_dataset_replacing_NA,
 )
@@ -84,19 +85,12 @@ def update_history_selected_indexes(dataset_code: str, name: str):
 def import_dataset():
     try:
         with st.sidebar:
-            with st.spinner(text="Fetching table of contents"):
+            with st.spinner(text="Fetching index"):
                 toc = load_table_of_contents()
-    except Exception as e:
-        st.sidebar.error(e)
-        return
-
-    try:
-        with st.sidebar:
-            with st.spinner(text="Fetching codelist"):
                 codelist = load_codelist_reverse_index()
     except Exception as e:
         st.sidebar.error(e)
-        return
+        return empty_eurostat_dataframe()
 
     variables = build_dimension_list(codelist)
 
@@ -203,16 +197,7 @@ def import_dataset():
         except (ValueError, AssertionError, NotImplementedError) as e:
             st.sidebar.error(e)
 
-    return pd.DataFrame.from_dict(
-        {
-            "index": [],
-            "columns": ["flag", "value"],
-            "data": None,
-            "index_names": ["geo", "time"],
-            "column_names": [None],
-        },
-        orient="tight",
-    )
+    return empty_eurostat_dataframe()
 
 
 def show_dataset(dataset):

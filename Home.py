@@ -3,10 +3,9 @@ from threading import Lock
 import pandas as pd
 import streamlit as st
 from requests import ConnectionError, HTTPError
-from datetime import datetime
 import time
 from globals import VARS_INDEX_PATH
-from widgets.index import load_table_of_contents
+from widgets.index import get_last_index_update, load_table_of_contents
 from src.eurostat import (
     eurostat_sdmx_request,
     fetch_dataset_codelist,
@@ -88,12 +87,6 @@ def save_index_file():
     message.empty()
 
 
-def get_last_index_update() -> datetime | None:
-    if os.path.exists(VARS_INDEX_PATH):
-        return datetime.fromtimestamp(os.path.getmtime(VARS_INDEX_PATH))
-    return None
-
-
 def index_helper(message_widget):
     last_update = get_last_index_update()
 
@@ -110,6 +103,17 @@ def index_helper(message_widget):
                 st.experimental_rerun()  # In order to load newly updated index
         else:
             message_widget.empty()
+
+
+def index_describer():
+    if get_last_index_update():
+        try:
+            with st.sidebar:
+                with st.spinner(text="Fetching index"):
+                    toc = load_table_of_contents()
+                    st.write(f"Indexed dataset: {len(toc)}")
+        except Exception as e:
+            st.sidebar.error(e)
 
 
 def show_cache_uploader():
@@ -142,6 +146,8 @@ if __name__ == "__main__":
     message = st.sidebar.empty()
     message.markdown("💤 A previous indexing is still running.")
     index_helper(message)
+
+    index_describer()
 
     show_cache_uploader()
 
