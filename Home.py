@@ -130,6 +130,12 @@ def index_describer():
                         .sort_values(ascending=False)
                         .reset_index()
                         .query("datasets > 1")
+                        .rename(
+                            columns={
+                                "code": "code | description",
+                                "datasets": "n° datasets",
+                            }
+                        )
                     )
 
         except Exception as e:
