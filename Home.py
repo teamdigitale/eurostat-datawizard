@@ -6,7 +6,7 @@ from requests import ConnectionError, HTTPError
 from datetime import datetime
 import time
 from globals import VARS_INDEX_PATH
-from pages.Data_Import import load_table_of_contents
+from widgets.index import load_table_of_contents
 from src.eurostat import (
     eurostat_sdmx_request,
     fetch_dataset_codelist,
@@ -107,7 +107,7 @@ def index_helper(message_widget):
             with index_lock():
                 message_widget.empty()
                 save_index_file()
-                st.experimental_rerun()
+                st.experimental_rerun()  # In order to load newly updated index
         else:
             message_widget.empty()
 

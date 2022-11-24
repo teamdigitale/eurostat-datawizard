@@ -4,11 +4,9 @@ from typing import List
 import pandas as pd
 import streamlit as st
 from widgets.session import app_config
-from globals import VARS_INDEX_PATH
 from src.eurostat import (
     cast_time_to_datetimeindex,
     fetch_dataset_and_metadata,
-    fetch_table_of_contents,
     split_dimensions_and_attributes_from,
 )
 from src.utils import concat_keys_to_values
@@ -18,6 +16,7 @@ from widgets.dataframe import (
     filter_dataset_replacing_NA,
 )
 from widgets.download import download_dataframe_button
+from widgets.index import load_table_of_contents, load_codelist_reverse_index
 
 
 session = st.session_state
@@ -46,17 +45,6 @@ def load_dataset(code: str) -> pd.DataFrame:
 
 def update_stash(code, indexes, flags):
     session.stash.update({code: {"indexes": indexes, "flags": flags}})
-
-
-# NOTE Caching is managed manually, do not cache with streamlit
-def load_codelist_reverse_index() -> pd.Series:
-    return pd.read_pickle(VARS_INDEX_PATH)
-
-
-# NOTE `persist` preserve caching also when page is left
-@st.experimental_memo(show_spinner=False, persist="disk")
-def load_table_of_contents() -> pd.Series:
-    return fetch_table_of_contents()
 
 
 @st.experimental_memo(show_spinner=False)
