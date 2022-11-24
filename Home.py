@@ -150,7 +150,7 @@ if __name__ == "__main__":
     app_description = app_description.replace("# Eurostat", "# 🇪🇺 Eurostat")
     app_description = app_description.replace(
         "[here](https://eurostat-datawizard.streamlit.app)", "here"
-    ).replace("repo", "[repo](https://github.com/teamdigitale/eurostat-datawizard)")
+    ).replace("repo", "[repo](https://github.com/teamdigitale/eurostat-datawizard)", 1)
     st.markdown(app_description)
 
     message = st.sidebar.empty()
