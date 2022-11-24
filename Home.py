@@ -117,7 +117,7 @@ def index_describer():
                 with st.spinner(text="Fetching index"):
                     toc = load_table_of_contents()
                     codelist = load_codelist_reverse_index()
-                    st.markdown(
+                    st.sidebar.markdown(
                         f"""
                     - Indexed dataset: {len(toc)}
                     - Indexed unique variables: {len(codelist)}
@@ -125,7 +125,7 @@ def index_describer():
                     Most used variables:
                     """
                     )
-                    st.dataframe(
+                    st.sidebar.dataframe(
                         codelist.apply(len)
                         .sort_values(ascending=False)
                         .reset_index()
