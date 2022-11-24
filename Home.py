@@ -135,9 +135,8 @@ if __name__ == "__main__":
         app_description = "".join([next(readme) for _ in range(19)])
     app_description = app_description.replace("# Eurostat", "# 🇪🇺 Eurostat")
     app_description = app_description.replace(
-        "You can play with a (resource limited) working version [here](https://eurostat-datawizard.streamlit.app).",
-        "",
-    )
+        "[here](https://eurostat-datawizard.streamlit.app)", "here"
+    ).replace("repo", "[repo](https://github.com/teamdigitale/eurostat-datawizard)")
     st.markdown(app_description)
 
     message = st.sidebar.empty()
