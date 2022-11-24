@@ -5,7 +5,11 @@ import streamlit as st
 from requests import ConnectionError, HTTPError
 import time
 from globals import VARS_INDEX_PATH
-from widgets.index import get_last_index_update, load_table_of_contents
+from widgets.index import (
+    get_last_index_update,
+    load_table_of_contents,
+    load_codelist_reverse_index,
+)
 from src.eurostat import (
     eurostat_sdmx_request,
     fetch_dataset_codelist,
@@ -111,7 +115,13 @@ def index_describer():
             with st.sidebar:
                 with st.spinner(text="Fetching index"):
                     toc = load_table_of_contents()
-                    st.write(f"Indexed dataset: {len(toc)}")
+                    codelist = load_codelist_reverse_index()
+                    st.markdown(
+                        f"""
+                    - Indexed dataset: {len(toc)}
+                    - Indexed unique variables: {len(codelist)}
+                    """
+                    )
         except Exception as e:
             st.sidebar.error(e)
 
