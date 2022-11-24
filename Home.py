@@ -109,6 +109,7 @@ def index_helper(message_widget):
             message_widget.empty()
 
 
+@st.experimental_memo(show_spinner=False)
 def index_describer():
     if get_last_index_update():
         try:
@@ -120,8 +121,17 @@ def index_describer():
                         f"""
                     - Indexed dataset: {len(toc)}
                     - Indexed unique variables: {len(codelist)}
+
+                    Most used variables:
                     """
                     )
+                    st.dataframe(
+                        codelist.apply(len)
+                        .sort_values(ascending=False)
+                        .reset_index()
+                        .query("datasets > 1")
+                    )
+
         except Exception as e:
             st.sidebar.error(e)
 
