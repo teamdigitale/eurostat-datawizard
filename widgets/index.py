@@ -75,7 +75,7 @@ def save_index_file():
 
     # Aggregate datasets dimension for a variable -> list(dataset) index
     message.text("Finalizing indexing...")
-    uninformative_parents = ["OBS_FLAG", "OBS_STATUS"]
+    uninformative_parents = ["OBS_FLAG", "OBS_STATUS", "GEO", "TIME"]
     codelist = codelist[~codelist.parent.isin(uninformative_parents)]
     codelist = (
         codelist.assign(name=codelist.name.str.capitalize())
