@@ -15,7 +15,7 @@ A straightforward webapp to export easily multiple Eurostat datasets. You can pl
 5. You can repeat the process starting from _1_ for as many dataset as you like.
 
 ## Stash
-The current stash will be reported here and you can _download_ it too.
+Stash it's where you can find every dataset that you stored for later use. The current stash will be reported here and you can _download_ it too.
 
 # Run the app on localhost
 This is a [streamlit](https://streamlit.io/)-based app. Requirements are managed with [pipenv](https://pipenv.pypa.io/). 
