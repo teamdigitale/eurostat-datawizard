@@ -18,12 +18,13 @@ def table_of_contents():
     return pd.DataFrame(
         {
             "title": {
+                3: "   Business and consumer surveys (source: DG ECFIN)",
                 4: "                Consumer surveys (source: DG ECFIN)",
                 5: "                    Consumers - monthly data",
                 6: "                    Consumers - quarterly data",
             },
-            "code": {4: "ei_bcs_cs", 5: "ei_bsco_m", 6: "ei_bsco_q"},
-            "type": {4: "folder", 5: "dataset", 6: "dataset"},
+            "code": {3: "ei_bcs", 4: "ei_bcs_cs", 5: "ei_bsco_m", 6: "ei_bsco_q"},
+            "type": {3: "folder", 4: "folder", 5: "dataset", 6: "dataset"},
         }
     )
 
@@ -203,7 +204,7 @@ def test_fetch_table_of_contents(mocker, table_of_contents):
         return_value=table_of_contents,
     )
 
-    toc = fetch_table_of_contents()
+    toc, meta = fetch_table_of_contents()
     expected = pd.Series(
         {
             "ei_bsco_m": "Consumers - monthly data",
@@ -213,6 +214,16 @@ def test_fetch_table_of_contents(mocker, table_of_contents):
     expected.index.name = "code"
     expected.name = "title"
     assert_series_equal(toc, expected)
+
+    expected = pd.Series(
+        {
+            "ei_bcs": "Business and consumer surveys (source: DG ECFIN)",
+            "ei_bcs_cs": "Consumer surveys (source: DG ECFIN)",
+        }
+    )
+    expected.index.name = "code"
+    expected.name = "title"
+    assert_series_equal(meta, expected)
 
 
 def test_fetch_dataset_and_metadata(mock_eust):
