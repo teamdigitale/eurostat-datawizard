@@ -66,7 +66,8 @@ def index_describer():
                                 "code": "code | description",
                                 "datasets": "n° datasets",
                             }
-                        )
+                        ),
+                        use_container_width=True,
                     )
 
         except Exception as e:
