@@ -16,7 +16,8 @@ from src.eurostat import (
 
 @st.experimental_memo(show_spinner=False, ttl=timedelta(days=90))
 def load_table_of_contents() -> pd.Series:
-    return fetch_table_of_contents()
+    toc, _ = fetch_table_of_contents()
+    return toc
 
 
 def get_last_index_update() -> datetime | None:
@@ -72,8 +73,10 @@ def save_index_file():
             icon="✅",
         )
 
-    # Aggregate datasets dimension for a reverse index
+    # Aggregate datasets dimension for a variable -> list(dataset) index
     message.text("Finalizing indexing...")
+    uninformative_parents = ["OBS_FLAG", "OBS_STATUS", "GEO", "FREQ"]
+    codelist = codelist[~codelist.parent.isin(uninformative_parents)]
     codelist = (
         codelist.assign(name=codelist.name.str.capitalize())
         .groupby(["dimension", "name"])["dataset"]
