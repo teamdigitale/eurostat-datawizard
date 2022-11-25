@@ -10,6 +10,8 @@ streamlit = "*"
 requests-cache = "*"
 watchdog = "*"
 pandasdmx = "*"
+scikit-learn = "*"
+plotly = "*"
 
 [dev-packages]
 pytest = "*"
@@ -17,6 +19,8 @@ pytest-cov = "*"
 black = "*"
 pytest-mock = "*"
 flake8 = "*"
+ipykernel = "*"
+nbformat = ">=4.2.0"
 
 [requires]
 python_version = "3.10"
