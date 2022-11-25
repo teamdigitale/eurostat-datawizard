@@ -19,7 +19,9 @@ def eurostat_sdmx_request():
 
 def fetch_table_of_contents() -> pd.Series:
     """Returns dataset codes as keys and titles as values."""
-    # NOTE Access to txt seems quicker than a SDMX call
+    # NOTE Access to txt seems quicker than a SDMX call:
+    # `dataflows = pandasdmx.to_pandas(eurostat_sdmx_request().dataflow())`
+    # It's also returning more results than in the txt!
     return (
         pd.read_table(
             "https://ec.europa.eu/eurostat/estat-navtree-portlet-prod/BulkDownloadListing?file=table_of_contents_en.txt",
