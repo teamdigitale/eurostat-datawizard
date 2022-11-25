@@ -33,7 +33,9 @@ def index_helper(message_widget):
             with index_lock():
                 message_widget.empty()
                 save_index_file()
-                st.experimental_rerun()  # In order to load newly updated index
+                # In order to load newly updated index
+                st.experimental_memo.clear()
+                st.experimental_rerun()
         else:
             message_widget.empty()
 
