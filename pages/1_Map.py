@@ -58,7 +58,7 @@ if __name__ == "__main__":
 
     st.header("Datasets map")
     if os.environ["ENV"] == "streamlit":
-        st.warning(
+        st.error(
             "Datasets clustering is too expensive for streamlit cloud limited resources. You can compute this offline, cloning the repo."
         )
     else:
