@@ -18,7 +18,6 @@ from widgets.dataframe import (
 from widgets.download import download_dataframe_button
 from widgets.index import load_table_of_contents, load_codelist_reverse_index
 
-
 session = st.session_state
 
 
@@ -86,7 +85,7 @@ def import_dataset():
     try:
         with st.sidebar:
             with st.spinner(text="Fetching index"):
-                toc = load_table_of_contents()
+                toc, _ = load_table_of_contents()
                 codelist = load_codelist_reverse_index()
     except Exception as e:
         st.sidebar.error(e)
