@@ -1,14 +1,16 @@
-import streamlit as st
+from importlib import import_module
+
 import numpy as np
 import pandas as pd
+import streamlit as st
+
+from widgets.console import show_console
 from widgets.dataframe import (
-    st_dataframe_with_index_and_rows_cols_count,
     filter_dataset_replacing_NA,
+    st_dataframe_with_index_and_rows_cols_count,
 )
 from widgets.download import download_dataframe_button
 from widgets.session import app_config
-from widgets.console import show_console
-from pages.Data import load_dataset
 
 
 @st.experimental_memo(show_spinner=False)
@@ -17,7 +19,7 @@ def load_stash(stash: dict) -> pd.DataFrame:
     common_cols = ["geo", "time", "flag", "value"]
     for code, filters in stash.items():
         indexes, flags = filters["indexes"], filters["flags"]
-        df = load_dataset(code)
+        df = import_module("pages.2_Data").load_dataset(code)
         df = filter_dataset_replacing_NA(
             df,
             indexes,

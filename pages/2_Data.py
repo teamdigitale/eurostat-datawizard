@@ -18,7 +18,6 @@ from widgets.dataframe import (
 from widgets.download import download_dataframe_button
 from widgets.index import load_table_of_contents, load_codelist_reverse_index
 
-
 session = st.session_state
 
 
