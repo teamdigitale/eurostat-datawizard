@@ -94,7 +94,7 @@ if __name__ == "__main__":
     app_config("Home")
 
     with open("README.md", "r") as readme:
-        app_description = "".join([next(readme) for _ in range(19)])
+        app_description = "".join([next(readme) for _ in range(22)])
     app_description = app_description.replace("# Eurostat", "# 🇪🇺 Eurostat")
     app_description = app_description.replace(
         "[here](https://eurostat-datawizard.streamlit.app)", "here"
