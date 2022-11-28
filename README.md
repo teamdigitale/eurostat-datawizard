@@ -8,7 +8,7 @@ A straightforward webapp to export easily multiple Eurostat datasets. You can pl
 3. When ready, index is persisted on disk and all app users can benefit from it. Bear in mind that index can become too old but it can be refreshed. Check the displayed date to guide your choice.
 
 ## Map [Optional]
-An overview of every Eurostat dataset, characterized by its variables, in relation with eeach other. Closer the datasets, more the common variables. Map is available only if an index was created. Clusters are shown as a Plotly scatterplot, you can take advantage of its interactive ability:
+An overview of every Eurostat dataset, characterized by its variables, in relation with each other. Closer the datasets, more the common variables. Map is available only if an index was created. Clusters are shown as a Plotly scatterplot, you can take advantage of its interactive ability:
 1. Zoom in/out section of the map by drawing box around datapoints.
 2. Toggle datapoint visibility double-clicking on corresponding legend label.
 
