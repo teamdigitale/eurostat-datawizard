@@ -1,5 +1,6 @@
-import streamlit as st
+import os
 import pandas as pd
+import streamlit as st
 from widgets.console import show_console
 from widgets.session import app_config
 from widgets.index import (
@@ -56,31 +57,35 @@ if __name__ == "__main__":
     app_config("Map")
 
     st.header("Datasets map")
-
-    if get_last_index_update():
-        labeled_toc = build_labeled_toc()
-        adj = build_adjacency_matrix()
-        datasets2d = cluster_datasets(adj, labeled_toc)
-        margin = 5
-        fig = px.scatter(
-            datasets2d.rename(columns={"title_theme": "Themes"}),
-            x="1st",
-            y="2nd",
-            color="Themes",
-            hover_data=["code", "title"],
-            range_x=(
-                datasets2d["1st"].min() - margin,
-                datasets2d["1st"].max() + margin,
-            ),
-            range_y=(
-                datasets2d["2nd"].min() - margin,
-                datasets2d["2nd"].max() + margin,
-            ),
-            height=1300,
+    if os.environ["ENV"] == "streamlit":
+        st.warning(
+            "Datasets clustering is too expensive for streamlit cloud limited resources. You can compute this offline, cloning the repo."
         )
-        fig.update_layout(legend=dict(orientation="h"))
-        st.plotly_chart(figure_or_data=fig, use_container_width=True)
     else:
-        st.warning("Create an index first!")
+        if not get_last_index_update():
+            st.warning("Create an index first!")
+        else:
+            labeled_toc = build_labeled_toc()
+            adj = build_adjacency_matrix()
+            datasets2d = cluster_datasets(adj, labeled_toc)
+            margin = 5
+            fig = px.scatter(
+                datasets2d.rename(columns={"title_theme": "Themes"}),
+                x="1st",
+                y="2nd",
+                color="Themes",
+                hover_data=["code", "title"],
+                range_x=(
+                    datasets2d["1st"].min() - margin,
+                    datasets2d["1st"].max() + margin,
+                ),
+                range_y=(
+                    datasets2d["2nd"].min() - margin,
+                    datasets2d["2nd"].max() + margin,
+                ),
+                height=1300,
+            )
+            fig.update_layout(legend=dict(orientation="h"))
+            st.plotly_chart(figure_or_data=fig, use_container_width=True)
 
     show_console()  # For debugging
