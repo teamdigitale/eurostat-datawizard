@@ -6,7 +6,7 @@ from tests.test_eurostat import (
     dataset,  # NOTE must be imported in order to let `mock_eust` work
     metadata,  # NOTE must be imported in order to let `mock_eust` work
 )  # flake8: noqa
-from pages.Data_Import import load_dataset
+from pages.Data import load_dataset
 
 
 # NOTE `mock_eust` must appear as parameter in order to be active

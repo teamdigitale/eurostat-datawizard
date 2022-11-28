@@ -8,7 +8,7 @@ from widgets.dataframe import (
 from widgets.download import download_dataframe_button
 from widgets.session import app_config
 from widgets.console import show_console
-from pages.Data_Import import load_dataset
+from pages.Data import load_dataset
 
 
 @st.experimental_memo(show_spinner=False)

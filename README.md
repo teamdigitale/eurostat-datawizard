@@ -7,7 +7,7 @@ A straightforward webapp to export easily multiple Eurostat datasets. You can pl
 2. While running, do not leave or refresh page. If connection is reset for some reason, you can resume index creation: previous API requests are cached and will be faster to process.
 3. When ready, index is persisted on disk and all app users can benefit from it. Bear in mind that index can become too old but it can be refreshed. Check the displayed date to guide your choice.
 
-## Data Import
+## Data
 1. [Optional] Filter Eurostat datasets list by a variable of interest. This option appears only if an index was created.
 2. Choose an Eurostat dataset of interest (or start typing dataset code or title).
 3. After loading, you can inspect the dataset and filter indexes, flags and time-span with the controls provided in the sidebar.
