@@ -75,7 +75,7 @@ def index_describer():
 
 
 def show_cache_uploader():
-    # NOTE coul be simpler upload directly the varsname but choosen to not do, in order
+    # NOTE it was simpler upload directly the varsname but choosen to not do, in order
     # to mitigate security problems in uploading a `pickled` file.
     ext = "sqlite"
     cachename = f"cache/sdmx.{ext}"
