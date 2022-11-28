@@ -1,6 +1,7 @@
 import os
 import time
 from datetime import datetime, timedelta
+from typing import Tuple
 
 import pandas as pd
 import streamlit as st
@@ -9,15 +10,15 @@ from requests import ConnectionError, HTTPError
 from globals import VARS_INDEX_PATH
 from src.eurostat import (
     eurostat_sdmx_request,
-    fetch_table_of_contents,
     fetch_dataset_codelist,
+    fetch_table_of_contents,
 )
 
 
 @st.experimental_memo(show_spinner=False, ttl=timedelta(days=90))
-def load_table_of_contents() -> pd.Series:
-    toc, _ = fetch_table_of_contents()
-    return toc
+def load_table_of_contents() -> Tuple[pd.Series, pd.Series]:
+    toc, themes = fetch_table_of_contents()
+    return toc, themes
 
 
 def get_last_index_update() -> datetime | None:
@@ -36,7 +37,8 @@ def save_index_file():
     progress_value = 0.0
     status = st.sidebar.empty()
     req = eurostat_sdmx_request()
-    datasets = load_table_of_contents().index.to_list()
+    toc, _ = load_table_of_contents()
+    datasets = toc.index.to_list()
     len_datasets = len(datasets)
     datasets_not_loaded = []
     for n, dataset in enumerate(datasets):
@@ -75,7 +77,7 @@ def save_index_file():
 
     # Aggregate datasets dimension for a variable -> list(dataset) index
     message.text("Finalizing indexing...")
-    uninformative_parents = ["OBS_FLAG", "OBS_STATUS", "FREQ"]
+    uninformative_parents = ["OBS_FLAG", "OBS_STATUS"]
     codelist = codelist[~codelist.parent.isin(uninformative_parents)]
     codelist = (
         codelist.assign(name=codelist.name.str.capitalize())
