@@ -1,13 +1,13 @@
 import os
 import time
-from datetime import datetime, timedelta
+from datetime import timedelta
 from typing import Tuple
 
 import pandas as pd
 import streamlit as st
 from requests import ConnectionError, HTTPError
 
-from globals import VARS_INDEX_PATH
+from globals import VARS_INDEX_PATH, CLUSTERING_PATH, get_last_clustering_update
 from src.eurostat import (
     eurostat_sdmx_request,
     fetch_dataset_codelist,
@@ -19,12 +19,6 @@ from src.eurostat import (
 def load_table_of_contents() -> Tuple[pd.Series, pd.Series]:
     toc, themes = fetch_table_of_contents()
     return toc, themes
-
-
-def get_last_index_update() -> datetime | None:
-    if os.path.exists(VARS_INDEX_PATH):
-        return datetime.fromtimestamp(os.path.getmtime(VARS_INDEX_PATH))
-    return None
 
 
 def save_index_file():
@@ -89,6 +83,9 @@ def save_index_file():
     codelist.name = "datasets"
     codelist.index.name = "code"
     codelist.apply(lambda x: x.tolist()).to_pickle(VARS_INDEX_PATH)
+    # With a new index, Map clustering must be invalidated
+    if get_last_clustering_update():
+        os.remove(CLUSTERING_PATH)
     message.empty()
 
 

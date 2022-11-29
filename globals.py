@@ -1,4 +1,6 @@
 import streamlit as st
+from datetime import datetime
+from src.utils import get_last_file_update
 
 PAGE_ICON = "🇪🇺"
 LAYOUT = "wide"
@@ -13,3 +15,12 @@ MENU_ITEMS = {
             """
 }
 VARS_INDEX_PATH = "cache/vars_index.pickle"
+CLUSTERING_PATH = "cache/clustermap.csv.gz"
+
+
+def get_last_index_update() -> datetime | None:
+    return get_last_file_update(VARS_INDEX_PATH)
+
+
+def get_last_clustering_update() -> datetime | None:
+    return get_last_file_update(CLUSTERING_PATH)

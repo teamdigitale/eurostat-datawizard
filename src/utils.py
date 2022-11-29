@@ -1,6 +1,8 @@
+import os
 import numpy
 import pandas as pd
 from json import JSONEncoder
+from datetime import datetime
 
 
 def concat_keys_to_values(d: dict, sep=" | "):
@@ -43,3 +45,9 @@ class PandasJSONEncoder(JSONEncoder):
 
         # If none of the above apply, fall back to the standard JSON encoding
         return super().default(obj_to_encode)
+
+
+def get_last_file_update(filepath: str) -> datetime | None:
+    if os.path.exists(filepath):
+        return datetime.fromtimestamp(os.path.getmtime(filepath))
+    return None
