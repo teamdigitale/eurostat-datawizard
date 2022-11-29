@@ -82,12 +82,12 @@ if __name__ == "__main__":
 
     st.header("Datasets map")
     if os.environ["ENV"] == "streamlit":
-        dataset2d_path = "cache/clustermap.csv"
+        dataset2d_path = "cache/clustermap.csv.gz"
         if not os.path.exists(dataset2d_path):
             st.error(
                 "Datasets clustering is too expensive for Streamlit Cloud limited resources. You can compute this offline, cloning the repo."
             )
-            buffer = st.file_uploader("Load clustering offline results", ["csv", "gz"])
+            buffer = st.file_uploader("Load clustering offline results", "csv.gz")
             if buffer:
                 with open(dataset2d_path, "wb") as f:
                     f.write(buffer.getbuffer())
