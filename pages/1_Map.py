@@ -100,6 +100,9 @@ if __name__ == "__main__":
     app_config("Map")
 
     st.header("Datasets map")
+    st.markdown(
+        """Each datapoint is an Eurostat dataset. Closer the datasets, more the variable shared among them."""
+    )
 
     if "map_selection" not in session:
         session["map_selection"] = []
