@@ -16,14 +16,16 @@ import plotly.express as px
 def build_labeled_toc() -> pd.DataFrame:
     # Datasets starts with a code that identify its theme like:
     # aact_ali01 (Agricultural labour input statistics: absolute...) ->	aact (Economic accounts for agriculture)
-    # Here, a full-join is created and the filter the shorter match to find the generic theme of every dataset.
+    # Here, a full-join is created and them filtered the shorter match to find the generic theme of every dataset.
     toc, themes = load_table_of_contents()
     a, b = toc.reset_index(), themes.reset_index()
     a["_join"], b["_join"] = 1, 1
     ab = a.merge(b, on="_join", suffixes=("", "_theme")).drop(columns="_join")
     ab["match"] = ab.apply(lambda x: x["code"].find(x["code_theme"]), axis=1).ge(0)
     ab = ab[ab.match].drop(columns=["code_theme", "match"])
-    ab = ab.groupby("code").first()
+    ab = ab.groupby(
+        "code"
+    ).first()  # Because of ordering, this is the shorter theme matching
     return ab
 
 
