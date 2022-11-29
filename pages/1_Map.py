@@ -87,7 +87,7 @@ if __name__ == "__main__":
             st.error(
                 "Datasets clustering is too expensive for Streamlit Cloud limited resources. You can compute this offline, cloning the repo."
             )
-            buffer = st.file_uploader("Load clustering offline results", "csv.gz")
+            buffer = st.file_uploader("Load clustering offline results", "gz")
             if buffer:
                 with open(dataset2d_path, "wb") as f:
                     f.write(buffer.getbuffer())
