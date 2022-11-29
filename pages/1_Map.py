@@ -82,18 +82,18 @@ if __name__ == "__main__":
 
     st.header("Datasets map")
     if os.environ["ENV"] == "streamlit":
-        cluster_path = "cache/clustermap.csv"
-        if not os.path.exists(cluster_path):
+        dataset2d_path = "cache/clustermap.csv"
+        if not os.path.exists(dataset2d_path):
             st.error(
                 "Datasets clustering is too expensive for Streamlit Cloud limited resources. You can compute this offline, cloning the repo."
             )
             buffer = st.file_uploader("Load clustering offline results", "csv")
             if buffer:
-                with open(cluster_path, "wb") as f:
+                with open(dataset2d_path, "wb") as f:
                     f.write(buffer.getbuffer())
                     st.experimental_rerun()
         else:
-            show_clustering(pd.read_csv(cluster_path))
+            show_clustering(pd.read_csv(dataset2d_path))
     else:
         if not get_last_index_update():
             st.warning("Create an index first!")
