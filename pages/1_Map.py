@@ -8,6 +8,7 @@ from widgets.index import (
     load_codelist_reverse_index,
     load_table_of_contents,
 )
+from widgets.download import download_dataframe_button
 from sklearn.manifold import TSNE
 import plotly.express as px
 
@@ -55,14 +56,44 @@ def cluster_datasets(adjacency: pd.DataFrame, toc: pd.DataFrame) -> pd.DataFrame
     return xy.join(toc).reset_index()
 
 
+def show_clustering(data: pd.DataFrame, margin: int = 5):
+    fig = px.scatter(
+        data.rename(columns={"title_theme": "Themes"}),
+        x="1st",
+        y="2nd",
+        color="Themes",
+        hover_data=["code", "title"],
+        range_x=(
+            data["1st"].min() - margin,
+            data["1st"].max() + margin,
+        ),
+        range_y=(
+            data["2nd"].min() - margin,
+            data["2nd"].max() + margin,
+        ),
+        height=1300,
+    )
+    fig.update_layout(legend=dict(orientation="h"))
+    st.plotly_chart(figure_or_data=fig, use_container_width=True)
+
+
 if __name__ == "__main__":
     app_config("Map")
 
     st.header("Datasets map")
     if os.environ["ENV"] == "streamlit":
-        st.error(
-            "Datasets clustering is too expensive for Streamlit Cloud limited resources. You can compute this offline, cloning the repo."
-        )
+        cluster_path = "cache/clustermap.csv"
+        if not os.path.exists(cluster_path):
+            st.error(
+                "Datasets clustering is too expensive for Streamlit Cloud limited resources. You can compute this offline, cloning the repo."
+            )
+            buffer = st.file_uploader("Load clustering offline results", "csv")
+            if buffer:
+                with open(cluster_path, "wb") as f:
+                    f.write(buffer.getbuffer())
+                    st.experimental_rerun()
+        else:
+            show_clustering(pd.read_csv(cluster_path))
     else:
         if not get_last_index_update():
             st.warning("Create an index first!")
@@ -70,24 +101,7 @@ if __name__ == "__main__":
             labeled_toc = build_labeled_toc()
             adj = build_adjacency_matrix()
             datasets2d = cluster_datasets(adj, labeled_toc)
-            margin = 5
-            fig = px.scatter(
-                datasets2d.rename(columns={"title_theme": "Themes"}),
-                x="1st",
-                y="2nd",
-                color="Themes",
-                hover_data=["code", "title"],
-                range_x=(
-                    datasets2d["1st"].min() - margin,
-                    datasets2d["1st"].max() + margin,
-                ),
-                range_y=(
-                    datasets2d["2nd"].min() - margin,
-                    datasets2d["2nd"].max() + margin,
-                ),
-                height=1300,
-            )
-            fig.update_layout(legend=dict(orientation="h"))
-            st.plotly_chart(figure_or_data=fig, use_container_width=True)
+            show_clustering(datasets2d)
+            download_dataframe_button(datasets2d, filename_prefix="clustermap")
 
     show_console()  # For debugging
