@@ -59,7 +59,6 @@ def index_describer():
                         codelist.apply(len)
                         .sort_values(ascending=False)
                         .reset_index()
-                        .query("datasets > 1")
                         .rename(
                             columns={
                                 "code": "code | description",
