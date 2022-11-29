@@ -3,10 +3,9 @@ from threading import Lock
 
 import streamlit as st
 
-from globals import VARS_INDEX_PATH
+from globals import VARS_INDEX_PATH, get_last_index_update
 from widgets.console import show_console
 from widgets.index import (
-    get_last_index_update,
     load_codelist_reverse_index,
     load_table_of_contents,
     save_index_file,
