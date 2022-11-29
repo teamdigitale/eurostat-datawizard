@@ -60,8 +60,9 @@ def cluster_datasets() -> pd.DataFrame:
 
 @st.experimental_memo
 def plot_clustering(data: pd.DataFrame, margin: int = 5) -> Figure:
+    data = data.rename(columns={"title_theme": "Themes"})
     fig = px.scatter(
-        data.rename(columns={"title_theme": "Themes"}),
+        data,
         x="1st",
         y="2nd",
         color="Themes",
@@ -74,7 +75,7 @@ def plot_clustering(data: pd.DataFrame, margin: int = 5) -> Figure:
             data["2nd"].min() - margin,
             data["2nd"].max() + margin,
         ),
-        height=1300,
+        category_orders={"Themes": sorted(data["Themes"].astype(str).unique())},
     )
     fig = fig.update_layout(legend=dict(orientation="h"))
     # Keep zoom at click: https://discuss.streamlit.io/t/cant-enter-values-without-updating-a-plotly-figure/28066
@@ -122,7 +123,7 @@ if __name__ == "__main__":
                 click_event=True,
                 select_event=True,
                 # use_container_width=True,  # Not supported by plotly_events
-                override_height=600,
+                override_height=1300,
                 override_width="100%",
             )
             if selection:
