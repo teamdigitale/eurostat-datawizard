@@ -12,6 +12,7 @@ watchdog = "*"
 pandasdmx = "*"
 scikit-learn = "*"
 plotly = "*"
+streamlit-plotly-events = "*"
 
 [dev-packages]
 pytest = "*"
