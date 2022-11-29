@@ -14,6 +14,8 @@ from widgets.index import (
 )
 from widgets.session import app_config
 
+session = st.session_state
+
 
 def build_labeled_toc() -> pd.DataFrame:
     # Datasets starts with a code that identify its theme like:
@@ -98,6 +100,9 @@ if __name__ == "__main__":
 
     st.header("Datasets map")
 
+    if "map_selection" not in session:
+        session["map_selection"] = []
+
     if os.environ["ENV"] == "streamlit" and not get_last_clustering_update():
         st.error(
             "Datasets clustering is too expensive for Streamlit Cloud limited resources. You can compute this offline, cloning the repo."
@@ -122,8 +127,15 @@ if __name__ == "__main__":
             )
             if selection:
                 selection = [(s["x"], s["y"]) for s in selection]
-                st.sidebar.subheader("Selection")
-                st.sidebar.dataframe(coordinates_as_index(datasets2d).loc[selection])
+                session["map_selection"] = selection
+
+            st.sidebar.subheader("Selection")
+            st.sidebar.dataframe(
+                coordinates_as_index(datasets2d)
+                .loc[session["map_selection"]]
+                .reset_index(drop=True),
+                use_container_width=True,
+            )
 
             download_dataframe_button(datasets2d, filename_prefix="clustermap")
 
