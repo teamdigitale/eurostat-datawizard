@@ -6,6 +6,7 @@ import streamlit as st
 
 from widgets.console import show_console
 from widgets.dataframe import (
+    empty_eurostat_dataframe,
     filter_dataset_replacing_NA,
     st_dataframe_with_index_and_rows_cols_count,
 )
@@ -57,7 +58,7 @@ def clear_stash():
 
 
 def show_stash():
-    dataset = pd.DataFrame()
+    dataset = empty_eurostat_dataframe()
     try:
         with st.spinner(text="Fetching data"):
             if st.session_state.stash.keys():

@@ -1,17 +1,14 @@
 import os
-from typing import List
-
 import pandas as pd
 import plotly.express as px
 import streamlit as st
 from plotly.graph_objects import Figure
 from sklearn.manifold import TSNE
 from streamlit_plotly_events import plotly_events
-
+from globals import CLUSTERING_PATH, get_last_index_update, get_last_clustering_update
 from widgets.console import show_console
 from widgets.download import download_dataframe_button
 from widgets.index import (
-    get_last_index_update,
     load_codelist_reverse_index,
     load_table_of_contents,
 )
@@ -85,7 +82,15 @@ def plot_clustering(data: pd.DataFrame, margin: int = 5) -> Figure:
 
 @st.experimental_memo
 def coordinates_as_index(data: pd.DataFrame) -> pd.DataFrame:
-    return data.set_index(["1st", "2nd"])
+    return data.set_index(["1st", "2nd"]).sort_index()
+
+
+def show_upload_button():
+    buffer = st.file_uploader("Load clustering offline results", "gz")
+    if buffer:
+        with open(CLUSTERING_PATH, "wb") as f:
+            f.write(buffer.getbuffer())
+            st.experimental_rerun()
 
 
 if __name__ == "__main__":
@@ -93,22 +98,17 @@ if __name__ == "__main__":
 
     st.header("Datasets map")
 
-    dataset2d_path = "cache/clustermap.csv.gz"
-    if os.environ["ENV"] == "streamlit" and not os.path.exists(dataset2d_path):
+    if os.environ["ENV"] == "streamlit" and not get_last_clustering_update():
         st.error(
             "Datasets clustering is too expensive for Streamlit Cloud limited resources. You can compute this offline, cloning the repo."
         )
-        buffer = st.file_uploader("Load clustering offline results", "gz")
-        if buffer:
-            with open(dataset2d_path, "wb") as f:
-                f.write(buffer.getbuffer())
-                st.experimental_rerun()
+        show_upload_button()
     else:
         if not get_last_index_update():
             st.warning("Create an index first!")
         else:
             datasets2d = (
-                pd.read_csv(dataset2d_path)
+                pd.read_csv(CLUSTERING_PATH)
                 if os.environ["ENV"] == "streamlit"
                 else cluster_datasets()
             )
