@@ -63,6 +63,7 @@ def update_variable_idx(variables: List[str]):
     session.selected_variable_idx = variables.index(session.selected_variable)
     # NOTE Because datasets list change, reset the selected idx
     session.selected_dataset_idx = 0
+    # NOTE Override "Filter datasets by (map) selection"
     if "selected_map_selection" in session:
         session["selected_map_selection"] = False
 
