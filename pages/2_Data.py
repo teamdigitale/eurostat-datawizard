@@ -119,7 +119,8 @@ def import_dataset():
             key="selected_map_selection",
             disabled="map_selection" not in session or session["map_selection"].empty,
         ):
-            dataset_codes = session["map_selection"]["code"].to_list()
+            if "map_selection" in session:
+                dataset_codes = session["map_selection"]["code"].to_list()
 
     datasets = build_toc_list(
         toc.loc[toc.index.intersection(dataset_codes)] if dataset_codes else toc  # type: ignore
