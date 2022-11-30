@@ -23,7 +23,7 @@ def fetch_table_of_contents() -> Tuple[pd.Series, pd.Series]:
     # `dataflows = pandasdmx.to_pandas(eurostat_sdmx_request().dataflow())`
     # Txt has dataset classifications and sdmx also returning more results
     # than in the txt and that can't be found in bulk download.
-    dataflow = (
+    txt = (
         pd.read_table(
             "https://ec.europa.eu/eurostat/estat-navtree-portlet-prod/BulkDownloadListing?file=table_of_contents_en.txt",
             usecols=[0, 1, 2],
@@ -33,14 +33,14 @@ def fetch_table_of_contents() -> Tuple[pd.Series, pd.Series]:
         .drop_duplicates()
     )
     toc = (
-        dataflow.query("type == 'dataset'")
+        txt.query("type == 'dataset'")
         .drop(columns=["type"])
         .set_index("code")
         .squeeze()
         .sort_index()
     )
     meta = (
-        dataflow.query("type == 'folder'")
+        txt.query("type == 'folder'")
         .drop(columns=["type"])
         .set_index("code")
         .squeeze()

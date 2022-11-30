@@ -13,7 +13,7 @@ An overview of every Eurostat dataset, characterized by its variables, in relati
 2. Toggle datapoint visibility double-clicking on corresponding legend label.
 
 ## Data
-1. [Optional] Filter Eurostat datasets list by a variable of interest. This option appears only if an index was created.
+1. [Optional] Filter Eurostat datasets list by a variable of interest OR by selected datasets in the [MAP](##MAP) page. These options appears only if an index and a clustering were created, respectively.
 2. Choose an Eurostat dataset of interest (or start typing dataset code or title).
 3. After loading, you can inspect the dataset and filter indexes, flags and time-span with the controls provided in the sidebar.
 4. When done, you can _download_ the current data snapshot in a convenient gzipped csv. You can _stash_ it for further inspection down the line. 

@@ -63,6 +63,9 @@ def update_variable_idx(variables: List[str]):
     session.selected_variable_idx = variables.index(session.selected_variable)
     # NOTE Because datasets list change, reset the selected idx
     session.selected_dataset_idx = 0
+    # NOTE Override "Filter datasets by (map) selection"
+    if "selected_map_selection" in session:
+        session["selected_map_selection"] = False
 
 
 def update_dataset_idx(datasets: List[str]):
@@ -113,9 +116,11 @@ def import_dataset():
     with tab2:
         if tab2.checkbox(
             "Filter datasets by selection",
+            key="selected_map_selection",
             disabled="map_selection" not in session or session["map_selection"].empty,
         ):
-            dataset_codes = session["map_selection"]["code"].to_list()
+            if "map_selection" in session:
+                dataset_codes = session["map_selection"]["code"].to_list()
 
     datasets = build_toc_list(
         toc.loc[toc.index.intersection(dataset_codes)] if dataset_codes else toc  # type: ignore
