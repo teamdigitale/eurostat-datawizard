@@ -105,7 +105,7 @@ if __name__ == "__main__":
     )
 
     if "map_selection" not in session:
-        session["map_selection"] = []
+        session["map_selection"] = pd.Series(name="Selection")
 
     if os.environ["ENV"] == "streamlit" and not get_last_clustering_update():
         st.error(
@@ -131,13 +131,13 @@ if __name__ == "__main__":
             )
             if selection:
                 selection = [(s["x"], s["y"]) for s in selection]
+                selection = coordinates_as_index(datasets2d).loc[selection]
+                selection = selection["code"]
+                selection.name = "Selection"
                 session["map_selection"] = selection
 
-            st.sidebar.subheader("Selection")
             st.sidebar.dataframe(
-                coordinates_as_index(datasets2d)
-                .loc[session["map_selection"]]
-                .reset_index(drop=True),
+                session["map_selection"].reset_index(drop=True),
                 use_container_width=True,
             )
 

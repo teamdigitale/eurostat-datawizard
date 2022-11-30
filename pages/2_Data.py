@@ -106,6 +106,11 @@ def import_dataset():
 
     # Get a toc subsets or the entire toc list
     dataset_codes = codelist.get(session.selected_variable, default=None)
+
+    if "map_selection" in session:
+        if st.sidebar.checkbox("Use Map Selection"):
+            dataset_codes = session["map_selection"].to_list()
+
     datasets = build_toc_list(
         toc.loc[toc.index.intersection(dataset_codes)] if dataset_codes else toc  # type: ignore
     )
