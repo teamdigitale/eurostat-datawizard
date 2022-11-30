@@ -93,22 +93,28 @@ def import_dataset():
 
     variables = build_dimension_list(codelist)
 
-    if "selected_variable_idx" not in session:
-        session.selected_variable_idx = 0
-    st.sidebar.selectbox(
-        label="Filter datasets by variable",
-        options=variables,
-        index=session.selected_variable_idx,
-        key="selected_variable",
-        on_change=update_variable_idx,
-        args=(variables,),
-    )
+    tab1, tab2 = st.sidebar.tabs(["Filter datasets by variable", "Map Selection"])
 
-    # Get a toc subsets or the entire toc list
-    dataset_codes = codelist.get(session.selected_variable, default=None)
+    with tab1:
+        if "selected_variable_idx" not in session:
+            session.selected_variable_idx = 0
+        tab1.selectbox(
+            label="Filter datasets by variable",
+            options=variables,
+            index=session.selected_variable_idx,
+            key="selected_variable",
+            on_change=update_variable_idx,
+            args=(variables,),
+        )
 
-    if "map_selection" in session:
-        if st.sidebar.checkbox("Use Map Selection"):
+        # Get a toc subsets or the entire toc list
+        dataset_codes = codelist.get(session.selected_variable, default=None)
+
+    with tab2:
+        if tab2.checkbox(
+            "Filter datasets by selection",
+            disabled="map_selection" not in session or session["map_selection"].empty,
+        ):
             dataset_codes = session["map_selection"]["code"].to_list()
 
     datasets = build_toc_list(
