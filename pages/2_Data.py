@@ -15,6 +15,7 @@ from widgets.dataframe import (
     st_dataframe_with_index_and_rows_cols_count,
     filter_dataset_replacing_NA,
 )
+from widgets.selectbox import stateful_selectbox
 from widgets.download import download_dataframe_button
 from widgets.index import load_table_of_contents, load_codelist_reverse_index
 
@@ -68,10 +69,6 @@ def update_variable_idx(variables: List[str]):
         session["selected_map_selection"] = False
 
 
-def update_dataset_idx(datasets: List[str]):
-    session.selected_dataset_idx = datasets.index(session.selected_dataset)
-
-
 def update_history_selected_flags(dataset_code: str):
     session.history[dataset_code]["selected_flags"] = session[
         f"_{dataset_code}.selected_flags"
@@ -122,21 +119,12 @@ def import_dataset():
             if "map_selection" in session:
                 dataset_codes = session["map_selection"]["code"].to_list()
 
+    # List (filtered) datasets
     datasets = build_toc_list(
         toc.loc[toc.index.intersection(dataset_codes)] if dataset_codes else toc  # type: ignore
     )
 
-    # List (filtered) datasets
-    if "selected_dataset_idx" not in session:
-        session.selected_dataset_idx = 0
-    st.sidebar.selectbox(
-        label="Choose a dataset",
-        options=datasets,
-        index=session.selected_dataset_idx,
-        key="selected_dataset",
-        on_change=update_dataset_idx,
-        args=(datasets,),
-    )
+    stateful_selectbox("Choose a dataset", datasets, session_key="selected_dataset")  # type: ignore
 
     dataset_code_title = session.selected_dataset
     if dataset_code_title != "Scroll options or start typing":

@@ -1,3 +1,4 @@
+from importlib import import_module
 import os
 import pandas as pd
 import plotly.express as px
@@ -13,6 +14,8 @@ from widgets.index import (
     load_table_of_contents,
 )
 from widgets.session import app_config
+from widgets.selectbox import stateful_selectbox
+
 
 session = st.session_state
 
@@ -59,7 +62,9 @@ def cluster_datasets() -> pd.DataFrame:
 
 
 @st.experimental_memo
-def plot_clustering(data: pd.DataFrame, margin: int = 5) -> Figure:
+def plot_clustering(
+    data: pd.DataFrame, mark: str | None = None, margin: int = 5
+) -> Figure:
     data = data.rename(columns={"title_theme": "Themes"})
     fig = px.scatter(
         data,
@@ -77,6 +82,16 @@ def plot_clustering(data: pd.DataFrame, margin: int = 5) -> Figure:
         ),
         category_orders={"Themes": sorted(data["Themes"].astype(str).unique())},
     )
+    if mark:
+        fig.add_traces(
+            px.scatter(data[data.code == mark], x="1st", y="2nd")
+            .update_traces(
+                marker=dict(
+                    size=30, symbol="x-open-dot", color="red", line=dict(width=3)
+                ),
+            )
+            .data
+        )
     fig = fig.update_layout(legend=dict(orientation="h"))
     # Keep zoom at click: https://discuss.streamlit.io/t/cant-enter-values-without-updating-a-plotly-figure/28066
     fig = fig.update_layout({"uirevision": "foo"}, overwrite=True)
@@ -112,17 +127,31 @@ if __name__ == "__main__":
             "Datasets clustering is too expensive for Streamlit Cloud limited resources. You can compute this offline, cloning the repo."
         )
         show_upload_button()
+        # NOTE When a new index is computed, CLUSTERING_PATH is also removed and enable again this branch.
     else:
         if not get_last_index_update():
             st.warning("Create an index first!")
         else:
+            # List datasets
+            toc, _ = load_table_of_contents()
+            datasets = import_module("pages.2_Data").build_toc_list(toc)
+            mark = stateful_selectbox(
+                "Mark a dataset", datasets, session_key="pinpoint"
+            )
+
             datasets2d = (
                 pd.read_csv(CLUSTERING_PATH)
                 if os.environ["ENV"] == "streamlit"
                 else cluster_datasets()
             )
+
             selection = plotly_events(
-                plot_clustering(datasets2d),
+                plot_clustering(
+                    datasets2d,
+                    mark=mark.split(" | ")[0]
+                    if mark and mark != "Scroll options or start typing"
+                    else None,
+                ),
                 click_event=True,
                 select_event=True,
                 # use_container_width=True,  # Not supported by plotly_events
