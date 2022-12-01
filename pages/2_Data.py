@@ -48,6 +48,13 @@ def update_stash(code, indexes, flags):
 
 
 @st.experimental_memo(show_spinner=False)
+def build_toc_list(toc: pd.Series) -> List[str]:
+    # ex: I_IUIF | Internet use: ...
+    toc = toc.index + " | " + toc.values  # type: ignore
+    return ["Scroll options or start typing"] + toc.to_list()
+
+
+@st.experimental_memo(show_spinner=False)
 def build_dimension_list(dimensions: pd.Series) -> List[str]:
     # ex: ei_bsco_m | Consumers ...
     return ["Scroll options or start typing"] + dimensions.index.to_list()
@@ -112,7 +119,12 @@ def import_dataset():
             if "map_selection" in session:
                 dataset_codes = session["map_selection"]["code"].to_list()
 
-    stateful_selectbox("Choose a dataset", toc, dataset_codes, session_key="selected_dataset")  # type: ignore
+    # List (filtered) datasets
+    datasets = build_toc_list(
+        toc.loc[toc.index.intersection(dataset_codes)] if dataset_codes else toc  # type: ignore
+    )
+
+    stateful_selectbox("Choose a dataset", datasets, session_key="selected_dataset")  # type: ignore
 
     dataset_code_title = session.selected_dataset
     if dataset_code_title != "Scroll options or start typing":

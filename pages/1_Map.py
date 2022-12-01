@@ -1,3 +1,4 @@
+from importlib import import_module
 import os
 import pandas as pd
 import plotly.express as px
@@ -14,6 +15,7 @@ from widgets.index import (
 )
 from widgets.session import app_config
 from widgets.selectbox import stateful_selectbox
+
 
 session = st.session_state
 
@@ -130,9 +132,12 @@ if __name__ == "__main__":
         if not get_last_index_update():
             st.warning("Create an index first!")
         else:
-
+            # List datasets
             toc, _ = load_table_of_contents()
-            mark = stateful_selectbox("Mark a dataset", toc, session_key=None)
+            datasets = import_module("pages.2_Data").build_toc_list(toc)
+            mark = stateful_selectbox(
+                "Mark a dataset", datasets, session_key="pinpoint"
+            )
 
             datasets2d = (
                 pd.read_csv(CLUSTERING_PATH)
