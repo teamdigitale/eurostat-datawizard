@@ -17,7 +17,6 @@ from widgets.session import app_config
 @st.experimental_memo(show_spinner=False)
 def load_stash(stash: dict) -> pd.DataFrame:
     data = pd.DataFrame()
-    common_cols = ["geo", "time", "flag", "value"]
     for code, filters in stash.items():
         indexes, flags = filters["indexes"], filters["flags"]
         df = import_module("pages.2_Data").load_dataset(code)
@@ -31,25 +30,10 @@ def load_stash(stash: dict) -> pd.DataFrame:
             {code: df},
             names=["dataset"],
         )
-        # Merge dataset-specific indexes into one field
-        # NOTE `unit` columns is not always presents
-        df = df.reset_index()
-        df = (
-            pd.concat(
-                [
-                    df[["dataset"]],
-                    df[df.columns.difference(["dataset"] + common_cols)].agg(
-                        " • ".join, axis=1
-                    ),
-                    df[df.columns.intersection(common_cols)],
-                ],
-                axis=1,
-            )
-            .rename(columns={0: "variable"})
-            .set_index(["dataset", "variable"] + common_cols[:-2])
-        )
-        # Append previous loop datasets
-        data = pd.concat([data, df])
+        # Merging with index resetted to preserve unique columns
+        data = pd.concat([data.reset_index(), df.reset_index()])
+        # Restore a global index based on current stash
+        data = data.set_index(data.columns.difference(["flag", "value"]).to_list())
     return data
 
 
