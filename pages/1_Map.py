@@ -84,7 +84,13 @@ def plot_clustering(
     )
     if mark:
         fig.add_traces(
-            px.scatter(data[data.code == mark], x="1st", y="2nd")
+            px.scatter(
+                data[data.code == mark],
+                x="1st",
+                y="2nd",
+                color="Themes",
+                hover_data=["code", "title"],
+            )
             .update_traces(
                 marker=dict(
                     size=30, symbol="x-open-dot", color="red", line=dict(width=3)
