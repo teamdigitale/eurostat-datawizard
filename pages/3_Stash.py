@@ -1,6 +1,5 @@
 from importlib import import_module
 
-import numpy as np
 import pandas as pd
 import streamlit as st
 
@@ -11,6 +10,7 @@ from widgets.dataframe import (
     st_dataframe_with_index_and_rows_cols_count,
 )
 from widgets.download import download_dataframe_button
+from widgets.selectbox import stateful_selectbox
 from widgets.session import app_config
 
 
@@ -37,16 +37,14 @@ def load_stash(stash: dict) -> pd.DataFrame:
     return data
 
 
-def clear_stash():
-    st.session_state.stash = {}
-
-
 def show_stash():
+    stash = st.session_state.history
     dataset = empty_eurostat_dataframe()
+
     try:
         with st.spinner(text="Fetching data"):
-            if st.session_state.stash.keys():
-                dataset = load_stash(st.session_state.stash)
+            if stash.keys():
+                dataset = load_stash(stash)
     except ValueError as ve:
         st.error(ve)
 
@@ -54,11 +52,12 @@ def show_stash():
         dataset, "Stash", use_container_width=True
     )
 
-    col1, col2 = st.columns(2, gap="large")
-    with col1:
-        st.button("Clear", on_click=clear_stash, disabled=dataset.empty)
-    with col2:
-        download_dataframe_button(view)
+    remove_code = st.sidebar.selectbox("Remove a dataset", ["-"] + list(stash.keys()))
+    if remove_code != "-":
+        stash.pop(remove_code)
+        st.experimental_rerun()
+
+    download_dataframe_button(view)
 
 
 if __name__ == "__main__":

@@ -7,7 +7,7 @@ import pandas as pd
 import streamlit as st
 from requests import ConnectionError, HTTPError
 
-from globals import VARS_INDEX_PATH, CLUSTERING_PATH, get_last_clustering_update
+from globals import VARS_INDEX_PATH
 from src.eurostat import (
     eurostat_sdmx_request,
     fetch_dataset_codelist,
@@ -83,9 +83,6 @@ def save_index_file():
     codelist.name = "datasets"
     codelist.index.name = "code"
     codelist.apply(lambda x: x.tolist()).to_pickle(VARS_INDEX_PATH)
-    # With a new index, Map clustering must be invalidated
-    if get_last_clustering_update():
-        os.remove(CLUSTERING_PATH)
     message.empty()
 
 

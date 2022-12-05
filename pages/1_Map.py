@@ -49,7 +49,7 @@ def build_adjacency_matrix() -> pd.DataFrame:
     return adj
 
 
-@st.experimental_memo
+@st.experimental_memo(persist="disk")
 def cluster_datasets() -> pd.DataFrame:
     toc = build_labeled_toc()
     adj = build_adjacency_matrix()
@@ -61,7 +61,7 @@ def cluster_datasets() -> pd.DataFrame:
     return xy.join(toc).reset_index()
 
 
-@st.experimental_memo
+@st.experimental_memo(persist="disk")
 def plot_clustering(
     data: pd.DataFrame, mark: str | None = None, margin: int = 5
 ) -> Figure:
