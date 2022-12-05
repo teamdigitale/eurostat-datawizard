@@ -12,8 +12,9 @@ from src.utils import concat_keys_to_values
 from widgets.console import show_console
 from widgets.dataframe import (
     empty_eurostat_dataframe,
-    st_dataframe_with_index_and_rows_cols_count,
+    st_dataframe_index_and_rows_cols_count,
     filter_dataset_replacing_NA,
+    st_dataframe_with_index_and_rows_cols_count,
 )
 from widgets.selectbox import stateful_selectbox
 from widgets.download import download_dataframe_button
@@ -119,75 +120,74 @@ def import_dataset():
     if dataset_code_title != "Scroll options or start typing":
         dataset_code = dataset_code_title.split(" | ", maxsplit=1)[0]
         try:
-            with st.sidebar:
-                with st.spinner(text="Downloading data"):
-                    dataset = load_dataset(dataset_code)
+            with st.spinner(text="Downloading data"):
+                dataset = load_dataset(dataset_code)
 
-                    # Create or reuse a filtering history for this code
-                    if dataset_code not in session["history"]:
-                        session["history"][dataset_code] = dict()
-                    history = session["history"][dataset_code]
+                # Create or reuse a filtering history for this code
+                if dataset_code not in session["history"]:
+                    session["history"][dataset_code] = dict()
+                history = session["history"][dataset_code]
 
-                    # Flags management
-                    flags = dataset.flag.fillna("<NA>").unique().tolist()
-                    if "flags" not in history:
-                        history["flags"] = flags
+                # Flags management
+                flags = dataset.flag.fillna("<NA>").unique().tolist()
+                if "flags" not in history:
+                    history["flags"] = flags
 
-                    st.sidebar.subheader("Filter dataset")
-                    history["flags"] = st.sidebar.multiselect(
-                        label="Select FLAG",
-                        options=flags,
-                        default=history["flags"],
-                        key=f"_{dataset_code}.flags",
-                        on_change=update_history_flags,
-                        args=(dataset_code,),
+                st.subheader(dataset_code_title)
+                history["flags"] = st.multiselect(
+                    label="Select FLAG",
+                    options=flags,
+                    default=history["flags"],
+                    key=f"_{dataset_code}.flags",
+                    on_change=update_history_flags,
+                    args=(dataset_code,),
+                )
+
+                # Indexes management
+                indexes = {n: dataset.index.levels[i].to_list() for i, n in enumerate(dataset.index.names)}  # type: ignore
+                if "time" in indexes:
+                    indexes["time"] = (
+                        min(indexes["time"]).year,
+                        max(indexes["time"]).year,
                     )
 
-                    # Indexes management
-                    indexes = {n: dataset.index.levels[i].to_list() for i, n in enumerate(dataset.index.names)}  # type: ignore
-                    if "time" in indexes:
-                        indexes["time"] = (
-                            min(indexes["time"]).year,
-                            max(indexes["time"]).year,
+                if "indexes" not in history:
+                    history["indexes"] = indexes
+
+                for name in dataset.index.names:
+                    if name == "time":
+                        m, M = indexes[name][0], indexes[name][1]
+                        M = M if m < M else M + 1  # RangeError fix
+                        history["indexes"][name] = st.slider(
+                            label="Select TIME [min: 1 year]",
+                            min_value=m,
+                            max_value=M,
+                            value=history["indexes"][name],
+                            step=1,
+                            key=f"_{dataset_code}.indexes.{name}",
+                            on_change=update_history_indexes,
+                            args=(
+                                dataset_code,
+                                name,
+                            ),
+                        )
+                    else:
+                        history["indexes"][name] = st.multiselect(
+                            label=f"Select {name.upper()}",
+                            options=indexes[name],
+                            default=history["indexes"][name],
+                            key=f"_{dataset_code}.indexes.{name}",
+                            on_change=update_history_indexes,
+                            args=(
+                                dataset_code,
+                                name,
+                            ),
                         )
 
-                    if "indexes" not in history:
-                        history["indexes"] = indexes
-
-                    for name in dataset.index.names:
-                        if name == "time":
-                            m, M = indexes[name][0], indexes[name][1]
-                            M = M if m < M else M + 1  # RangeError fix
-                            history["indexes"][name] = st.sidebar.slider(
-                                label="Select TIME [min: 1 year]",
-                                min_value=m,
-                                max_value=M,
-                                value=history["indexes"][name],
-                                step=1,
-                                key=f"_{dataset_code}.indexes.{name}",
-                                on_change=update_history_indexes,
-                                args=(
-                                    dataset_code,
-                                    name,
-                                ),
-                            )
-                        else:
-                            history["indexes"][name] = st.sidebar.multiselect(
-                                label=f"Select {name.upper()}",
-                                options=indexes[name],
-                                default=history["indexes"][name],
-                                key=f"_{dataset_code}.indexes.{name}",
-                                on_change=update_history_indexes,
-                                args=(
-                                    dataset_code,
-                                    name,
-                                ),
-                            )
-
-                    return dataset
+                return dataset
 
         except (ValueError, AssertionError, NotImplementedError) as e:
-            st.sidebar.error(e)
+            st.error(e)
 
     return empty_eurostat_dataframe()
 
@@ -205,11 +205,12 @@ def show_dataset(dataset):
     else:
         view = dataset
 
-    view = st_dataframe_with_index_and_rows_cols_count(
-        view, f"{dataset_code_title}", use_container_width=True
-    )
-
-    download_dataframe_button(view)
+    with st.sidebar:
+        st.write("Preview")
+        st_dataframe_with_index_and_rows_cols_count(
+            view, height=150, use_container_width=True
+        )
+        download_dataframe_button(view)
 
 
 def page_init():
@@ -220,6 +221,18 @@ def page_init():
 if __name__ == "__main__":
     app_config("Data Import")
     page_init()
+
+    st.markdown(
+        """
+    <style>
+        .stMultiSelect [data-baseweb=select] span{
+            max-width: 900px;
+            font-size: 0.8rem;
+        }
+    </style>
+    """,
+        unsafe_allow_html=True,
+    )
 
     dataset = import_dataset()
 

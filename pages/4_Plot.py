@@ -64,15 +64,20 @@ if __name__ == "__main__":
                     rows=i + 1,
                     cols=1,
                 )
-            fig = fig.update_annotations(font=dict(size=10))
-            fig = fig.update_layout(legend=dict(orientation="h", y=-0.2))
+            fig.update_annotations(font=dict(size=10))
+            fig.update_layout(
+                legend=dict(orientation="h", y=-0.2),
+                height=1000,
+                width=800,
+                title_text="Time Series comparison",
+            )
             st.plotly_chart(fig, use_container_width=True)
         else:
             st.error(
                 f"""
                 {n_variables} variables found in `Stash`, cannot plot. 
                 
-                Reduce the stash variable by deselecting data in the `Data` page or removing dataset altogether in the `Stash` page.
+                Reduce the stash variables by deselecting data in the `Data` page or removing dataset altogether in the `Stash` page.
                 """
             )
 
