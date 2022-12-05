@@ -4,9 +4,7 @@ from streamlit.type_util import Key
 from typing import Any, List, Literal, MutableMapping
 
 
-def update_selectbox_idx(
-    options: List[str], session: MutableMapping[Key, Any], key: str
-):
+def _update_index(options: List[str], session: MutableMapping[Key, Any], key: str):
     session[f"{key}_idx"] = options.index(session[key])
 
 
@@ -33,7 +31,7 @@ def stateful_selectbox(
         options=options,
         index=session[f"{key}_idx"],
         key=key,
-        on_change=update_selectbox_idx,
+        on_change=_update_index,
         args=(options, session, key),
         **kwargs,
     )
