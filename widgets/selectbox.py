@@ -6,7 +6,7 @@ from typing import Any, List, MutableMapping, Callable
 
 
 def _update_index(options: List[str], session: MutableMapping[Key, Any], key: str):
-    session[f"{key}_idx"] = options.index(session[key])
+    session[f"{key}_index"] = options.index(session[key])
 
 
 def _on_change_factory(options, session, key):
@@ -34,13 +34,13 @@ def stateful_selectbox(
     A stateful selectbox that preserves index selection.
     """
 
-    if key and f"{key}_idx" not in session:
-        session[f"{key}_idx"] = 0
+    if key and f"{key}_index" not in session:
+        session[f"{key}_index"] = 0
 
     return position.selectbox(
         label=label,
         options=options,
-        index=session[f"{key}_idx"],
+        index=session[f"{key}_index"],
         key=key,
         on_change=_on_change_factory(options, session, key)(on_change),
         **kwargs,
