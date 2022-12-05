@@ -124,7 +124,7 @@ def import_dataset():
         toc.loc[toc.index.intersection(dataset_codes)] if dataset_codes else toc  # type: ignore
     )
 
-    stateful_selectbox("Choose a dataset", datasets, position="sidebar", key="selected_dataset")  # type: ignore
+    stateful_selectbox("Choose a dataset", datasets, position=st.sidebar, key="selected_dataset")  # type: ignore
 
     dataset_code_title = session.selected_dataset
     if dataset_code_title != "Scroll options or start typing":
