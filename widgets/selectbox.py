@@ -14,7 +14,7 @@ def _on_change_factory(options, session, key):
     def decorator(function):
         def wrapper(*args, **kwargs):
             _update_index(options, session, key)
-            return function(*args, **kwargs)
+            return function(*args, **kwargs) if function else None
 
         return wrapper
 
