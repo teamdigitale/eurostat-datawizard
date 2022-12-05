@@ -9,7 +9,7 @@ def _update_index(options: Iterable[str], session: MutableMapping[Key, Any], key
 
 
 def _on_change_factory(options, session, key):
-    # Source: https://www.artima.com/weblogs/viewpost.jsp?thread=240845#decorator-functions-with-decorator-arguments
+    # Inspiration: https://www.artima.com/weblogs/viewpost.jsp?thread=240845#decorator-functions-with-decorator-arguments
     def decorator(function):
         def wrapper(*args, **kwargs):
             _update_index(options, session, key)
