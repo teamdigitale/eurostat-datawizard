@@ -99,7 +99,7 @@ def plot_clustering(
             .data
         )
     fig = fig.update_layout(legend=dict(orientation="h"))
-    # Keep zoom at click: https://discuss.streamlit.io/t/cant-enter-values-without-updating-a-plotly-figure/28066
+    # Keep zoom/legend at reload: https://discuss.streamlit.io/t/cant-enter-values-without-updating-a-plotly-figure/28066
     fig = fig.update_layout({"uirevision": "foo"}, overwrite=True)
     return fig
 

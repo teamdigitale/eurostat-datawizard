@@ -9,6 +9,9 @@ from widgets.dataframe import empty_eurostat_dataframe
 from widgets.session import app_config
 
 
+session = st.session_state
+
+
 def tuple2str(tuple, sep: str = " "):
     return sep.join([v for v in tuple if isinstance(v, str)])
 
@@ -41,11 +44,19 @@ if __name__ == "__main__":
     except ValueError as ve:
         st.error(ve)
 
+    # TODO make it stateful
+    plot_height = st.sidebar.number_input(
+        "Adjust plot height",
+        value=session["plot_height"] if "plot_height" in session else 500,
+        step=100,
+        key="plot_height",
+    )
+
     if not stash.empty:
         stash = stash.unstack(stash.index.names.difference(["geo", "time"]))  # type: ignore
         n_variables = len(stash["value"].columns)
 
-        if n_variables < 10:
+        if n_variables < 25:  # TODO Totally arbitrary threshold, can be inferred?
             sep = " • "
             fig = make_subplots(
                 rows=n_variables,
@@ -66,11 +77,12 @@ if __name__ == "__main__":
                 )
             fig.update_annotations(font=dict(size=10))
             fig.update_layout(
-                legend=dict(orientation="h", y=-0.2),
-                height=1000,
-                width=800,
+                legend=dict(orientation="h"),
+                height=plot_height,
                 title_text="Time Series comparison",
             )
+            # Keep zoom/legend at reload: https://discuss.streamlit.io/t/cant-enter-values-without-updating-a-plotly-figure/28066
+            fig.update_layout({"uirevision": "foo"}, overwrite=True)
             st.plotly_chart(fig, use_container_width=True)
         else:
             st.error(
