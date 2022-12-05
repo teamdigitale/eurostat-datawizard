@@ -142,7 +142,7 @@ if __name__ == "__main__":
             toc, _ = load_table_of_contents()
             datasets = import_module("pages.2_Data").build_toc_list(toc)
             mark = stateful_selectbox(
-                "Mark a dataset", datasets, session_key="pinpoint"
+                "Mark a dataset", datasets, position="sidebar", key="pinpoint"
             )
 
             datasets2d = (

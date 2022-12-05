@@ -1,33 +1,39 @@
 import streamlit as st
-import pandas as pd
-from typing import List
+from uuid import uuid4
+from streamlit.type_util import Key
+from typing import Any, List, Literal, MutableMapping
 
-session = st.session_state
 
-
-def update_selectbox_idx(options: List[str], session_key: str):
-    session[f"{session_key}_idx"] = options.index(session[session_key])
+def update_selectbox_idx(
+    options: List[str], session: MutableMapping[Key, Any], key: str
+):
+    session[f"{key}_idx"] = options.index(session[key])
 
 
 def stateful_selectbox(
     label: str,
     options: List[str],
-    session_key: str | None = "selected_option",
+    position: Literal["sidebar"] | None = None,
+    session: MutableMapping[Key, Any] = st.session_state,
+    key: str = str(uuid4()),
     **kwargs,
 ):
     """
     A stateful selectbox.
-    It manages autonomously index, key, on_change, args. DO NOT OVERRIDE THESE PARAMS!
+    It manages autonomously index, on_change and args.
     """
 
-    if session_key and f"{session_key}_idx" not in session:
-        session[f"{session_key}_idx"] = 0
-    return st.sidebar.selectbox(
+    if key and f"{key}_idx" not in session:
+        session[f"{key}_idx"] = 0
+
+    pos = st if not position else st.sidebar
+
+    return pos.selectbox(
         label=label,
         options=options,
-        index=session[f"{session_key}_idx"] if session_key else 0,
-        key=session_key if session_key else None,
-        on_change=update_selectbox_idx if session_key else None,
-        args=(options, session_key) if session_key else None,
+        index=session[f"{key}_idx"],
+        key=key,
+        on_change=update_selectbox_idx,
+        args=(options, session, key),
         **kwargs,
     )
