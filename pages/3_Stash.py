@@ -38,26 +38,30 @@ def load_stash(stash: dict) -> pd.DataFrame:
 
 
 def show_stash():
-    stash = st.session_state.history
-    dataset = empty_eurostat_dataframe()
+    if "history" in st.session_state:
+        stash = st.session_state.history
+        dataset = empty_eurostat_dataframe()
 
-    try:
-        with st.spinner(text="Fetching data"):
-            if stash.keys():
+        try:
+            with st.spinner(text="Fetching data"):
                 dataset = load_stash(stash)
-    except ValueError as ve:
-        st.error(ve)
+        except ValueError as ve:
+            st.error(ve)
 
-    view = st_dataframe_with_index_and_rows_cols_count(
-        dataset, "Stash", use_container_width=True
-    )
+        view = st_dataframe_with_index_and_rows_cols_count(
+            dataset, "Stash", use_container_width=True
+        )
 
-    remove_code = st.sidebar.selectbox("Remove a dataset", ["-"] + list(stash.keys()))
-    if remove_code != "-":
-        stash.pop(remove_code)
-        st.experimental_rerun()
+        remove_code = st.sidebar.selectbox(
+            "Remove a dataset", ["-"] + list(stash.keys())
+        )
+        if remove_code != "-":
+            stash.pop(remove_code)
+            st.experimental_rerun()
 
-    download_dataframe_button(view)
+        download_dataframe_button(view)
+    else:
+        st.warning("No stash found. Select some data to plot.")
 
 
 if __name__ == "__main__":
