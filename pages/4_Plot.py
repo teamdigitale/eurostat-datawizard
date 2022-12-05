@@ -37,10 +37,12 @@ if __name__ == "__main__":
     stash = empty_eurostat_dataframe()
     try:
         with st.spinner(text="Fetching data"):
-            if st.session_state.history.keys():
+            if "history" in st.session_state:
                 stash = import_module("pages.3_Stash").load_stash(
                     st.session_state.history
                 )
+            else:
+                st.warning("No stash found. Select some data to plot.")
     except ValueError as ve:
         st.error(ve)
 
