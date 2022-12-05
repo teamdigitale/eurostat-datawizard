@@ -70,13 +70,13 @@ def update_variable_idx(variables: List[str]):
 
 
 def update_history_selected_flags(dataset_code: str):
-    session.history[dataset_code]["selected_flags"] = session[
+    session["history"][dataset_code]["selected_flags"] = session[
         f"_{dataset_code}.selected_flags"
     ]
 
 
 def update_history_selected_indexes(dataset_code: str, name: str):
-    session.history[dataset_code]["selected_indexes"][name] = session[
+    session["history"][dataset_code]["selected_indexes"][name] = session[
         f"_{dataset_code}.selected_indexes.{name}"
     ]
 
@@ -135,9 +135,9 @@ def import_dataset():
                     dataset = load_dataset(dataset_code)
 
                     # Create or reuse a filtering history for this code
-                    if dataset_code not in session.history:
-                        session.history[dataset_code] = dict()
-                    history = session.history[dataset_code]
+                    if dataset_code not in session["history"]:
+                        session["history"][dataset_code] = dict()
+                    history = session["history"][dataset_code]
 
                     # Flags management
                     flags = dataset.flag.fillna("<NA>").unique().tolist()
@@ -210,8 +210,8 @@ def show_dataset(dataset):
     if not dataset.empty:
         view = filter_dataset_replacing_NA(
             dataset,
-            session.history[dataset_code]["selected_indexes"],
-            session.history[dataset_code]["selected_flags"],
+            session["history"][dataset_code]["selected_indexes"],
+            session["history"][dataset_code]["selected_flags"],
         )
     else:
         view = dataset
@@ -227,10 +227,10 @@ def show_dataset(dataset):
             on_click=update_stash,
             args=(
                 dataset_code,
-                session.history[dataset_code]["selected_indexes"]
+                session["history"][dataset_code]["selected_indexes"]
                 if not dataset.empty
                 else None,
-                session.history[dataset_code]["selected_flags"]
+                session["history"][dataset_code]["selected_flags"]
                 if not dataset.empty
                 else None,
             ),
@@ -242,7 +242,7 @@ def show_dataset(dataset):
 
 def page_init():
     if "history" not in session:
-        session.history = dict()
+        session["history"] = dict()
 
 
 if __name__ == "__main__":
