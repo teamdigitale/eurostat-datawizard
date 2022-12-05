@@ -1,12 +1,11 @@
 import streamlit as st
-from uuid import uuid4
 from streamlit.delta_generator import DeltaGenerator
 from streamlit.type_util import Key
-from typing import Any, List, MutableMapping, Callable
+from typing import Any, Iterable, MutableMapping, Callable
 
 
-def _update_index(options: List[str], session: MutableMapping[Key, Any], key: str):
-    session[f"{key}_index"] = options.index(session[key])
+def _update_index(options: Iterable[str], session: MutableMapping[Key, Any], key: str):
+    session[f"{key}_index"] = tuple(options).index(session[key])
 
 
 def _on_change_factory(options, session, key):
@@ -23,10 +22,10 @@ def _on_change_factory(options, session, key):
 
 def stateful_selectbox(
     label: str,
-    options: List[str],
+    options: Iterable[str],
+    key: str,
     position: DeltaGenerator = st._main,
     session: MutableMapping[Key, Any] = st.session_state,
-    key: str = str(uuid4()),
     on_change: Callable | None = None,
     **kwargs,
 ):
