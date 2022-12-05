@@ -3,7 +3,12 @@ from threading import Lock
 
 import streamlit as st
 
-from globals import VARS_INDEX_PATH, get_last_index_update
+from globals import (
+    VARS_INDEX_PATH,
+    get_last_index_update,
+    CLUSTERING_PATH,
+    get_last_clustering_update,
+)
 from widgets.console import show_console
 from widgets.index import (
     load_codelist_reverse_index,
@@ -32,8 +37,11 @@ def index_helper(message_widget):
             with index_lock():
                 message_widget.empty()
                 save_index_file()
-                # In order to load newly updated index
+                # In order to load newly updated index and invalidate cache
                 st.experimental_memo.clear()
+                # With a new index, Map clustering uploaded manually must be invalidated
+                if get_last_clustering_update():
+                    os.remove(CLUSTERING_PATH)
                 st.experimental_rerun()
         else:
             message_widget.empty()
