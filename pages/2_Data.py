@@ -60,8 +60,7 @@ def build_dimension_list(dimensions: pd.Series) -> List[str]:
     return ["Scroll options or start typing"] + dimensions.index.to_list()
 
 
-def update_variable_idx(variables: List[str]):
-    session.selected_variable_idx = variables.index(session.selected_variable)
+def reset_user_selections():
     # NOTE Because datasets list change, reset the selected idx
     session.selected_dataset_idx = 0
     # NOTE Override "Filter datasets by (map) selection"
@@ -96,15 +95,11 @@ def import_dataset():
     tab1, tab2 = st.sidebar.tabs(["Filter datasets by variable", "Map Selection"])
 
     with tab1:
-        if "selected_variable_idx" not in session:
-            session.selected_variable_idx = 0
-        tab1.selectbox(
+        stateful_selectbox(
             label="Filter datasets by variable",
             options=variables,
-            index=session.selected_variable_idx,
             key="selected_variable",
-            on_change=update_variable_idx,
-            args=(variables,),
+            on_change=reset_user_selections,
         )
 
         # Get a toc subsets or the entire toc list
