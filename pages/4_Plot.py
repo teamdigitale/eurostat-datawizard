@@ -64,6 +64,7 @@ if __name__ == "__main__":
                 rows=n_variables,
                 cols=1,
                 shared_xaxes=True,
+                vertical_spacing=0.15 / n_variables,
                 subplot_titles=[
                     tuple2str(map(trim_code, stash.columns[i][2:]), sep)  # type: ignore
                     for i in range(n_variables)
