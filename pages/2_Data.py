@@ -12,7 +12,6 @@ from src.utils import concat_keys_to_values
 from widgets.console import show_console
 from widgets.dataframe import (
     empty_eurostat_dataframe,
-    st_dataframe_index_and_rows_cols_count,
     filter_dataset_replacing_NA,
     st_dataframe_with_index_and_rows_cols_count,
 )

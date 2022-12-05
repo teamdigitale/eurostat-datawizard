@@ -10,7 +10,6 @@ from widgets.dataframe import (
     st_dataframe_with_index_and_rows_cols_count,
 )
 from widgets.download import download_dataframe_button
-from widgets.selectbox import stateful_selectbox
 from widgets.session import app_config
 
 
