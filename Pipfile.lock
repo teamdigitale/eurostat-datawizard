@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "7121e9d2bdbe08670a566e9046226be07e1ab45bb394d771b030fecdb9c20f1c"
+            "sha256": "08d299cbea163c70508684e27d32a9a03de8cef8a1ce560e06e2ac04c6273c22"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -371,7 +371,7 @@
                 "sha256:f063b69b090c9d918f9df0a12116029e274daf0181df392839661c4c7ec9018a",
                 "sha256:f9a909a8bae284d46bbfdefbdd4a262ba19d3bc9921b1e76126b1d21c3c34135"
             ],
-            "markers": "python_version >= '3.10'",
+            "markers": "python_version >= '3.8'",
             "version": "==1.23.5"
         },
         "packaging": {
@@ -786,11 +786,11 @@
         },
         "streamlit": {
             "hashes": [
-                "sha256:31b2fa33848f8dbcf526e6c93017cf58c81a8479844c4f6ff553382e1bac6152",
-                "sha256:40933b64e7b3a1770d798918cbd2ae52a6671a52266ac069f62e1b66f38e0662"
+                "sha256:2ec65c29b6390ff5d8288dac20fa3a4a343ac8f0755de3dc922b468a4d6ea6cc",
+                "sha256:ac8b24fa26dd5dfcd1954a340315c0b36c868c7de688259099dfd909524f1d8d"
             ],
             "index": "pypi",
-            "version": "==1.15.2"
+            "version": "==1.15.1"
         },
         "streamlit-plotly-events": {
             "hashes": [
