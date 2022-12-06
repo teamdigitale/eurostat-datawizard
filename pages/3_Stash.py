@@ -68,13 +68,15 @@ def show_stash():
 
             download_dataframe_button(view)
         with tab2:
-            dataset = dataset.unstack(dataset.index.names.difference(["geo", "time"]))  # type: ignore
-            levels = list(range(len(dataset.columns.names)))
-            dataset = dataset.reorder_levels(
-                levels[1:] + levels[:1], axis=1  # type: ignore
-            ).sort_index(
-                axis=1
-            )  # Move flag, value as last index
+            if not dataset.empty:
+                dataset = dataset.unstack(dataset.index.names.difference(["geo", "time"]))  # type: ignore
+                levels = list(range(len(dataset.columns.names)))
+                dataset = dataset.reorder_levels(
+                    levels[1:] + levels[:1], axis=1  # type: ignore
+                ).sort_index(
+                    axis=1
+                )  # Move flag, value as last index
+
             view = st_dataframe_with_index_and_rows_cols_count(
                 dataset, use_container_width=True  # type: ignore
             )
