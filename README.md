@@ -28,7 +28,7 @@ Stash it's where you can find every dataset that you inspected. The current stas
 Stash can also be inspected visually here as separated time series. In order to prevent long loading time, a message will inform you if the amount of variables to be plot are too high.
 
 # Run the app on localhost
-This is a [streamlit](https://streamlit.io/)-based app. Requirements are managed with [pipenv](https://pipenv.pypa.io/). 
+This is a [streamlit](https://streamlit.io/)-based app. Requirements are managed with [pipenv](https://pipenv.pypa.io/) (and it is highly suggested to use [pyenv](https://github.com/pyenv/pyenv) to manage python versions). 
 Clone the repo and you should be able to run this command:
 ```
 pipenv run streamlit run Home.py
