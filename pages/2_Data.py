@@ -84,8 +84,8 @@ def import_dataset():
 
     with tab1:
         selected_variable = stateful_selectbox(
-            "Filter datasets by variable",
-            variables,
+            label="Filter datasets by variable",
+            options=variables,
             key="selected_variable",
             on_change=reset_user_selections,
         )
@@ -109,7 +109,7 @@ def import_dataset():
 
     with st.sidebar:
         dataset_code_title = stateful_selectbox(
-            "Choose a dataset", datasets, key="selected_dataset"
+            label="Choose a dataset", options=datasets, key="selected_dataset"
         )
 
     if dataset_code_title and dataset_code_title != "Scroll options or start typing":
