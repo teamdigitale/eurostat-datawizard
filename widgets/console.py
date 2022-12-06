@@ -19,10 +19,11 @@ def upload_session_state(widget):
     json_str = st.file_uploader("Upload & overwrite existing session", "json")
     if json_str:
         py_dict = json.loads(json_str.getvalue())
-        # NOTE UI variables will be filtered to avoid collision like:
+        # NOTE private variables will be filtered to avoid collision with internal
+        # widget state, like:
         # StreamlitAPIException: st.session_state.selected_variable cannot be
         # modified after the widget with key selected_variable is instantiated.
-        [py_dict.pop(key) for key in list(py_dict.keys()) if "selected_" in key]
+        [py_dict.pop(key) for key in list(py_dict.keys()) if key.startswith("_")]
         if "toc" in py_dict:
             py_dict["toc"] = pd.read_json(py_dict["toc"], typ="series")
         if "codelist" in py_dict:
