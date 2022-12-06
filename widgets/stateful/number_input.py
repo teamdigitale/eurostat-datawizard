@@ -1,10 +1,13 @@
+from typing import Any, MutableMapping, Optional, Union
+
 import streamlit as st
 from streamlit.delta_generator import DeltaGenerator
-from streamlit.type_util import Key
-from typing import Union, Any, MutableMapping, Optional
 from streamlit.elements.number_input import Number
-from streamlit.runtime.state.widgets import NoValue
 from streamlit.runtime.state.session_state import WidgetCallback
+from streamlit.runtime.state.widgets import NoValue
+from streamlit.type_util import Key
+
+from widgets.stateful import _on_change_factory
 
 
 def _update_value(
@@ -12,18 +15,6 @@ def _update_value(
     key: str,
 ):
     session[f"{key}_value"] = session[key]
-
-
-def _on_change_factory(session, key):
-    # Inspiration: https://www.artima.com/weblogs/viewpost.jsp?thread=240845#decorator-functions-with-decorator-arguments
-    def decorator(function):
-        def wrapper(*args, **kwargs):
-            _update_value(session, key)
-            return function(*args, **kwargs) if function else None
-
-        return wrapper
-
-    return decorator
 
 
 def stateful_number_input(
@@ -46,6 +37,6 @@ def stateful_number_input(
         label,
         value=session[f"{key}_value"],
         key=key,
-        on_change=_on_change_factory(session, key)(on_change),
+        on_change=_on_change_factory(_update_value, session, key)(on_change),
         **kwargs,
     )

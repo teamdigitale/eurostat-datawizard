@@ -13,10 +13,8 @@ from widgets.console import show_console
 from widgets.dataframe import (
     empty_eurostat_dataframe,
     filter_dataset_replacing_NA,
-    st_dataframe_with_index_and_rows_cols_count,
 )
-from widgets.selectbox import stateful_selectbox
-from widgets.download import download_dataframe_button
+from widgets.stateful.selectbox import stateful_selectbox
 from widgets.index import load_table_of_contents, load_codelist_reverse_index
 
 session = st.session_state
@@ -36,7 +34,9 @@ def load_dataset(code: str) -> pd.DataFrame:
         data, meta = fetch_dataset_and_metadata(code)
     dims, attrs = split_dimensions_and_attributes_from(meta, code)
     data = cast_time_to_datetimeindex(data)
-    dims = concat_keys_to_values(dims.to_dict())
+    dims = concat_keys_to_values(
+        dims.str.replace('"', "-").str.replace("'", "-").to_dict()
+    )
     data = data.rename(index=dims).sort_index()
     data = data.assign(flag=data.flag.map(attrs.to_dict()))
     # `flag` shown before `value` to make it more readable as filterable
