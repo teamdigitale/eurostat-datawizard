@@ -117,7 +117,7 @@ def import_dataset():
         "Choose a dataset", datasets, position=st.sidebar, key="selected_dataset"
     )
 
-    if dataset_code_title != "Scroll options or start typing":
+    if dataset_code_title and dataset_code_title != "Scroll options or start typing":
         dataset_code = dataset_code_title.split(" | ", maxsplit=1)[0]
         try:
             with st.spinner(text="Downloading data"):

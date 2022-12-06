@@ -15,7 +15,7 @@ from widgets.session import app_config
 
 @st.experimental_memo(show_spinner=False)
 def load_stash(stash: dict) -> pd.DataFrame:
-    data = pd.DataFrame()
+    data = empty_eurostat_dataframe()
     for code, properties in stash.items():
         indexes, flags, stash = (
             properties["indexes"],
