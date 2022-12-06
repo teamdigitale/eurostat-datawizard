@@ -14,7 +14,6 @@ def _update_default(session: MutableMapping[Key, Any], key: str):
 
 def stateful_multiselect(
     label: str,
-    options: Iterable[str],
     key: str,
     default: Optional[Any] = None,
     position: DeltaGenerator = st._main,
@@ -26,15 +25,11 @@ def stateful_multiselect(
     A stateful multiselect that preserves default selection.
     """
 
-    if f"{key}_options" not in session:
-        session[f"{key}_options"] = options
-
     if f"{key}_default" not in session:
         session[f"{key}_default"] = default
 
     return position.multiselect(
         label=label,
-        options=session[f"{key}_options"],
         default=session[f"{key}_default"],
         key=key,
         on_change=_on_change_factory(_update_default, session, key)(on_change),

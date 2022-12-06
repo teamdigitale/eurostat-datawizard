@@ -141,9 +141,14 @@ if __name__ == "__main__":
             # List datasets
             toc, _ = load_table_of_contents()
             datasets = import_module("pages.2_Data").build_toc_list(toc)
-            mark = stateful_selectbox(
-                "Mark a dataset", datasets, position=st.sidebar, key="pinpoint"
-            )
+            with st.sidebar:
+                mark = stateful_selectbox(
+                    label="Mark a dataset",
+                    options=range(len(datasets)),
+                    format_func=lambda i: datasets[i],
+                    key="pinpoint",
+                )
+                mark = datasets[mark]
 
             datasets2d = (
                 pd.read_csv(CLUSTERING_PATH)
