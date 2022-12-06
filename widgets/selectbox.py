@@ -33,7 +33,7 @@ def stateful_selectbox(
     A stateful selectbox that preserves index selection.
     """
 
-    if key and f"{key}_index" not in session:
+    if f"{key}_index" not in session:
         session[f"{key}_index"] = 0
 
     return position.selectbox(
