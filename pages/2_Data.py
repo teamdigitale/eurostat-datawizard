@@ -28,15 +28,17 @@ def eust_lock():
     return Lock()
 
 
+def quote_sanitizer(series: pd.Series) -> pd.Series:
+    return series.str.replace('"', "-").str.replace("'", "-")
+
+
 @st.experimental_memo(show_spinner=False)
 def load_dataset(code: str) -> pd.DataFrame:
     with eust_lock():
         data, meta = fetch_dataset_and_metadata(code)
     dims, attrs = split_dimensions_and_attributes_from(meta, code)
     data = cast_time_to_datetimeindex(data)
-    dims = concat_keys_to_values(
-        dims.str.replace('"', "-").str.replace("'", "-").to_dict()
-    )
+    dims = concat_keys_to_values(quote_sanitizer(dims).to_dict())
     data = data.rename(index=dims).sort_index()
     data = data.assign(flag=data.flag.map(attrs.to_dict()))
     # `flag` shown before `value` to make it more readable as filterable
@@ -58,7 +60,10 @@ def build_dimension_list(dimensions: pd.Series) -> List[str]:
 
 def reset_user_selections():
     # NOTE Because datasets list change, reset the selected idx
-    session.selected_dataset_idx = 0
+    if "selected_dataset_options" in session:
+        session.pop("selected_dataset_options")
+    if "selected_dataset_index" in session:
+        session.pop("selected_dataset_index")
     # NOTE Override "Filter datasets by (map) selection"
     if "selected_map_selection" in session:
         session["selected_map_selection"] = False
@@ -89,15 +94,15 @@ def import_dataset():
     tab1, tab2 = st.sidebar.tabs(["Filter datasets by variable", "Map Selection"])
 
     with tab1:
-        stateful_selectbox(
-            label="Filter datasets by variable",
-            options=variables,
+        selected_variable = stateful_selectbox(
+            "Filter datasets by variable",
+            variables,
             key="selected_variable",
             on_change=reset_user_selections,
         )
 
         # Get a toc subsets or the entire toc list
-        dataset_codes = codelist.get(session.selected_variable, default=None)
+        dataset_codes = codelist.get(selected_variable, default=None)
 
     with tab2:
         if tab2.checkbox(
@@ -113,9 +118,10 @@ def import_dataset():
         toc.loc[toc.index.intersection(dataset_codes)] if dataset_codes else toc  # type: ignore
     )
 
-    dataset_code_title = stateful_selectbox(
-        "Choose a dataset", datasets, position=st.sidebar, key="selected_dataset"
-    )
+    with st.sidebar:
+        dataset_code_title = stateful_selectbox(
+            "Choose a dataset", datasets, key="selected_dataset"
+        )
 
     if dataset_code_title and dataset_code_title != "Scroll options or start typing":
         dataset_code = dataset_code_title.split(" | ", maxsplit=1)[0]
