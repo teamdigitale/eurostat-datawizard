@@ -10,10 +10,7 @@ from src.eurostat import (
 )
 from src.utils import concat_keys_to_values
 from widgets.console import show_console
-from widgets.dataframe import (
-    empty_eurostat_dataframe,
-    filter_dataset_replacing_NA,
-)
+from widgets.dataframe import empty_eurostat_dataframe
 from widgets.stateful.multiselect import stateful_multiselect
 from widgets.stateful.selectbox import stateful_selectbox
 from widgets.index import load_table_of_contents, load_codelist_reverse_index
