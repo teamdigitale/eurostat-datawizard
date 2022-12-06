@@ -16,23 +16,28 @@ from widgets.session import app_config
 @st.experimental_memo(show_spinner=False)
 def load_stash(stash: dict) -> pd.DataFrame:
     data = pd.DataFrame()
-    for code, filters in stash.items():
-        indexes, flags = filters["indexes"], filters["flags"]
-        df = import_module("pages.2_Data").load_dataset(code)
-        df = filter_dataset_replacing_NA(
-            df,
-            indexes,
-            flags,
+    for code, properties in stash.items():
+        indexes, flags, stash = (
+            properties["indexes"],
+            properties["flags"],
+            properties["stash"],
         )
-        # Append dataset code to data as first level
-        df = pd.concat(
-            {code: df},
-            names=["dataset"],
-        )
-        # Merging with index resetted to preserve unique columns
-        data = pd.concat([data.reset_index(), df.reset_index()])
-        # Restore a global index based on current stash
-        data = data.set_index(data.columns.difference(["flag", "value"]).to_list())
+        if stash:
+            df = import_module("pages.2_Data").load_dataset(code)
+            df = filter_dataset_replacing_NA(
+                df,
+                indexes,
+                flags,
+            )
+            # Append dataset code to data as first level
+            df = pd.concat(
+                {code: df},
+                names=["dataset"],
+            )
+            # Merging with index resetted to preserve unique columns
+            data = pd.concat([data.reset_index(), df.reset_index()])
+            # Restore a global index based on current stash
+            data = data.set_index(data.columns.difference(["flag", "value"]).to_list())
     return data
 
 
@@ -52,7 +57,8 @@ def show_stash():
         )
 
         remove_code = st.sidebar.selectbox(
-            "Remove a dataset", ["-"] + list(stash.keys())
+            "Remove a dataset",
+            ["-"] + [code for code, p in stash.items() if p["stash"]],
         )
         if remove_code != "-":
             stash.pop(remove_code)

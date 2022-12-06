@@ -113,9 +113,10 @@ def import_dataset():
         toc.loc[toc.index.intersection(dataset_codes)] if dataset_codes else toc  # type: ignore
     )
 
-    stateful_selectbox("Choose a dataset", datasets, position=st.sidebar, key="selected_dataset")  # type: ignore
+    dataset_code_title = stateful_selectbox(
+        "Choose a dataset", datasets, position=st.sidebar, key="selected_dataset"
+    )
 
-    dataset_code_title = session.selected_dataset
     if dataset_code_title != "Scroll options or start typing":
         dataset_code = dataset_code_title.split(" | ", maxsplit=1)[0]
         try:
@@ -127,12 +128,17 @@ def import_dataset():
                     session["history"][dataset_code] = dict()
                 history = session["history"][dataset_code]
 
+                history["stash"] = st.sidebar.checkbox(
+                    "Save into Stash",
+                    value=history["stash"] if "stash" in history else False,
+                )
+
                 # Flags management
                 flags = dataset.flag.fillna("<NA>").unique().tolist()
                 if "flags" not in history:
                     history["flags"] = flags
 
-                st.subheader(dataset_code_title)
+                st.subheader(f"Variable selection: {dataset_code_title}")
                 history["flags"] = st.multiselect(
                     label="Select FLAG",
                     options=flags,
@@ -204,13 +210,6 @@ def show_dataset(dataset):
     else:
         view = dataset
 
-    with st.sidebar:
-        st.write("Preview")
-        st_dataframe_with_index_and_rows_cols_count(
-            view, height=150, use_container_width=True
-        )
-        download_dataframe_button(view)
-
 
 def page_init():
     if "history" not in session:
@@ -234,7 +233,5 @@ if __name__ == "__main__":
     )
 
     dataset = import_dataset()
-
-    show_dataset(dataset)
 
     show_console()  # For debugging
