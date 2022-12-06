@@ -9,12 +9,11 @@ from widgets.stateful import _on_change_factory
 
 
 def _update_index(session: MutableMapping[Key, Any], key: str):
-    session[f"{key}_index"] = tuple(session[f"{key}_options"]).index(session[key])
+    session[f"{key}_index"] = session[key]
 
 
 def stateful_selectbox(
     label: str,
-    options: Iterable[str],
     key: str,
     index: int = 0,
     position: DeltaGenerator = st._main,
@@ -26,15 +25,11 @@ def stateful_selectbox(
     A stateful selectbox that preserves index selection.
     """
 
-    if f"{key}_options" not in session:
-        session[f"{key}_options"] = options
-
     if f"{key}_index" not in session:
         session[f"{key}_index"] = index
 
     return position.selectbox(
         label=label,
-        options=session[f"{key}_options"],
         index=session[f"{key}_index"],
         key=key,
         on_change=_on_change_factory(_update_index, session, key)(on_change),

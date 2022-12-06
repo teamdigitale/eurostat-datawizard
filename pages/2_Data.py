@@ -85,10 +85,12 @@ def import_dataset():
     with tab1:
         selected_variable = stateful_selectbox(
             label="Filter datasets by variable",
-            options=variables,
+            options=range(len(variables)),
+            format_func=lambda i: variables[i],
             key="selected_variable",
             on_change=reset_user_selections,
         )
+        selected_variable = variables[selected_variable]  # type: ignore
 
         # Get a toc subsets or the entire toc list
         dataset_codes = codelist.get(selected_variable, default=None)
@@ -109,8 +111,12 @@ def import_dataset():
 
     with st.sidebar:
         dataset_code_title = stateful_selectbox(
-            label="Choose a dataset", options=datasets, key="selected_dataset"
+            label="Choose a dataset",
+            options=range(len(datasets)),
+            format_func=lambda i: datasets[i],
+            key="selected_dataset",
         )
+        dataset_code_title = datasets[dataset_code_title]  # type: ignore
 
     if dataset_code_title and dataset_code_title != "Scroll options or start typing":
         dataset_code = dataset_code_title.split(" | ", maxsplit=1)[0]
