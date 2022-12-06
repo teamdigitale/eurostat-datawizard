@@ -1,6 +1,5 @@
 from importlib import import_module
 
-import numpy as np
 import pandas as pd
 import streamlit as st
 
@@ -16,65 +15,71 @@ from widgets.session import app_config
 
 @st.experimental_memo(show_spinner=False)
 def load_stash(stash: dict) -> pd.DataFrame:
-    data = pd.DataFrame()
-    common_cols = ["geo", "time", "flag", "value"]
-    for code, filters in stash.items():
-        indexes, flags = filters["indexes"], filters["flags"]
-        df = import_module("pages.2_Data").load_dataset(code)
-        df = filter_dataset_replacing_NA(
-            df,
-            indexes,
-            flags,
+    data = empty_eurostat_dataframe()
+    for code, properties in stash.items():
+        indexes, flags, stash = (
+            properties["indexes"],
+            properties["flags"],
+            properties["stash"],
         )
-        # Append dataset code to data as first level
-        df = pd.concat(
-            {code: df},
-            names=["dataset"],
-        )
-        # Merge dataset-specific indexes into one field
-        # NOTE `unit` columns is not always presents
-        df = df.reset_index()
-        df = (
-            pd.concat(
-                [
-                    df[["dataset"]],
-                    df[df.columns.difference(["dataset"] + common_cols)].agg(
-                        " • ".join, axis=1
-                    ),
-                    df[df.columns.intersection(common_cols)],
-                ],
-                axis=1,
+        if stash:
+            df = import_module("pages.2_Data").load_dataset(code)
+            df = filter_dataset_replacing_NA(
+                df,
+                indexes,
+                flags,
             )
-            .rename(columns={0: "variable"})
-            .set_index(["dataset", "variable"] + common_cols[:-2])
-        )
-        # Append previous loop datasets
-        data = pd.concat([data, df])
+            # Append dataset code to data as first level
+            df = pd.concat(
+                {code: df},
+                names=["dataset"],
+            )
+            # Merging with index resetted to preserve unique columns
+            data = pd.concat([data.reset_index(), df.reset_index()])
+            # Restore a global index based on current stash
+            data = data.set_index(data.columns.difference(["flag", "value"]).to_list())
     return data
 
 
-def clear_stash():
-    st.session_state.stash = {}
-
-
 def show_stash():
-    dataset = empty_eurostat_dataframe()
-    try:
-        with st.spinner(text="Fetching data"):
-            if st.session_state.stash.keys():
-                dataset = load_stash(st.session_state.stash)
-    except ValueError as ve:
-        st.error(ve)
+    if "history" in st.session_state:
+        stash = st.session_state.history
+        dataset = empty_eurostat_dataframe()
 
-    view = st_dataframe_with_index_and_rows_cols_count(
-        dataset, "Stash", use_container_width=True
-    )
+        remove_code = st.sidebar.selectbox(
+            "Remove a dataset",
+            ["-"] + [code for code, p in stash.items() if p["stash"]],
+        )
+        if remove_code != "-":
+            stash.pop(remove_code)
+            st.experimental_rerun()
 
-    col1, col2 = st.columns(2, gap="large")
-    with col1:
-        st.button("Clear", on_click=clear_stash, disabled=dataset.empty)
-    with col2:
-        download_dataframe_button(view)
+        try:
+            with st.spinner(text="Fetching data"):
+                dataset = load_stash(stash)
+        except ValueError as ve:
+            st.error(ve)
+
+        tab1, tab2 = st.tabs(["Long-format", "Wide-format"])
+        with tab1:
+            view = st_dataframe_with_index_and_rows_cols_count(
+                dataset, use_container_width=True
+            )
+
+            download_dataframe_button(view)
+        with tab2:
+            dataset = dataset.unstack(dataset.index.names.difference(["geo", "time"]))  # type: ignore
+            levels = list(range(len(dataset.columns.names)))
+            dataset = dataset.reorder_levels(
+                levels[1:] + levels[:1], axis=1  # type: ignore
+            ).sort_index(
+                axis=1
+            )  # Move flag, value as last index
+            view = st_dataframe_with_index_and_rows_cols_count(
+                dataset, use_container_width=True  # type: ignore
+            )
+    else:
+        st.warning("No stash found. Select some data to plot.")
 
 
 if __name__ == "__main__":

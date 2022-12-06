@@ -12,9 +12,6 @@ def app_config(title: str):
         menu_items=MENU_ITEMS,  # type: ignore
     )
 
-    if "stash" not in st.session_state:
-        st.session_state.stash = {}
-
     if "user" not in st.session_state:
         st.session_state.user = dict(st.experimental_user)
 

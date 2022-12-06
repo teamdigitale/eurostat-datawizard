@@ -49,7 +49,7 @@ def build_adjacency_matrix() -> pd.DataFrame:
     return adj
 
 
-@st.experimental_memo
+@st.experimental_memo(persist="disk")
 def cluster_datasets() -> pd.DataFrame:
     toc = build_labeled_toc()
     adj = build_adjacency_matrix()
@@ -61,7 +61,7 @@ def cluster_datasets() -> pd.DataFrame:
     return xy.join(toc).reset_index()
 
 
-@st.experimental_memo
+@st.experimental_memo(persist="disk")
 def plot_clustering(
     data: pd.DataFrame, mark: str | None = None, margin: int = 5
 ) -> Figure:
@@ -99,7 +99,7 @@ def plot_clustering(
             .data
         )
     fig = fig.update_layout(legend=dict(orientation="h"))
-    # Keep zoom at click: https://discuss.streamlit.io/t/cant-enter-values-without-updating-a-plotly-figure/28066
+    # Keep zoom/legend at reload: https://discuss.streamlit.io/t/cant-enter-values-without-updating-a-plotly-figure/28066
     fig = fig.update_layout({"uirevision": "foo"}, overwrite=True)
     return fig
 
@@ -142,7 +142,7 @@ if __name__ == "__main__":
             toc, _ = load_table_of_contents()
             datasets = import_module("pages.2_Data").build_toc_list(toc)
             mark = stateful_selectbox(
-                "Mark a dataset", datasets, session_key="pinpoint"
+                "Mark a dataset", datasets, position=st.sidebar, key="pinpoint"
             )
 
             datasets2d = (

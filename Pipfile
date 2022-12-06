@@ -6,7 +6,7 @@ name = "pypi"
 [packages]
 eust = "*"
 pandas = "*"
-streamlit = "*"
+streamlit = "==1.15.1"
 requests-cache = "*"
 watchdog = "*"
 pandasdmx = "*"
