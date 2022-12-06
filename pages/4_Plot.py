@@ -6,7 +6,7 @@ from plotly.subplots import make_subplots
 
 from widgets.console import show_console
 from widgets.dataframe import empty_eurostat_dataframe
-from widgets.number_input import stateful_number_input
+from widgets.stateful.number_input import stateful_number_input
 from widgets.session import app_config
 
 
