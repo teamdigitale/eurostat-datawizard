@@ -14,7 +14,7 @@ from widgets.index import (
     load_table_of_contents,
 )
 from widgets.session import app_config
-from widgets.stateful import stateful_selectbox
+from widgets.stateful.selectbox import stateful_selectbox
 
 
 session = st.session_state

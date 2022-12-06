@@ -14,7 +14,8 @@ from widgets.dataframe import (
     empty_eurostat_dataframe,
     filter_dataset_replacing_NA,
 )
-from widgets.stateful import stateful_multiselect, stateful_selectbox
+from widgets.stateful.multiselect import stateful_multiselect
+from widgets.stateful.selectbox import stateful_selectbox
 from widgets.index import load_table_of_contents, load_codelist_reverse_index
 
 session = st.session_state
@@ -175,16 +176,11 @@ def import_dataset():
                             ),
                         )
                     else:
-                        history["indexes"][name] = st.multiselect(
+                        history["indexes"][name] = stateful_multiselect(
                             label=f"Select {name.upper()}",
                             options=indexes[name],
-                            default=history["indexes"][name],
+                            default=indexes[name],
                             key=f"_{dataset_code}.indexes.{name}",
-                            on_change=update_history_indexes,
-                            args=(
-                                dataset_code,
-                                name,
-                            ),
                         )
 
                 return dataset
@@ -193,20 +189,6 @@ def import_dataset():
             st.error(e)
 
     return empty_eurostat_dataframe()
-
-
-def show_dataset(dataset):
-    dataset_code_title = session.selected_dataset
-    dataset_code = dataset_code_title.split(" | ", maxsplit=1)[0]
-
-    if not dataset.empty:
-        view = filter_dataset_replacing_NA(
-            dataset,
-            session["history"][dataset_code]["indexes"],
-            session["history"][dataset_code]["flags"],
-        )
-    else:
-        view = dataset
 
 
 def page_init():

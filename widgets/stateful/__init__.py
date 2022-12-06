@@ -1,7 +1,3 @@
-from .multiselect import stateful_multiselect
-from .selectbox import stateful_selectbox
-
-
 def _on_change_factory(_state_function, _session, _key):
     """A wrapper to user-defined `function`.
 
