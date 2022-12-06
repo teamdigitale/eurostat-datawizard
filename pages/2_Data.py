@@ -14,7 +14,7 @@ from widgets.dataframe import (
     empty_eurostat_dataframe,
     filter_dataset_replacing_NA,
 )
-from widgets.stateful.selectbox import stateful_selectbox
+from widgets.stateful import stateful_multiselect, stateful_selectbox
 from widgets.index import load_table_of_contents, load_codelist_reverse_index
 
 session = st.session_state
@@ -67,10 +67,6 @@ def reset_user_selections():
     # NOTE Override "Filter datasets by (map) selection"
     if "selected_map_selection" in session:
         session["selected_map_selection"] = False
-
-
-def update_history_flags(dataset_code: str):
-    session["history"][dataset_code]["flags"] = session[f"_{dataset_code}.flags"]
 
 
 def update_history_indexes(dataset_code: str, name: str):
@@ -139,19 +135,15 @@ def import_dataset():
                     value=history["stash"] if "stash" in history else False,
                 )
 
+                st.subheader(f"Variable selection: {dataset_code_title}")
+
                 # Flags management
                 flags = dataset.flag.fillna("<NA>").unique().tolist()
-                if "flags" not in history:
-                    history["flags"] = flags
-
-                st.subheader(f"Variable selection: {dataset_code_title}")
-                history["flags"] = st.multiselect(
+                history["flags"] = stateful_multiselect(
                     label="Select FLAG",
                     options=flags,
-                    default=history["flags"],
+                    default=flags,
                     key=f"_{dataset_code}.flags",
-                    on_change=update_history_flags,
-                    args=(dataset_code,),
                 )
 
                 # Indexes management
