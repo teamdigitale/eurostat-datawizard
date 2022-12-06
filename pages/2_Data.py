@@ -13,6 +13,7 @@ from widgets.console import show_console
 from widgets.dataframe import empty_eurostat_dataframe
 from widgets.stateful.multiselect import stateful_multiselect
 from widgets.stateful.selectbox import stateful_selectbox
+from widgets.stateful.slider import stateful_slider
 from widgets.index import load_table_of_contents, load_codelist_reverse_index
 
 session = st.session_state
@@ -65,12 +66,6 @@ def reset_user_selections():
     # NOTE Override "Filter datasets by (map) selection"
     if "selected_map_selection" in session:
         session["selected_map_selection"] = False
-
-
-def update_history_indexes(dataset_code: str, name: str):
-    session["history"][dataset_code]["indexes"][name] = session[
-        f"_{dataset_code}.indexes.{name}"
-    ]
 
 
 def import_dataset():
@@ -147,30 +142,24 @@ def import_dataset():
                 # Indexes management
                 indexes = {n: dataset.index.levels[i].to_list() for i, n in enumerate(dataset.index.names)}  # type: ignore
                 if "time" in indexes:
-                    indexes["time"] = (
+                    indexes["time"] = [
                         min(indexes["time"]).year,
                         max(indexes["time"]).year,
-                    )
+                    ]
 
                 if "indexes" not in history:
-                    history["indexes"] = indexes
+                    history["indexes"] = dict()
 
                 for name in dataset.index.names:
                     if name == "time":
-                        m, M = indexes[name][0], indexes[name][1]
+                        m, M = indexes["time"][0], indexes["time"][1]
                         M = M if m < M else M + 1  # RangeError fix
-                        history["indexes"][name] = st.slider(
+                        history["indexes"]["time"] = stateful_slider(
                             label="Select TIME [min: 1 year]",
                             min_value=m,
                             max_value=M,
-                            value=history["indexes"][name],
-                            step=1,
-                            key=f"_{dataset_code}.indexes.{name}",
-                            on_change=update_history_indexes,
-                            args=(
-                                dataset_code,
-                                name,
-                            ),
+                            value=(m, M),
+                            key=f"_{dataset_code}.indexes.time",
                         )
                     else:
                         history["indexes"][name] = stateful_multiselect(
@@ -201,7 +190,7 @@ if __name__ == "__main__":
         """
     <style>
         .stMultiSelect [data-baseweb=select] span{
-            max-width: 900px;
+            max-width: 500px;
             font-size: 0.8rem;
         }
     </style>
