@@ -1,40 +1,46 @@
-from typing import Any, MutableMapping, Optional, Union
+from typing import Any, Iterable, MutableMapping, Optional
 
 import streamlit as st
 from streamlit.delta_generator import DeltaGenerator
-from streamlit.elements.number_input import Number
 from streamlit.runtime.state.session_state import WidgetCallback
-from streamlit.runtime.state.widgets import NoValue
 from streamlit.type_util import Key
+from streamlit.elements.slider import SliderScalar, SliderValue
 
 from widgets.stateful import _on_change_factory
 
 
-def _update_value(
-    session: MutableMapping[Key, Any],
-    key: str,
-):
+def _update_value(session: MutableMapping[Key, Any], key: str):
     session[f"{key}_value"] = session[key]
 
 
-def stateful_number_input(
+def stateful_slider(
     label: str,
     key: str,
-    value: Union[NoValue, Number, None] = NoValue(),
+    min_value: Optional[SliderScalar] = None,
+    max_value: Optional[SliderScalar] = None,
+    value: Optional[SliderValue] = None,
     position: DeltaGenerator = st._main,
     session: MutableMapping[Key, Any] = st.session_state,
     on_change: Optional[WidgetCallback] = None,
     **kwargs,
 ):
     """
-    A stateful number input that preserves value.
+    A stateful slider that preserves value selection.
     """
+
+    if f"{key}_min_value" not in session:
+        session[f"{key}_min_value"] = min_value
+
+    if f"{key}_max_value" not in session:
+        session[f"{key}_max_value"] = max_value
 
     if f"{key}_value" not in session:
         session[f"{key}_value"] = value
 
-    return position.number_input(
-        label,
+    return position.slider(
+        label=label,
+        min_value=session[f"{key}_min_value"],
+        max_value=session[f"{key}_max_value"],
         value=session[f"{key}_value"],
         key=key,
         on_change=_on_change_factory(_update_value, session, key)(on_change),

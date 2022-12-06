@@ -1,3 +1,12 @@
+""" 
+Goal of this widget collection is to effortlessy use widgets that need stateful interaction,
+like:
+- preserving a value while navigating the app and changing pages,
+- solving clicking twice to make a setting _stick_:
+  https://docs.streamlit.io/knowledge-base/using-streamlit/widget-updating-session-state
+"""
+
+
 def _on_change_factory(_state_function, _session, _key):
     """A wrapper to user-defined `function`.
 
