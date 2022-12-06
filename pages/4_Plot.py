@@ -6,6 +6,7 @@ from plotly.subplots import make_subplots
 
 from widgets.console import show_console
 from widgets.dataframe import empty_eurostat_dataframe
+from widgets.number_input import stateful_number_input
 from widgets.session import app_config
 
 
@@ -46,13 +47,13 @@ if __name__ == "__main__":
     except ValueError as ve:
         st.error(ve)
 
-    # TODO make it stateful
-    plot_height = st.sidebar.number_input(
-        "Adjust plot height",
-        value=session["plot_height"] if "plot_height" in session else 500,
-        step=100,
-        key="plot_height",
-    )
+    with st.sidebar:
+        plot_height = stateful_number_input(
+            "Adjust plot height [px]",
+            value=500,
+            step=100,
+            key="plot_height",
+        )
 
     if not stash.empty:
         stash = stash.unstack(stash.index.names.difference(["geo", "time"]))  # type: ignore
