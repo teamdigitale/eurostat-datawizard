@@ -29,6 +29,12 @@ def test_load_stash(mock_eust):  # flake8: noqa
                 "time": [2016, 2021],
             },
             "flags": [np.nan, "low reliability"],
+            "stash": True,
+        },
+        "code_not_stashed": {
+            "indexes": None,
+            "flags": None,
+            "stash": False,
         },
     }
     df = import_module("pages.3_Stash").load_stash(stash)
