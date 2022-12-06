@@ -18,11 +18,14 @@ An overview of every Eurostat dataset, characterized by its variables, in relati
 1. [Optional] Filter Eurostat datasets list by a variable of interest OR by selected datasets in the `Map` page. These options appears only if an index and a clustering were created, respectively.
 2. Choose an Eurostat dataset of interest (or start typing dataset code or title).
 3. After loading, you can inspect the dataset and filter indexes, flags and time-span with the controls provided in the sidebar.
-4. When done, you can _download_ the current data snapshot in a convenient gzipped csv. Every dataset that you inspect, along with your filtering choice, is saved and showed in the `Stash` page. 
+4. Every dataset that you inspect, along with your filtering choice, is saved and can be shown in the `Stash` page by ticking the dedicated checkbox. 
 5. You can repeat the process starting from _1_ for as many dataset as you like.
 
 ## Stash
-Stash it's where you can find every dataset that you inspected. The current stash will be reported here and you can _download_ it too.
+Stash it's where you can find every dataset that you inspected. The current stash will be reported here and you can _download_ it in a convenient gzipped csv.
+
+## Plot
+Stash can also be inspected visually here as separated time series. In order to prevent long loading time, a message will inform you if the amount of variables to be plot are too high.
 
 # Run the app on localhost
 This is a [streamlit](https://streamlit.io/)-based app. Requirements are managed with [pipenv](https://pipenv.pypa.io/). 
