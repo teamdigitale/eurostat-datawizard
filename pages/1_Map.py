@@ -61,11 +61,12 @@ def cluster_datasets() -> pd.DataFrame:
     return xy.join(toc).reset_index()
 
 
-@st.experimental_memo(persist="disk")
+@st.experimental_memo()
 def plot_clustering(
     data: pd.DataFrame, mark: str | None = None, margin: int = 5
 ) -> Figure:
     data = data.rename(columns={"title_theme": "Themes"})
+    categories = {"Themes": sorted(data["Themes"].astype(str).unique())}
     fig = px.scatter(
         data,
         x="1st",
@@ -80,7 +81,7 @@ def plot_clustering(
             data["2nd"].min() - margin,
             data["2nd"].max() + margin,
         ),
-        category_orders={"Themes": sorted(data["Themes"].astype(str).unique())},
+        category_orders=categories,
     )
     if mark:
         fig.add_traces(
@@ -90,13 +91,15 @@ def plot_clustering(
                 y="2nd",
                 color="Themes",
                 hover_data=["code", "title"],
+                category_orders=categories,
             )
             .update_traces(
+                showlegend=False,
                 marker=dict(
                     size=30, symbol="x-open-dot", color="red", line=dict(width=3)
                 ),
             )
-            .data
+            .data,
         )
     fig = fig.update_layout(legend=dict(orientation="h"))
     # Keep zoom/legend at reload: https://discuss.streamlit.io/t/cant-enter-values-without-updating-a-plotly-figure/28066
