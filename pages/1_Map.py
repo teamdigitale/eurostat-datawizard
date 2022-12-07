@@ -6,7 +6,7 @@ import streamlit as st
 from plotly.graph_objects import Figure
 from sklearn.manifold import TSNE
 from streamlit_plotly_events import plotly_events
-from globals import CLUSTERING_PATH, get_last_index_update, get_last_clustering_update
+from globals import DEMO_N_DATASET, get_last_index_update
 from widgets.console import show_console
 from widgets.download import download_dataframe_button
 from widgets.index import (
@@ -54,7 +54,13 @@ def cluster_datasets() -> pd.DataFrame:
     toc = build_labeled_toc()
     adj = build_adjacency_matrix()
     # Project datasets into 2D space
-    tsne = TSNE(n_components=2, learning_rate="auto", metric="cosine", init="pca")
+    tsne = TSNE(
+        n_components=2,
+        learning_rate="auto",
+        metric="cosine",
+        init="pca",
+        perplexity=DEMO_N_DATASET - 1 if os.environ["ENV"] == "demo" else 30,
+    )
     xy = pd.DataFrame(tsne.fit_transform(adj), index=adj.index, columns=["1st", "2nd"])
     xy.index.name = "code"
     # Join datasets with label
