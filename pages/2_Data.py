@@ -71,29 +71,40 @@ def reset_user_selections():
 def import_dataset():
     try:
         with st.sidebar:
-            with st.spinner(text="Fetching index"):
+            with st.spinner(text="Fetching table of contents"):
                 toc, _ = load_table_of_contents()
-                codelist = load_codelist_reverse_index()
     except Exception as e:
         st.sidebar.error(e)
         return empty_eurostat_dataframe()
 
-    variables = build_dimension_list(codelist)
+    try:
+        with st.sidebar:
+            with st.spinner(text="Fetching index"):
+                codelist = load_codelist_reverse_index()
+    except Exception as e:
+        codelist = None
 
     tab1, tab2 = st.sidebar.tabs(["Filter datasets by variable", "Map Selection"])
 
     with tab1:
-        selected_variable = stateful_selectbox(
-            label="Filter datasets by variable",
-            options=range(len(variables)),
-            format_func=lambda i: variables[i],
-            key="selected_variable",
-            on_change=reset_user_selections,
-        )
-        selected_variable = variables[selected_variable]  # type: ignore
+        if codelist:
+            variables = build_dimension_list(codelist)
+            selected_variable = stateful_selectbox(
+                label="Filter datasets by variable",
+                options=range(len(variables)),
+                format_func=lambda i: variables[i],
+                key="selected_variable",
+                on_change=reset_user_selections,
+            )
+            selected_variable = variables[selected_variable]  # type: ignore
 
-        # Get a toc subsets or the entire toc list
-        dataset_codes = codelist.get(selected_variable, default=None)
+            # Get a toc subsets or the entire toc list
+            dataset_codes = codelist.get(selected_variable, default=None)
+        else:
+            dataset_codes = None
+            st.sidebar.warning(
+                "Filter datasets by variable not available without index."
+            )
 
     with tab2:
         if tab2.checkbox(
