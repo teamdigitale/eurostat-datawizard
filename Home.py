@@ -27,6 +27,11 @@ def index_lock():
 def index_helper(message_widget):
     last_update = get_last_index_update()
 
+    if os.environ["ENV"] == "demo":
+        st.sidebar.warning(
+            "On Streamlit Cloud you are limited to explore 10 random dataset due to limited resources."
+        )
+
     col1, col2 = st.sidebar.columns(2, gap="large")
     with col1:
         st.markdown(
