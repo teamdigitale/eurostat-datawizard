@@ -32,6 +32,11 @@ def save_index_file():
     status = st.sidebar.empty()
     req = eurostat_sdmx_request()
     toc, _ = load_table_of_contents()
+    if os.environ["ENV"] == "streamlit":
+        st.sidebar.warning(
+            "On Streamlit Cloud you are limited to explore 10 random dataset due to limited resources."
+        )
+        toc = toc.sample(10)
     datasets = toc.index.to_list()
     len_datasets = len(datasets)
     datasets_not_loaded = []

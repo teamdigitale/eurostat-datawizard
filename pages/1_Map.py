@@ -61,11 +61,12 @@ def cluster_datasets() -> pd.DataFrame:
     return xy.join(toc).reset_index()
 
 
-@st.experimental_memo(persist="disk")
+@st.experimental_memo()
 def plot_clustering(
     data: pd.DataFrame, mark: str | None = None, margin: int = 5
 ) -> Figure:
     data = data.rename(columns={"title_theme": "Themes"})
+    categories = {"Themes": sorted(data["Themes"].astype(str).unique())}
     fig = px.scatter(
         data,
         x="1st",
@@ -80,7 +81,7 @@ def plot_clustering(
             data["2nd"].min() - margin,
             data["2nd"].max() + margin,
         ),
-        category_orders={"Themes": sorted(data["Themes"].astype(str).unique())},
+        category_orders=categories,
     )
     if mark:
         fig.add_traces(
@@ -90,13 +91,15 @@ def plot_clustering(
                 y="2nd",
                 color="Themes",
                 hover_data=["code", "title"],
+                category_orders=categories,
             )
             .update_traces(
+                showlegend=False,
                 marker=dict(
                     size=30, symbol="x-open-dot", color="red", line=dict(width=3)
                 ),
             )
-            .data
+            .data,
         )
     fig = fig.update_layout(legend=dict(orientation="h"))
     # Keep zoom/legend at reload: https://discuss.streamlit.io/t/cant-enter-values-without-updating-a-plotly-figure/28066
@@ -107,14 +110,6 @@ def plot_clustering(
 @st.experimental_memo
 def coordinates_as_index(data: pd.DataFrame) -> pd.DataFrame:
     return data.set_index(["1st", "2nd"]).sort_index()
-
-
-def show_upload_button():
-    buffer = st.file_uploader("Load clustering offline results", "gz")
-    if buffer:
-        with open(CLUSTERING_PATH, "wb") as f:
-            f.write(buffer.getbuffer())
-            st.experimental_rerun()
 
 
 if __name__ == "__main__":
@@ -128,58 +123,47 @@ if __name__ == "__main__":
     if "map_selection" not in session:
         session["map_selection"] = pd.DataFrame(columns=["code", "title"])
 
-    if os.environ["ENV"] == "streamlit" and not get_last_clustering_update():
-        st.error(
-            "Datasets clustering is too expensive for Streamlit Cloud limited resources. You can compute this offline, cloning the repo."
-        )
-        show_upload_button()
-        # NOTE When a new index is computed, CLUSTERING_PATH is also removed and enable again this branch.
+    if not get_last_index_update():
+        st.warning("Create an index first!")
     else:
-        if not get_last_index_update():
-            st.warning("Create an index first!")
-        else:
-            # List datasets
-            toc, _ = load_table_of_contents()
-            datasets = import_module("pages.2_Data").build_toc_list(toc)
-            with st.sidebar:
-                mark = stateful_selectbox(
-                    label="Mark a dataset",
-                    options=range(len(datasets)),
-                    format_func=lambda i: datasets[i],
-                    key="pinpoint",
-                )
-                mark = datasets[mark]
-
-            datasets2d = (
-                pd.read_csv(CLUSTERING_PATH)
-                if os.environ["ENV"] == "streamlit"
-                else cluster_datasets()
+        # List datasets
+        toc, _ = load_table_of_contents()
+        datasets = import_module("pages.2_Data").build_toc_list(toc)
+        with st.sidebar:
+            mark = stateful_selectbox(
+                label="Mark a dataset",
+                options=range(len(datasets)),
+                format_func=lambda i: datasets[i],
+                key="pinpoint",
             )
+            mark = datasets[mark]
 
-            selection = plotly_events(
-                plot_clustering(
-                    datasets2d,
-                    mark=mark.split(" | ")[0]
-                    if mark and mark != "Scroll options or start typing"
-                    else None,
-                ),
-                click_event=True,
-                select_event=True,
-                # use_container_width=True,  # Not supported by plotly_events
-                override_height=1300,
-                override_width="100%",
-            )
-            if selection:
-                selection = [(s["x"], s["y"]) for s in selection]
-                selection = coordinates_as_index(datasets2d).loc[selection]
-                selection = selection.drop(columns="title_theme").reset_index(drop=True)
-                session["map_selection"] = selection
+        datasets2d = cluster_datasets()
 
-            st.sidebar.dataframe(
-                session["map_selection"],
-                use_container_width=True,
-            )
+        selection = plotly_events(
+            plot_clustering(
+                datasets2d,
+                mark=mark.split(" | ")[0]
+                if mark and mark != "Scroll options or start typing"
+                else None,
+            ),
+            click_event=True,
+            select_event=True,
+            # use_container_width=True,  # Not supported by plotly_events
+            override_height=1300,
+            override_width="100%",
+        )
+        if selection:
+            selection = [(s["x"], s["y"]) for s in selection]
+            selection = coordinates_as_index(datasets2d).loc[selection]
+            selection = selection.drop(columns="title_theme").reset_index(drop=True)
+            session["map_selection"] = selection
 
-            download_dataframe_button(datasets2d, filename_prefix="clustermap")
+        st.sidebar.dataframe(
+            session["map_selection"],
+            use_container_width=True,
+        )
+
+        download_dataframe_button(datasets2d, filename_prefix="clustermap")
 
     show_console()  # For debugging
