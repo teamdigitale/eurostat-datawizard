@@ -32,7 +32,7 @@ def plot_column_idx(df, i):
 
 
 if __name__ == "__main__":
-    app_config("Viz")
+    app_config("Plot")
 
     stash = empty_eurostat_dataframe()
     try:
