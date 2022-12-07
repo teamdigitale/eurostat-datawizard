@@ -87,7 +87,12 @@ def import_dataset():
     tab1, tab2 = st.sidebar.tabs(["Filter datasets by variable", "Map Selection"])
 
     with tab1:
-        if codelist:
+        if codelist is None:
+            dataset_codes = None
+            st.sidebar.warning(
+                "Filter datasets by variable not available without index."
+            )
+        else:
             variables = build_dimension_list(codelist)
             selected_variable = stateful_selectbox(
                 label="Filter datasets by variable",
@@ -100,11 +105,6 @@ def import_dataset():
 
             # Get a toc subsets or the entire toc list
             dataset_codes = codelist.get(selected_variable, default=None)
-        else:
-            dataset_codes = None
-            st.sidebar.warning(
-                "Filter datasets by variable not available without index."
-            )
 
     with tab2:
         if tab2.checkbox(
