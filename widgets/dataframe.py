@@ -39,12 +39,17 @@ def st_dataframe_index_and_rows_cols_count(dataset: pd.DataFrame):
 
 
 def st_dataframe_with_index_and_rows_cols_count(
-    dataset: pd.DataFrame, title: str | None = None, *args, **kwargs
+    dataset: pd.DataFrame,
+    title: str | None = None,
+    show_shape: bool = True,
+    *args,
+    **kwargs
 ):
     if title:
         st.subheader("Dataset" if dataset.empty else title)
     # Dataset is shown with `.reset_index` because MultiIndex are not rendered properly
     view = dataset if dataset.empty else dataset.reset_index()
     st.dataframe(view, *args, **kwargs)
-    st_dataframe_index_and_rows_cols_count(view)
+    if show_shape:
+        st_dataframe_index_and_rows_cols_count(view)
     return view

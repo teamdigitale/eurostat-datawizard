@@ -68,8 +68,11 @@ def show_stash():
 
             download_dataframe_button(view)
         with tab2:
+            n_flags, n_values = 0, 0
+
             if not dataset.empty:
                 dataset = dataset.unstack(dataset.index.names.difference(["geo", "time"]))  # type: ignore
+                n_flags, n_values = dataset["flag"].shape[1], dataset["value"].shape[1]
                 levels = list(range(len(dataset.columns.names)))
                 dataset = dataset.reorder_levels(
                     levels[1:] + levels[:1], axis=1  # type: ignore
@@ -78,7 +81,12 @@ def show_stash():
                 )  # Move flag, value as last index
 
             view = st_dataframe_with_index_and_rows_cols_count(
-                dataset, use_container_width=True  # type: ignore
+                dataset, show_shape=False, use_container_width=True  # type: ignore
+            )
+            st.write(
+                "{} rows x {} columns ({} flags, {} values)".format(
+                    *view.shape, n_flags, n_values
+                )
             )
     else:
         st.warning("No stash found. Select some data to plot.")
