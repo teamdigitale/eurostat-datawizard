@@ -4,6 +4,7 @@ import plotly.express as px
 import streamlit as st
 from plotly.subplots import make_subplots
 
+from globals import MAX_TIMESERIES_PLOT
 from widgets.console import show_console
 from widgets.dataframe import empty_eurostat_dataframe
 from widgets.session import app_config
@@ -17,7 +18,10 @@ def tuple2str(tuple, sep: str = " "):
 
 
 def trim_code(s):
-    return s.split(" | ")[1] if isinstance(s, str) else None
+    code_title = s.split(" | ")
+    # Reuse code if title is missing
+    title = code_title[1] if len(code_title) > 1 else code_title[0]
+    return title if isinstance(s, str) else None
 
 
 def plot_column_idx(df, i):
@@ -55,7 +59,9 @@ if __name__ == "__main__":
         stash = stash.unstack(stash.index.names.difference(["geo", "time"]))  # type: ignore
         n_variables = len(stash["value"].columns)
 
-        if n_variables < 25:  # TODO Totally arbitrary threshold, can be inferred?
+        if (
+            n_variables < MAX_TIMESERIES_PLOT
+        ):  # TODO Totally arbitrary threshold, can be inferred?
             sep = " • "
             fig = make_subplots(
                 rows=n_variables,
@@ -63,7 +69,7 @@ if __name__ == "__main__":
                 shared_xaxes=True,
                 vertical_spacing=0.15 / n_variables,
                 subplot_titles=[
-                    tuple2str(map(trim_code, stash.columns[i][2:]), sep)  # type: ignore
+                    tuple2str(map(trim_code, stash.columns[i][1:]), sep)  # type: ignore
                     for i in range(n_variables)
                 ],
             )
@@ -79,7 +85,7 @@ if __name__ == "__main__":
             fig.update_layout(
                 legend=dict(orientation="h"),
                 height=plot_height,
-                title_text="Time Series comparison",
+                title_text="Stacked timeseries",
             )
             # Keep zoom/legend at reload: https://discuss.streamlit.io/t/cant-enter-values-without-updating-a-plotly-figure/28066
             fig.update_layout({"uirevision": "foo"}, overwrite=True)
@@ -87,9 +93,9 @@ if __name__ == "__main__":
         else:
             st.error(
                 f"""
-                {n_variables} variables found in `Stash`, cannot plot. 
+                {n_variables} variables found in `Stash`, plot computation was interrupt to prevent overload. 
                 
-                Reduce the stash variables by deselecting data in the `Data` page or removing dataset altogether in the `Stash` page.
+                Reduce variables up to {MAX_TIMESERIES_PLOT}. You can check data size in the `Stash` page, selecting `Wide-format`.
                 """
             )
 
