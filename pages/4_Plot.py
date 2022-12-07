@@ -73,6 +73,9 @@ if __name__ == "__main__":
                     for i in range(n_variables)
                 ],
             )
+            # Subplot titles size: https://community.plotly.com/t/setting-subplot-title-font-sizes/46612
+            fig.update_annotations(font=dict(size=12))
+            # Cycle stash columns by flag, value pairs
             for i in range(n_variables):
                 fig.add_traces(
                     plot_column_idx(stash, i)
@@ -81,7 +84,6 @@ if __name__ == "__main__":
                     rows=i + 1,
                     cols=1,
                 )
-            fig.update_annotations(font=dict(size=10))
             fig.update_layout(
                 legend=dict(orientation="h"),
                 height=plot_height,
