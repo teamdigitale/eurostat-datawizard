@@ -8,6 +8,7 @@ from globals import (
     get_last_index_update,
     CLUSTERING_PATH,
     get_last_clustering_update,
+    DEMO_N_DATASET,
 )
 from widgets.console import show_console
 from widgets.index import (
@@ -62,7 +63,7 @@ def index_describer():
                     codelist = load_codelist_reverse_index()
                     st.sidebar.markdown(
                         f"""
-                    - Indexed dataset: {len(toc)}
+                    - Indexed dataset: {DEMO_N_DATASET if os.environ["demo"] else len(toc)}
                     - Indexed unique variables: {len(codelist)}
 
                     Most used variables:

@@ -7,7 +7,7 @@ import pandas as pd
 import streamlit as st
 from requests import ConnectionError, HTTPError
 
-from globals import VARS_INDEX_PATH
+from globals import VARS_INDEX_PATH, DEMO_N_DATASET
 from src.eurostat import (
     eurostat_sdmx_request,
     fetch_dataset_codelist,
@@ -33,7 +33,7 @@ def save_index_file():
     req = eurostat_sdmx_request()
     toc, _ = load_table_of_contents()
     if os.environ["ENV"] == "demo":
-        toc = toc.sample(10)
+        toc = toc.sample(DEMO_N_DATASET)
     datasets = toc.index.to_list()
     len_datasets = len(datasets)
     datasets_not_loaded = []
