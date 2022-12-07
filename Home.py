@@ -63,7 +63,7 @@ def index_describer():
                     codelist = load_codelist_reverse_index()
                     st.sidebar.markdown(
                         f"""
-                    - Indexed dataset: {DEMO_N_DATASET if os.environ["demo"] else len(toc)}
+                    - Indexed dataset: {DEMO_N_DATASET if os.environ["ENV"]=="demo" else len(toc)}
                     - Indexed unique variables: {len(codelist)}
 
                     Most used variables:
