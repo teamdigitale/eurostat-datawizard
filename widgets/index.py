@@ -18,6 +18,8 @@ from src.eurostat import (
 @st.experimental_memo(show_spinner=False, ttl=timedelta(days=90))
 def load_table_of_contents() -> Tuple[pd.Series, pd.Series]:
     toc, themes = fetch_table_of_contents()
+    if os.environ["ENV"] == "demo":
+        toc = toc.sample(DEMO_N_DATASET)
     return toc, themes
 
 
@@ -32,8 +34,6 @@ def save_index_file():
     status = st.sidebar.empty()
     req = eurostat_sdmx_request()
     toc, _ = load_table_of_contents()
-    if os.environ["ENV"] == "demo":
-        toc = toc.sample(DEMO_N_DATASET)
     datasets = toc.index.to_list()
     len_datasets = len(datasets)
     datasets_not_loaded = []
