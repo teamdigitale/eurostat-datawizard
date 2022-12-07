@@ -93,7 +93,9 @@ def import_dataset():
                 "Filter datasets by variable not available without index."
             )
         else:
-            variables = build_dimension_list(codelist)
+            with st.sidebar:
+                with st.spinner(text="Fetching index"):
+                    variables = build_dimension_list(codelist)
             selected_variable = stateful_selectbox(
                 label="Filter datasets by variable",
                 options=range(len(variables)),
