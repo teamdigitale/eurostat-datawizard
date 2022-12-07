@@ -16,7 +16,7 @@ MENU_ITEMS = {
 }
 VARS_INDEX_PATH = "cache/vars_index.pickle"
 CLUSTERING_PATH = "cache/clustermap.csv.gz"
-DEMO_N_DATASET = 10
+DEMO_N_DATASET = 5
 
 
 def get_last_index_update() -> datetime | None:
