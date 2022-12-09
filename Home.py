@@ -30,7 +30,7 @@ def index_helper(message_widget):
 
     if os.environ["ENV"] == "demo":
         st.sidebar.warning(
-            f"On Streamlit Cloud you are limited to explore {DEMO_N_DATASET} random datasets due to limited resources."
+            f"Demo version: you are limited to explore {DEMO_N_DATASET} random datasets."
         )
 
     col1, col2 = st.sidebar.columns(2, gap="large")

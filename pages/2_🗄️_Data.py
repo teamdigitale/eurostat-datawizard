@@ -219,4 +219,4 @@ if __name__ == "__main__":
 
     dataset = import_dataset()
 
-    show_console()  # For debugging
+    show_console()

@@ -36,7 +36,7 @@ def plot_column_idx(df, i):
 
 
 if __name__ == "__main__":
-    app_config("Plot")
+    app_config("Timeseries")
 
     stash = empty_eurostat_dataframe()
     try:
@@ -101,4 +101,4 @@ if __name__ == "__main__":
                 """
             )
 
-    show_console()  # For debugging
+    show_console()
