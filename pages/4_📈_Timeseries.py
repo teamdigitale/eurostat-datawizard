@@ -42,7 +42,7 @@ if __name__ == "__main__":
     try:
         with st.spinner(text="Fetching data"):
             if "history" in st.session_state:
-                stash = import_module("pages.3_Stash").load_stash(
+                stash = import_module("pages.3_🛒_Stash").load_stash(
                     st.session_state.history
                 )
             else:
