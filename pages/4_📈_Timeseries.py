@@ -55,10 +55,11 @@ if __name__ == "__main__":
             "Adjust plot height [px]", value=500, step=100, key="plot_height"
         )
 
-    if not stash.empty:
+    if stash.empty:
+        st.warning("No stash found. Select some data to plot.")
+    else:
         stash = stash.unstack(stash.index.names.difference(["geo", "time"]))  # type: ignore
         n_variables = len(stash["value"].columns)
-
         if (
             n_variables < MAX_TIMESERIES_PLOT
         ):  # TODO Totally arbitrary threshold, can be inferred?
