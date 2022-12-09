@@ -151,12 +151,27 @@ def import_dataset():
 
                 # Flags management
                 flags = dataset.flag.fillna("<NA>").unique().tolist()
-                history["flags"] = stateful_multiselect(
-                    label="Select FLAG",
-                    options=flags,
-                    default=flags,
-                    key=f"_{dataset_code}.flags",
-                )
+
+                flags_container = st.container()
+
+                if st.checkbox(
+                    "Select all",
+                    key=f"_{dataset_code}.flags_all",
+                    value=sorted(session[f"_{dataset_code}.flags_default"])
+                    == sorted(history["flags"])
+                    if f"_{dataset_code}.flags_default" in session
+                    else False,
+                    disabled=f"_{dataset_code}.flags_default" not in session,
+                ):
+                    del session[f"_{dataset_code}.flags_default"]
+
+                with flags_container:
+                    history["flags"] = stateful_multiselect(
+                        label="Select FLAG",
+                        options=flags,
+                        default=flags,
+                        key=f"_{dataset_code}.flags",
+                    )
 
                 # Indexes management
                 indexes = {n: dataset.index.levels[i].to_list() for i, n in enumerate(dataset.index.names)}  # type: ignore
@@ -171,22 +186,55 @@ def import_dataset():
 
                 for name in dataset.index.names:
                     if name == "time":
-                        m, M = indexes["time"][0], indexes["time"][1]
-                        M = M if m < M else M + 1  # RangeError fix
-                        history["indexes"]["time"] = stateful_slider(
-                            label="Select TIME [min: 1 year]",
-                            min_value=m,
-                            max_value=M,
-                            value=(m, M),
-                            key=f"_{dataset_code}.indexes.time",
-                        )
+                        index_container = st.container()
+
+                        if st.checkbox(
+                            "Select all",
+                            key=f"_{dataset_code}.indexes.time_all",
+                            value=sorted(
+                                session[f"_{dataset_code}.indexes.time_default"]
+                            )
+                            == sorted(history["indexes"]["time"])
+                            if f"_{dataset_code}.indexes.time_default" in session
+                            else False,
+                            disabled=f"_{dataset_code}.indexes.time_default"
+                            not in session,
+                        ):
+                            del session[f"_{dataset_code}.indexes.time_default"]
+                        with index_container:
+                            m, M = indexes["time"][0], indexes["time"][1]
+                            M = M if m < M else M + 1  # RangeError fix
+                            history["indexes"]["time"] = stateful_slider(
+                                label="Select TIME [min: 1 year]",
+                                min_value=m,
+                                max_value=M,
+                                value=(m, M),
+                                key=f"_{dataset_code}.indexes.time",
+                            )
                     else:
-                        history["indexes"][name] = stateful_multiselect(
-                            label=f"Select {name.upper()}",
-                            options=indexes[name],
-                            default=indexes[name],
-                            key=f"_{dataset_code}.indexes.{name}",
-                        )
+                        index_container = st.container()
+
+                        if st.checkbox(
+                            "Select all",
+                            key=f"_{dataset_code}.indexes.{name}_all",
+                            value=sorted(
+                                session[f"_{dataset_code}.indexes.{name}_default"]
+                            )
+                            == sorted(history["indexes"][name])
+                            if f"_{dataset_code}.indexes.{name}_default" in session
+                            else False,
+                            disabled=f"_{dataset_code}.indexes.{name}_default"
+                            not in session,
+                        ):
+                            del session[f"_{dataset_code}.indexes.{name}_default"]
+
+                        with index_container:
+                            history["indexes"][name] = stateful_multiselect(
+                                label=f"Select {name.upper()}",
+                                options=indexes[name],
+                                default=indexes[name],
+                                key=f"_{dataset_code}.indexes.{name}",
+                            )
 
                 return dataset
 
