@@ -121,8 +121,10 @@ if __name__ == "__main__":
         if (
             n_variables < MAX_VARIABLES_PLOT
         ):  # TODO Totally arbitrary threshold, can be inferred?
-            not_enough_datapoints = stash.groupby("geo").count() < 3
-            # stash = stash.mask(not_enough_datapoints)
+            not_enough_datapoints = (
+                stash.groupby("geo").transform(lambda c: c.count()) < 2
+            )
+            stash = stash.mask(not_enough_datapoints)
             stash.columns = [
                 tuple2str(map(trim_code, i), " • ")
                 for i in stash.columns.to_flat_index()
