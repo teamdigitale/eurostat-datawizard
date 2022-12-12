@@ -159,6 +159,7 @@ def import_dataset():
                     key=f"_{dataset_code}.flags_all",
                 ):
                     del session[f"_{dataset_code}.flags_default"]
+                    st.experimental_rerun()
 
                 with flags_container:
                     history["flags"] = stateful_multiselect(
@@ -187,6 +188,7 @@ def import_dataset():
                         key=f"_{dataset_code}.indexes.{name}_all",
                     ):
                         del session[f"_{dataset_code}.indexes.{name}_default"]
+                        st.experimental_rerun()
 
                     if name == "time":
                         with index_container:
