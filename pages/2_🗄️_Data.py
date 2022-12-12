@@ -154,14 +154,9 @@ def import_dataset():
 
                 flags_container = st.container()
 
-                if st.checkbox(
+                if st.button(
                     "Select all",
                     key=f"_{dataset_code}.flags_all",
-                    value=sorted(session[f"_{dataset_code}.flags_default"])
-                    == sorted(history["flags"])
-                    if f"_{dataset_code}.flags_default" in session
-                    else False,
-                    disabled=f"_{dataset_code}.flags_default" not in session,
                 ):
                     del session[f"_{dataset_code}.flags_default"]
 
@@ -185,22 +180,15 @@ def import_dataset():
                     history["indexes"] = dict()
 
                 for name in dataset.index.names:
-                    if name == "time":
-                        index_container = st.container()
+                    index_container = st.container()
 
-                        if st.checkbox(
-                            "Select all",
-                            key=f"_{dataset_code}.indexes.time_all",
-                            value=sorted(
-                                session[f"_{dataset_code}.indexes.time_default"]
-                            )
-                            == sorted(history["indexes"]["time"])
-                            if f"_{dataset_code}.indexes.time_default" in session
-                            else False,
-                            disabled=f"_{dataset_code}.indexes.time_default"
-                            not in session,
-                        ):
-                            del session[f"_{dataset_code}.indexes.time_default"]
+                    if st.button(
+                        "Select all",
+                        key=f"_{dataset_code}.indexes.{name}_all",
+                    ):
+                        del session[f"_{dataset_code}.indexes.{name}_default"]
+
+                    if name == "time":
                         with index_container:
                             m, M = indexes["time"][0], indexes["time"][1]
                             M = M if m < M else M + 1  # RangeError fix
@@ -212,22 +200,6 @@ def import_dataset():
                                 key=f"_{dataset_code}.indexes.time",
                             )
                     else:
-                        index_container = st.container()
-
-                        if st.checkbox(
-                            "Select all",
-                            key=f"_{dataset_code}.indexes.{name}_all",
-                            value=sorted(
-                                session[f"_{dataset_code}.indexes.{name}_default"]
-                            )
-                            == sorted(history["indexes"][name])
-                            if f"_{dataset_code}.indexes.{name}_default" in session
-                            else False,
-                            disabled=f"_{dataset_code}.indexes.{name}_default"
-                            not in session,
-                        ):
-                            del session[f"_{dataset_code}.indexes.{name}_default"]
-
                         with index_container:
                             history["indexes"][name] = stateful_multiselect(
                                 label=f"Select {name.upper()}",
