@@ -58,7 +58,9 @@ def tuple2str(tuple, sep: str = " "):
 
 
 def trim_code(s):
-    code_title = s.split(" | ")
-    # Reuse code if title is missing
-    title = code_title[1] if len(code_title) > 1 else code_title[0]
-    return title if isinstance(s, str) else None
+    if isinstance(s, str):
+        code_title = s.split(" | ")
+        # Reuse code if title is missing
+        title = code_title[1] if len(code_title) > 1 else code_title[0]
+        return title if isinstance(s, str) else None
+    return None
