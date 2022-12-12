@@ -51,7 +51,7 @@ if __name__ == "__main__":
         stash = stash.unstack(stash.index.names.difference(["geo", "time"]))  # type: ignore
         n_variables = len(stash["value"].columns)
         if (
-            n_variables < MAX_VARIABLES_PLOT
+            n_variables <= MAX_VARIABLES_PLOT
         ):  # TODO Totally arbitrary threshold, can be inferred?
             sep = " • "
             fig = make_subplots(

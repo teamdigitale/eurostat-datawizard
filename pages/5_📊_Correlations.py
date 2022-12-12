@@ -119,7 +119,7 @@ if __name__ == "__main__":
 
         # Correlations
         if (
-            n_variables < MAX_VARIABLES_PLOT
+            n_variables <= MAX_VARIABLES_PLOT
         ):  # TODO Totally arbitrary threshold, can be inferred?
             not_enough_datapoints = (
                 stash.groupby("geo").transform(lambda c: c.count()) < 2
