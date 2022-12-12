@@ -51,3 +51,7 @@ def get_last_file_update(filepath: str) -> datetime | None:
     if os.path.exists(filepath):
         return datetime.fromtimestamp(os.path.getmtime(filepath))
     return None
+
+
+def tuple2str(tuple, sep: str = " "):
+    return sep.join([v for v in tuple if isinstance(v, str)])

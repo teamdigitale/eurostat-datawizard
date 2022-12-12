@@ -9,12 +9,9 @@ from widgets.console import show_console
 from widgets.dataframe import empty_eurostat_dataframe
 from widgets.session import app_config
 from widgets.stateful.number_input import stateful_number_input
+from src.utils import tuple2str
 
 session = st.session_state
-
-
-def tuple2str(tuple, sep: str = " "):
-    return sep.join([v for v in tuple if isinstance(v, str)])
 
 
 def trim_code(s):
