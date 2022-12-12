@@ -1,19 +1,23 @@
 from functools import partial
 from importlib import import_module
+import io
 
 import numpy as np
 import pandas as pd
 import streamlit as st
 from pingouin import rm_corr
+from globals import MAX_VARIABLES_PLOT
 
 from widgets.console import show_console
 from widgets.dataframe import empty_eurostat_dataframe
 from widgets.session import app_config
 import plotly.express as px
 from matplotlib.colors import LinearSegmentedColormap
-from src.utils import tuple2str
+from src.utils import tuple2str, trim_code
 import matplotlib.pyplot as plt
 import seaborn as sns
+
+from widgets.stateful.number_input import stateful_number_input
 
 sns.set()
 
@@ -38,7 +42,8 @@ def pandas_rm_corr_pval(x, y, subject):
     return rm_corr(data=data, x="x", y="y", subject="subject").pval.squeeze()
 
 
-def compute(df: pd.DataFrame):
+@st.experimental_memo
+def compute_correlation(df: pd.DataFrame):
     corr = df.corr(
         method=partial(pandas_rm_corr, subject=df.index.get_level_values("geo"))  # type: ignore
     )
@@ -56,14 +61,15 @@ def RdWtBu():
     )
 
 
-def plot(corr, pval, cmap):
-    fig, ax = plt.subplots(figsize=(18, 16))
+def plot_heatmap(corr: pd.DataFrame):
+    fig, ax = plt.subplots(figsize=(12, 10), dpi=150)
+    plt.title("Correlation heatmap")
     ax = sns.heatmap(
-        corr.mask(pval > 0.05),
+        corr,
         annot=True,
         vmin=-1,
         vmax=+1,
-        cmap=cmap,
+        cmap=RdWtBu(),
         fmt=".2f",
         ax=ax,
     )
@@ -102,23 +108,39 @@ if __name__ == "__main__":
         stash = stash["value"]
         n_variables = len(stash.columns)
 
+        with st.sidebar:
+            pval_threshold = stateful_number_input(
+                "Adjust p-value threshold",
+                "pval_threshold",
+                min_value=0.01,
+                max_value=1.0,
+                value=0.01,
+            )
+
         # Correlations
-        MAX_CORRELATION_PLOT = 100
         if (
-            n_variables < MAX_CORRELATION_PLOT
+            n_variables < MAX_VARIABLES_PLOT
         ):  # TODO Totally arbitrary threshold, can be inferred?
             not_enough_datapoints = stash.groupby("geo").count() < 3
             # stash = stash.mask(not_enough_datapoints)
-            stash.columns = [tuple2str(i, " • ") for i in stash.columns.to_flat_index()]
-            scores, pvals = compute(stash)  # type: ignore
-            f, ax = plot(scores, pvals, RdWtBu())
-            st.pyplot(f)
+            stash.columns = [
+                tuple2str(map(trim_code, i), " • ")
+                for i in stash.columns.to_flat_index()
+            ]
+            scores, pvals = compute_correlation(stash)  # type: ignore
+            scores = scores.mask(pvals > pval_threshold)
+            f, ax = plot_heatmap(scores)
+            with io.BytesIO() as buffer:
+                f.savefig(buffer, bbox_inches="tight")
+                buffer.seek(0)
+                st.image(buffer)
+            # st.pyplot(f, dpi=150)  # NOTE pyplot does not render custom dpi
         else:
             st.error(
                 f"""
                 {n_variables} variables found in `Stash`, plot computation was interrupt to prevent overload. 
                 
-                Reduce variables up to {MAX_CORRELATION_PLOT}. You can check data size in the `Stash` page, selecting `Wide-format`.
+                Reduce variables up to {MAX_VARIABLES_PLOT}. You can check data size in the `Stash` page, selecting `Wide-format`.
                 """
             )
 

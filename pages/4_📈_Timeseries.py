@@ -4,21 +4,14 @@ import plotly.express as px
 import streamlit as st
 from plotly.subplots import make_subplots
 
-from globals import MAX_TIMESERIES_PLOT
+from globals import MAX_VARIABLES_PLOT
 from widgets.console import show_console
 from widgets.dataframe import empty_eurostat_dataframe
 from widgets.session import app_config
 from widgets.stateful.number_input import stateful_number_input
-from src.utils import tuple2str
+from src.utils import tuple2str, trim_code
 
 session = st.session_state
-
-
-def trim_code(s):
-    code_title = s.split(" | ")
-    # Reuse code if title is missing
-    title = code_title[1] if len(code_title) > 1 else code_title[0]
-    return title if isinstance(s, str) else None
 
 
 def plot_column_idx(df, i):
@@ -58,7 +51,7 @@ if __name__ == "__main__":
         stash = stash.unstack(stash.index.names.difference(["geo", "time"]))  # type: ignore
         n_variables = len(stash["value"].columns)
         if (
-            n_variables < MAX_TIMESERIES_PLOT
+            n_variables < MAX_VARIABLES_PLOT
         ):  # TODO Totally arbitrary threshold, can be inferred?
             sep = " • "
             fig = make_subplots(
@@ -95,7 +88,7 @@ if __name__ == "__main__":
                 f"""
                 {n_variables} variables found in `Stash`, plot computation was interrupt to prevent overload. 
                 
-                Reduce variables up to {MAX_TIMESERIES_PLOT}. You can check data size in the `Stash` page, selecting `Wide-format`.
+                Reduce variables up to {MAX_VARIABLES_PLOT}. You can check data size in the `Stash` page, selecting `Wide-format`.
                 """
             )
 
