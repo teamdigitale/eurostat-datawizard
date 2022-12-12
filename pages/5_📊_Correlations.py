@@ -62,7 +62,7 @@ def RdWtBu():
 
 
 def plot_heatmap(corr: pd.DataFrame):
-    fig, ax = plt.subplots(figsize=(12, 10), dpi=150)
+    fig, ax = plt.subplots(figsize=(18, 16), dpi=150)
     plt.title("Correlation heatmap")
     ax = sns.heatmap(
         corr,
