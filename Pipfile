@@ -13,6 +13,8 @@ pandasdmx = "*"
 scikit-learn = "*"
 plotly = "*"
 streamlit-plotly-events = "*"
+pingouin = "*"
+seaborn = "*"
 
 [dev-packages]
 pytest = "*"
