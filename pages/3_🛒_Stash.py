@@ -23,7 +23,7 @@ def load_stash(stash: dict) -> pd.DataFrame:
             properties["stash"],
         )
         if stash:
-            df = import_module("pages.2_Data").load_dataset(code)
+            df = import_module("pages.2_🗄️_Data").load_dataset(code)
             df = filter_dataset_replacing_NA(
                 df,
                 indexes,
@@ -97,4 +97,4 @@ if __name__ == "__main__":
 
     show_stash()
 
-    show_console()  # For debugging
+    show_console()

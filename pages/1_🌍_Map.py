@@ -134,7 +134,7 @@ if __name__ == "__main__":
     else:
         # List datasets
         toc, _ = load_table_of_contents()
-        datasets = import_module("pages.2_Data").build_toc_list(toc)
+        datasets = import_module("pages.2_🗄️_Data").build_toc_list(toc)
         with st.sidebar:
             mark = stateful_selectbox(
                 label="Mark a dataset",
@@ -172,4 +172,4 @@ if __name__ == "__main__":
 
         download_dataframe_button(datasets2d, filename_prefix="clustermap")
 
-    show_console()  # For debugging
+    show_console()

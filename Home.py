@@ -30,7 +30,7 @@ def index_helper(message_widget):
 
     if os.environ["ENV"] == "demo":
         st.sidebar.warning(
-            f"On Streamlit Cloud you are limited to explore {DEMO_N_DATASET} random datasets due to limited resources."
+            f"Demo version: you are limited to explore {DEMO_N_DATASET} random datasets."
         )
 
     col1, col2 = st.sidebar.columns(2, gap="large")
@@ -86,22 +86,6 @@ def index_describer():
             st.sidebar.error(e)
 
 
-def show_cache_uploader():
-    # NOTE it was simpler upload directly the varsname but choosen to not do, in order
-    # to mitigate security problems in uploading a `pickled` file.
-    ext = "sqlite"
-    cachename = f"cache/sdmx.{ext}"
-    # NOTE Available only at first run, without a cache
-    if not os.path.exists(cachename):
-        cache = st.sidebar.file_uploader("Create index or preload a cache first", ext)
-        if cache:
-            os.makedirs(os.path.dirname(cachename), exist_ok=True)
-            if os.path.exists(VARS_INDEX_PATH):
-                os.remove(VARS_INDEX_PATH)
-            with open(cachename, "wb") as f:
-                f.write(cache.getbuffer())
-
-
 if __name__ == "__main__":
     app_config("Home")
 
@@ -118,7 +102,5 @@ if __name__ == "__main__":
     index_helper(message)
 
     index_describer()
-
-    show_cache_uploader()
 
     show_console()  # For debugging

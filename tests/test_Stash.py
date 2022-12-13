@@ -37,7 +37,7 @@ def test_load_stash(mock_eust):  # flake8: noqa
             "stash": False,
         },
     }
-    df = import_module("pages.3_Stash").load_stash(stash)
+    df = import_module("pages.3_🛒_Stash").load_stash(stash)
     assert len(df) == 3
     assert "dataset" in df.index.names
     assert "geo" in df.index.names

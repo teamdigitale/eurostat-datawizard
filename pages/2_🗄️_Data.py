@@ -151,12 +151,23 @@ def import_dataset():
 
                 # Flags management
                 flags = dataset.flag.fillna("<NA>").unique().tolist()
-                history["flags"] = stateful_multiselect(
-                    label="Select FLAG",
-                    options=flags,
-                    default=flags,
-                    key=f"_{dataset_code}.flags",
-                )
+
+                flags_container = st.container()
+
+                if st.button(
+                    "Select all",
+                    key=f"_{dataset_code}.flags_all",
+                ):
+                    del session[f"_{dataset_code}.flags_default"]
+                    st.experimental_rerun()
+
+                with flags_container:
+                    history["flags"] = stateful_multiselect(
+                        label="Select FLAG",
+                        options=flags,
+                        default=flags,
+                        key=f"_{dataset_code}.flags",
+                    )
 
                 # Indexes management
                 indexes = {n: dataset.index.levels[i].to_list() for i, n in enumerate(dataset.index.names)}  # type: ignore
@@ -170,23 +181,34 @@ def import_dataset():
                     history["indexes"] = dict()
 
                 for name in dataset.index.names:
+                    index_container = st.container()
+
+                    if st.button(
+                        "Select all",
+                        key=f"_{dataset_code}.indexes.{name}_all",
+                    ):
+                        del session[f"_{dataset_code}.indexes.{name}_default"]
+                        st.experimental_rerun()
+
                     if name == "time":
-                        m, M = indexes["time"][0], indexes["time"][1]
-                        M = M if m < M else M + 1  # RangeError fix
-                        history["indexes"]["time"] = stateful_slider(
-                            label="Select TIME [min: 1 year]",
-                            min_value=m,
-                            max_value=M,
-                            value=(m, M),
-                            key=f"_{dataset_code}.indexes.time",
-                        )
+                        with index_container:
+                            m, M = indexes["time"][0], indexes["time"][1]
+                            M = M if m < M else M + 1  # RangeError fix
+                            history["indexes"]["time"] = stateful_slider(
+                                label="Select TIME [min: 1 year]",
+                                min_value=m,
+                                max_value=M,
+                                value=(m, M),
+                                key=f"_{dataset_code}.indexes.time",
+                            )
                     else:
-                        history["indexes"][name] = stateful_multiselect(
-                            label=f"Select {name.upper()}",
-                            options=indexes[name],
-                            default=indexes[name],
-                            key=f"_{dataset_code}.indexes.{name}",
-                        )
+                        with index_container:
+                            history["indexes"][name] = stateful_multiselect(
+                                label=f"Select {name.upper()}",
+                                options=indexes[name],
+                                default=indexes[name],
+                                key=f"_{dataset_code}.indexes.{name}",
+                            )
 
                 return dataset
 
@@ -219,4 +241,4 @@ if __name__ == "__main__":
 
     dataset = import_dataset()
 
-    show_console()  # For debugging
+    show_console()
