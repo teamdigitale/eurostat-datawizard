@@ -92,9 +92,20 @@ if __name__ == "__main__":
     with open("README.md", "r") as readme:
         app_description = "".join([next(readme) for _ in range(29)])
     app_description = app_description.replace("# Eurostat", "# 🇪🇺 Eurostat")
-    app_description = app_description.replace(
-        "[here](https://eurostat-datawizard.streamlit.app)", "here"
-    ).replace("repo", "[repo](https://github.com/teamdigitale/eurostat-datawizard)", 1)
+    if os.environ["ENV"] == "demo":
+        app_description = app_description.replace(
+            "[here](https://eurostat-datawizard.streamlit.app)", "here"
+        ).replace(
+            "repo", "[repo](https://github.com/teamdigitale/eurostat-datawizard)", 1
+        )
+    else:
+        app_description = app_description.replace(
+            "You can play with a (**resource limited**) working version [here](https://eurostat-datawizard.streamlit.app).",
+            "",
+        ).replace(
+            "⚠️ For a better experience, cloning the repo and run it locally is highly suggested! ⚠️",
+            "",
+        )
     st.markdown(app_description)
 
     message = st.sidebar.empty()
