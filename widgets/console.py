@@ -30,7 +30,7 @@ def upload_session_state(widget):
         widget.write(st.session_state)
 
 
-def show_console():
+def session_console():
     with st.expander("Session console"):
         download_session_state()
         show_session = st.empty()

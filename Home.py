@@ -10,13 +10,13 @@ from globals import (
     get_last_clustering_update,
     DEMO_N_DATASET,
 )
-from widgets.console import show_console
+from widgets.console import session_console
 from widgets.index import (
     load_codelist_reverse_index,
     load_table_of_contents,
     save_index_file,
 )
-from widgets.session import app_config
+from widgets.commons import app_config
 
 
 @st.experimental_singleton(show_spinner=False)
@@ -114,4 +114,4 @@ if __name__ == "__main__":
 
     index_describer()
 
-    show_console()  # For debugging
+    session_console()

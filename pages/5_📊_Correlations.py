@@ -8,9 +8,9 @@ import streamlit as st
 from pingouin import rm_corr
 from globals import MAX_VARIABLES_PLOT
 
-from widgets.console import show_console
+from widgets.console import session_console
 from widgets.dataframe import empty_eurostat_dataframe
-from widgets.session import app_config
+from widgets.commons import app_config
 import plotly.express as px
 from matplotlib.colors import LinearSegmentedColormap
 from src.utils import tuple2str, trim_code
@@ -146,4 +146,4 @@ if __name__ == "__main__":
                 """
             )
 
-    show_console()
+    session_console()

@@ -2,14 +2,14 @@ from threading import Lock
 from typing import List
 import pandas as pd
 import streamlit as st
-from widgets.session import app_config
+from widgets.commons import app_config
 from src.eurostat import (
     cast_time_to_datetimeindex,
     fetch_dataset_and_metadata,
     split_dimensions_and_attributes_from,
 )
 from src.utils import concat_keys_to_values
-from widgets.console import show_console
+from widgets.console import session_console
 from widgets.dataframe import empty_eurostat_dataframe
 from widgets.stateful.multiselect import stateful_multiselect
 from widgets.stateful.selectbox import stateful_selectbox
@@ -241,4 +241,4 @@ if __name__ == "__main__":
 
     dataset = import_dataset()
 
-    show_console()
+    session_console()
