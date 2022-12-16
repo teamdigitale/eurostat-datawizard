@@ -59,10 +59,10 @@ def build_dimension_list(dimensions: pd.Series) -> List[str]:
 
 def reset_user_selections():
     # NOTE Because datasets list change, reset the selected idx
-    if "selected_dataset_options" in session:
-        session.pop("selected_dataset_options")
-    if "selected_dataset_index" in session:
-        session.pop("selected_dataset_index")
+    if "_selected_dataset_options" in session:
+        session.pop("_selected_dataset_options")
+    if "_selected_dataset_index" in session:
+        session.pop("_selected_dataset_index")
     # NOTE Override "Filter datasets by (map) selection"
     if "_selected_map_selection" in session:
         session["_selected_map_selection"] = False
