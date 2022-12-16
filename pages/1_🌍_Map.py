@@ -140,7 +140,7 @@ if __name__ == "__main__":
                 label="Mark a dataset",
                 options=range(len(datasets)),
                 format_func=lambda i: datasets[i],
-                key="pinpoint",
+                key="_pinpoint",
             )
             mark = datasets[mark]
 

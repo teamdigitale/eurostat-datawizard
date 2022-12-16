@@ -110,8 +110,8 @@ if __name__ == "__main__":
 
         with st.sidebar:
             pval_threshold = stateful_number_input(
-                "Adjust p-value threshold",
-                "pval_threshold",
+                label="Adjust p-value threshold",
+                key="_pval_threshold",
                 min_value=0.01,
                 max_value=1.0,
                 value=0.01,

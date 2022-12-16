@@ -42,7 +42,7 @@ if __name__ == "__main__":
 
     with st.sidebar:
         plot_height = stateful_number_input(
-            "Adjust plot height [px]", value=500, step=100, key="plot_height"
+            "Adjust plot height [px]", value=500, step=100, key="_plot_height"
         )
 
     if stash.empty:

@@ -64,8 +64,8 @@ def reset_user_selections():
     if "selected_dataset_index" in session:
         session.pop("selected_dataset_index")
     # NOTE Override "Filter datasets by (map) selection"
-    if "selected_map_selection" in session:
-        session["selected_map_selection"] = False
+    if "_selected_map_selection" in session:
+        session["_selected_map_selection"] = False
 
 
 def import_dataset():
@@ -100,7 +100,7 @@ def import_dataset():
                 label="Filter datasets by variable",
                 options=range(len(variables)),
                 format_func=lambda i: variables[i],
-                key="selected_variable",
+                key="_selected_variable",
                 on_change=reset_user_selections,
             )
             selected_variable = variables[selected_variable]  # type: ignore
@@ -111,7 +111,7 @@ def import_dataset():
     with tab2:
         if tab2.checkbox(
             "Filter datasets by selection",
-            key="selected_map_selection",
+            key="_selected_map_selection",
             disabled="map_selection" not in session or session["map_selection"].empty,
         ):
             if "map_selection" in session:
@@ -127,7 +127,7 @@ def import_dataset():
             label="Choose a dataset",
             options=range(len(datasets)),
             format_func=lambda i: datasets[i],
-            key="selected_dataset",
+            key="_selected_dataset",
         )
         dataset_code_title = datasets[dataset_code_title]  # type: ignore
 
