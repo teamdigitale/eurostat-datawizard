@@ -1,4 +1,5 @@
 import json
+from typing import Mapping
 import pandas as pd
 import streamlit as st
 from datetime import datetime
@@ -13,6 +14,16 @@ def download_session_state():
         file_name=f"EurostatDataWizard_session_{now}.json",
         mime="application/json",
     )
+
+
+def update_dict(d, u):
+    # Source: https://stackoverflow.com/questions/3232943/update-value-of-a-nested-dictionary-of-varying-depth
+    for k, v in u.items():
+        if isinstance(v, Mapping):
+            d[k] = update_dict(d.get(k, {}), v)
+        else:
+            d[k] = v
+    return d
 
 
 def upload_session_state(widget):
@@ -33,6 +44,6 @@ def upload_session_state(widget):
 def session_console():
     with st.expander("Session console"):
         download_session_state()
-        show_session = st.empty()
-        show_session.write(st.session_state)
-        upload_session_state(show_session)
+        session_container = st.empty()
+        session_container.write(st.session_state)
+        upload_session_state(session_container)
