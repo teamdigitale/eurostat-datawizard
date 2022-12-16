@@ -30,10 +30,11 @@ def upload_session_state(widget):
     json_str = st.file_uploader("Upload & overwrite existing session", "json")
     if json_str:
         py_dict = json.loads(json_str.getvalue())
-        # NOTE private variables will be filtered to avoid collision with internal
-        # widget state, like:
-        # StreamlitAPIException: st.session_state.selected_variable cannot be
-        # modified after the widget with key selected_variable is instantiated.
+        # NOTE variables set via session state are write-protected from streamlit.
+        # So they are marked as private variables by convention and will be filtered
+        # to avoid collision with session state API, that fires error like:
+        # StreamlitAPIException: st.session_state._selected_variable cannot be
+        # modified after the widget with key _selected_variable is instantiated.
         [py_dict.pop(key) for key in list(py_dict.keys()) if key.startswith("_")]
         if "time" in py_dict:
             py_dict["time"] = pd.to_datetime(py_dict["time"])
