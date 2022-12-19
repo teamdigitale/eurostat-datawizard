@@ -1,22 +1,22 @@
+import io
 from functools import partial
 from importlib import import_module
-import io
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import plotly.express as px
+import seaborn as sns
 import streamlit as st
+from matplotlib import cm
+from matplotlib.colors import LinearSegmentedColormap, Normalize
 from pingouin import rm_corr
-from globals import MAX_VARIABLES_PLOT
 
+from globals import MAX_VARIABLES_PLOT
+from src.utils import trim_code, tuple2str
+from widgets.commons import app_config
 from widgets.console import session_console
 from widgets.dataframe import empty_eurostat_dataframe
-from widgets.commons import app_config
-import plotly.express as px
-from matplotlib.colors import LinearSegmentedColormap
-from src.utils import tuple2str, trim_code
-import matplotlib.pyplot as plt
-import seaborn as sns
-
 from widgets.stateful.number_input import stateful_number_input
 
 sns.set()
@@ -53,12 +53,15 @@ def compute_correlation(df: pd.DataFrame):
     return corr, pval
 
 
-def RdWtBu():
-    p = [-1, -0.5, 0.5, 1]
-    f = lambda x: np.interp(x, p, [0, 0.5, 0.5, 1])
-    return LinearSegmentedColormap.from_list(
-        "RdWtBu", list(zip(np.linspace(0, 1), plt.cm.RdBu(f(np.linspace(-1, +1)))))  # type: ignore
-    )
+def OrBu():
+    colors = [
+        (1.0, 0.7, 0.0),  # Orange (#cc7a00)
+        (1.0, 0.9, 0.5),  # gradient
+        (1.0, 1.0, 1.0),  # White
+        (0.9, 0.9, 1.0),  # gradient
+        (0.0, 0.4, 0.8),  # Blue (#0066cc)
+    ]
+    return LinearSegmentedColormap.from_list("OrBu", colors)
 
 
 def plot_heatmap(corr: pd.DataFrame):
@@ -69,10 +72,11 @@ def plot_heatmap(corr: pd.DataFrame):
         annot=True,
         vmin=-1,
         vmax=+1,
-        cmap=RdWtBu(),
+        cmap=OrBu(),
         fmt=".2f",
         ax=ax,
     )
+    ax.set_facecolor("white")  # Background color (hence, NaN color)
     ax.set_xticklabels(ax.get_xticklabels(), rotation=45, horizontalalignment="right")
     return fig, ax
 
