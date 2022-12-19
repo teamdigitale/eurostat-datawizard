@@ -143,7 +143,7 @@ if __name__ == "__main__":
                 tuple2str(map(trim_code, i), " • ")
                 for i in stash.columns.to_flat_index()
             ]
-            stash.columns = stash.columns.str.replace(" • ", "\n")  # type: ignore
+            stash.columns = stash.columns.str.replace(" • ", "\n").str.replace(", ", "\n")  # type: ignore
             scores, pvals = compute_correlation(stash)  # type: ignore
             scores = scores.mask(pvals > pval_threshold)
 
