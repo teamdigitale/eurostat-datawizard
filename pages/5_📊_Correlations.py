@@ -1,15 +1,14 @@
 import io
 from functools import partial
 from importlib import import_module
+from typing import Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import plotly.express as px
 import seaborn as sns
 import streamlit as st
-from matplotlib import cm
-from matplotlib.colors import LinearSegmentedColormap, Normalize
+from matplotlib.colors import LinearSegmentedColormap
 from pingouin import rm_corr
 
 from globals import MAX_VARIABLES_PLOT
@@ -18,6 +17,7 @@ from widgets.commons import app_config
 from widgets.console import session_console
 from widgets.dataframe import empty_eurostat_dataframe
 from widgets.stateful.number_input import stateful_number_input
+from widgets.stateful.slider import stateful_slider
 
 sns.set()
 
@@ -42,7 +42,7 @@ def pandas_rm_corr_pval(x, y, subject):
     return rm_corr(data=data, x="x", y="y", subject="subject").pval.squeeze()
 
 
-@st.experimental_memo
+# @st.experimental_memo
 def compute_correlation(df: pd.DataFrame):
     corr = df.corr(
         method=partial(pandas_rm_corr, subject=df.index.get_level_values("geo"))  # type: ignore
@@ -64,8 +64,8 @@ def OrBu():
     return LinearSegmentedColormap.from_list("OrBu", colors)
 
 
-def plot_heatmap(corr: pd.DataFrame):
-    fig, ax = plt.subplots(figsize=(18, 16), dpi=150)
+def plot_heatmap(corr: pd.DataFrame, figsize: Tuple[int, int] = (18, 16)):
+    fig, ax = plt.subplots(figsize=figsize, dpi=150)
     plt.title("Correlation heatmap")
     ax = sns.heatmap(
         corr,
@@ -120,6 +120,16 @@ if __name__ == "__main__":
                 max_value=1.0,
                 value=0.01,
             )
+            fig_h = stateful_number_input(
+                label="Figure Height",
+                key="_fig_height",
+                value=16,
+            )
+            fig_w = stateful_number_input(
+                label="Figure Width",
+                key="_fig_width",
+                value=18,
+            )
 
         # Correlations
         if (
@@ -133,9 +143,28 @@ if __name__ == "__main__":
                 tuple2str(map(trim_code, i), " • ")
                 for i in stash.columns.to_flat_index()
             ]
+            stash.columns = stash.columns.str.replace(" • ", "\n")  # type: ignore
             scores, pvals = compute_correlation(stash)  # type: ignore
             scores = scores.mask(pvals > pval_threshold)
-            f, ax = plot_heatmap(scores)
+
+            with st.sidebar:
+                trim_h = stateful_slider(
+                    label="Trim Height",
+                    key="_trim_height",
+                    min_value=0,
+                    max_value=scores.shape[1],
+                    value=(0, scores.shape[1]),
+                )
+                trim_w = stateful_slider(
+                    label="Trim Width",
+                    key="_trim_width",
+                    min_value=0,
+                    max_value=scores.shape[0],
+                    value=(0, scores.shape[0]),
+                )
+            scores = scores.iloc[trim_h[0] : trim_h[1], trim_w[0] : trim_w[1]]
+
+            f, ax = plot_heatmap(scores, figsize=(int(fig_w), int(fig_h)))
             with io.BytesIO() as buffer:
                 f.savefig(buffer, bbox_inches="tight")
                 buffer.seek(0)
