@@ -24,7 +24,7 @@ def index_helper(message_widget):
 
     if os.environ["ENV"] == "demo":
         st.sidebar.warning(
-            f"Demo version: you are limited to explore a limited number of datasets."
+            f"Demo version: you are limited to explore a fixed list of datasets."
         )
 
     col1, col2 = st.sidebar.columns(2, gap="large")
