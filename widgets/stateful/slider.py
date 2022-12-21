@@ -27,9 +27,6 @@ def stateful_slider(
     """
     A stateful slider that preserves value selection.
     """
-    if key not in session:
-        session[key] = None
-
     if f"{key}_min_value" not in session:
         session[f"{key}_min_value"] = min_value
 
@@ -39,13 +36,12 @@ def stateful_slider(
     if f"{key}_value" not in session:
         session[f"{key}_value"] = value
 
-    session[key] = position.slider(
+    return position.slider(
         label=label,
         min_value=session[f"{key}_min_value"],
         max_value=session[f"{key}_max_value"],
         value=session[f"{key}_value"],
-        key=None,  # NOTE: avoid collisions with session state API
+        key=key,
         on_change=_on_change_factory(_update_value, session, key)(on_change),
         **kwargs,
     )
-    return session[key]

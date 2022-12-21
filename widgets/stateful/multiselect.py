@@ -24,17 +24,13 @@ def stateful_multiselect(
     """
     A stateful multiselect that preserves default selection.
     """
-    if key not in session:
-        session[key] = None
-
     if f"{key}_default" not in session:
         session[f"{key}_default"] = default
 
-    session[key] = position.multiselect(
+    return position.multiselect(
         label=label,
         default=session[f"{key}_default"],
-        key=None,  # NOTE: avoid collisions with session state API
+        key=key,
         on_change=_on_change_factory(_update_default, session, key)(on_change),
         **kwargs,
     )
-    return session[key]

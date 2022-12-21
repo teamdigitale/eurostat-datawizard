@@ -24,17 +24,13 @@ def stateful_selectbox(
     """
     A stateful selectbox that preserves index selection.
     """
-    if key not in session:
-        session[key] = None
-
     if f"{key}_index" not in session:
         session[f"{key}_index"] = index
 
-    session[key] = position.selectbox(
+    return position.selectbox(
         label=label,
         index=session[f"{key}_index"],
-        key=None,  # NOTE: avoid collisions with session state API
+        key=key,
         on_change=_on_change_factory(_update_index, session, key)(on_change),
         **kwargs,
     )
-    return session[key]
