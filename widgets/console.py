@@ -30,18 +30,13 @@ def upload_session_state(widget):
     json_str = st.file_uploader("Upload & overwrite existing session", "json")
     if json_str:
         py_dict = json.loads(json_str.getvalue())
-        # NOTE variables set via session state are write-protected from streamlit.
-        # So they are marked as private variables by convention and will be filtered
-        # to avoid collision with session state API, that fires error like:
-        # StreamlitAPIException: st.session_state._selected_variable cannot be
-        # modified after the widget with key _selected_variable is instantiated.
-        # [py_dict.pop(key) for key in list(py_dict.keys()) if key.startswith("_")]
-        # TODO remove above when stateful_widgets manage session state manually
         if "time" in py_dict:
             py_dict["time"] = pd.to_datetime(py_dict["time"])
+        if "map_selection" in py_dict:
+            py_dict["map_selection"] = pd.read_json(py_dict["map_selection"])
         st.session_state.clear()
         st.session_state.update(py_dict)
-        widget.json(st.session_state, expanded=False)
+        widget.json(st.session_state, expanded=True)
 
 
 def session_console():
