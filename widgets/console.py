@@ -35,16 +35,20 @@ def upload_session_state(widget):
         # to avoid collision with session state API, that fires error like:
         # StreamlitAPIException: st.session_state._selected_variable cannot be
         # modified after the widget with key _selected_variable is instantiated.
-        [py_dict.pop(key) for key in list(py_dict.keys()) if key.startswith("_")]
+        # [py_dict.pop(key) for key in list(py_dict.keys()) if key.startswith("_")]
         if "time" in py_dict:
             py_dict["time"] = pd.to_datetime(py_dict["time"])
+        st.session_state.clear()
         st.session_state.update(py_dict)
-        widget.write(st.session_state)
+        widget.json(st.session_state, expanded=False)
 
 
 def session_console():
     with st.expander("Session console"):
-        download_session_state()
+        col1, col2 = st.columns(2)
         session_container = st.empty()
-        session_container.write(st.session_state)
-        upload_session_state(session_container)
+        with col1:
+            download_session_state()
+        with col2:
+            upload_session_state(session_container)
+        session_container.json(st.session_state, expanded=False)
