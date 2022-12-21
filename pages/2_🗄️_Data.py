@@ -115,6 +115,7 @@ def import_dataset():
             disabled="map_selection" not in session or session["map_selection"].empty,
         ):
             if "map_selection" in session:
+                session["_selected_dataset_index"] = 0
                 dataset_codes = session["map_selection"]["code"].to_list()
 
     # List (filtered) datasets
