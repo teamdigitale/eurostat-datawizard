@@ -6,7 +6,7 @@ import streamlit as st
 from plotly.graph_objects import Figure
 from sklearn.manifold import TSNE
 from streamlit_plotly_events import plotly_events
-from globals import DEMO_N_DATASET, get_last_index_update
+from globals import get_last_index_update
 from widgets.console import session_console
 from widgets.download import download_dataframe_button
 from widgets.index import (
@@ -59,7 +59,7 @@ def cluster_datasets() -> pd.DataFrame:
         learning_rate="auto",
         metric="cosine",
         init="pca",
-        perplexity=DEMO_N_DATASET - 1 if os.environ["ENV"] == "demo" else 30,
+        perplexity=6 if os.environ["ENV"] == "demo" else 30,
     )
     xy = pd.DataFrame(tsne.fit_transform(adj), index=adj.index, columns=["1st", "2nd"])
     xy.index.name = "code"

@@ -3,20 +3,14 @@ from threading import Lock
 
 import streamlit as st
 
-from globals import (
-    VARS_INDEX_PATH,
-    get_last_index_update,
-    CLUSTERING_PATH,
-    get_last_clustering_update,
-    DEMO_N_DATASET,
-)
+from globals import CLUSTERING_PATH, get_last_clustering_update, get_last_index_update
+from widgets.commons import app_config
 from widgets.console import session_console
 from widgets.index import (
     load_codelist_reverse_index,
     load_table_of_contents,
     save_index_file,
 )
-from widgets.commons import app_config
 
 
 @st.experimental_singleton(show_spinner=False)
@@ -30,7 +24,7 @@ def index_helper(message_widget):
 
     if os.environ["ENV"] == "demo":
         st.sidebar.warning(
-            f"Demo version: you are limited to explore {DEMO_N_DATASET} random datasets."
+            f"Demo version: you are limited to explore a limited number of datasets."
         )
 
     col1, col2 = st.sidebar.columns(2, gap="large")
@@ -63,7 +57,7 @@ def index_describer():
                     codelist = load_codelist_reverse_index()
                     st.sidebar.markdown(
                         f"""
-                    - Indexed dataset: {DEMO_N_DATASET if os.environ["ENV"]=="demo" else len(toc)}
+                    - Indexed dataset: {len(toc)}
                     - Indexed unique variables: {len(codelist)}
 
                     Most used variables:

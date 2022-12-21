@@ -7,7 +7,7 @@ import pandas as pd
 import streamlit as st
 from requests import ConnectionError, HTTPError
 
-from globals import VARS_INDEX_PATH, DEMO_N_DATASET
+from globals import VARS_INDEX_PATH
 from src.eurostat import (
     eurostat_sdmx_request,
     fetch_dataset_codelist,
@@ -19,7 +19,17 @@ from src.eurostat import (
 def load_table_of_contents() -> Tuple[pd.Series, pd.Series]:
     toc, themes = fetch_table_of_contents()
     if os.environ["ENV"] == "demo":
-        toc = toc.sample(DEMO_N_DATASET)
+        toc = toc.loc[
+            [
+                "isoc_sk_dskl_i21",
+                "isoc_sk_cskl_i21",
+                "isoc_sk_edic_i21",
+                "isoc_sk_dskl_i",
+                "isoc_sk_cskl_i",
+                "isoc_sk_iskl_i",
+                "isoc_sk_how_i",
+            ]
+        ]
     return toc, themes
 
 
