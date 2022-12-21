@@ -1,4 +1,4 @@
-from typing import Any, Iterable, MutableMapping, Optional
+from typing import Any, MutableMapping, Optional
 
 import streamlit as st
 from streamlit.delta_generator import DeltaGenerator
@@ -24,14 +24,17 @@ def stateful_multiselect(
     """
     A stateful multiselect that preserves default selection.
     """
+    if key not in session:
+        session[key] = None
 
     if f"{key}_default" not in session:
         session[f"{key}_default"] = default
 
-    return position.multiselect(
+    session[key] = position.multiselect(
         label=label,
         default=session[f"{key}_default"],
-        key=key,
+        key=None,  # NOTE: avoid collisions with session state API
         on_change=_on_change_factory(_update_default, session, key)(on_change),
         **kwargs,
     )
+    return session[key]

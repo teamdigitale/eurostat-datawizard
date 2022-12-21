@@ -36,6 +36,7 @@ def upload_session_state(widget):
         # StreamlitAPIException: st.session_state._selected_variable cannot be
         # modified after the widget with key _selected_variable is instantiated.
         # [py_dict.pop(key) for key in list(py_dict.keys()) if key.startswith("_")]
+        # TODO remove above when stateful_widgets manage session state manually
         if "time" in py_dict:
             py_dict["time"] = pd.to_datetime(py_dict["time"])
         st.session_state.clear()
