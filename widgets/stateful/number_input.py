@@ -26,14 +26,17 @@ def stateful_number_input(
     """
     A stateful number input that preserves value.
     """
+    if key not in session:
+        session[key] = None
 
     if f"{key}_value" not in session:
         session[f"{key}_value"] = value
 
-    return position.number_input(
+    session[key] = position.number_input(
         label,
         value=session[f"{key}_value"],
-        key=key,
+        key=None,  # NOTE: avoid collisions with session state API
         on_change=_on_change_factory(_update_value, session, key)(on_change),
         **kwargs,
     )
+    return session[key]

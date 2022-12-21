@@ -2,14 +2,14 @@ from threading import Lock
 from typing import List
 import pandas as pd
 import streamlit as st
-from widgets.session import app_config
+from widgets.commons import app_config
 from src.eurostat import (
     cast_time_to_datetimeindex,
     fetch_dataset_and_metadata,
     split_dimensions_and_attributes_from,
 )
 from src.utils import concat_keys_to_values
-from widgets.console import show_console
+from widgets.console import session_console
 from widgets.dataframe import empty_eurostat_dataframe
 from widgets.stateful.multiselect import stateful_multiselect
 from widgets.stateful.selectbox import stateful_selectbox
@@ -59,13 +59,13 @@ def build_dimension_list(dimensions: pd.Series) -> List[str]:
 
 def reset_user_selections():
     # NOTE Because datasets list change, reset the selected idx
-    if "selected_dataset_options" in session:
-        session.pop("selected_dataset_options")
-    if "selected_dataset_index" in session:
-        session.pop("selected_dataset_index")
+    if "_selected_dataset_options" in session:
+        session.pop("_selected_dataset_options")
+    if "_selected_dataset_index" in session:
+        session.pop("_selected_dataset_index")
     # NOTE Override "Filter datasets by (map) selection"
-    if "selected_map_selection" in session:
-        session["selected_map_selection"] = False
+    if "_selected_map_selection" in session:
+        session["_selected_map_selection"] = False
 
 
 def import_dataset():
@@ -100,7 +100,7 @@ def import_dataset():
                 label="Filter datasets by variable",
                 options=range(len(variables)),
                 format_func=lambda i: variables[i],
-                key="selected_variable",
+                key="_selected_variable",
                 on_change=reset_user_selections,
             )
             selected_variable = variables[selected_variable]  # type: ignore
@@ -111,10 +111,11 @@ def import_dataset():
     with tab2:
         if tab2.checkbox(
             "Filter datasets by selection",
-            key="selected_map_selection",
+            key="_selected_map_selection",
             disabled="map_selection" not in session or session["map_selection"].empty,
         ):
             if "map_selection" in session:
+                session["_selected_dataset_index"] = 0
                 dataset_codes = session["map_selection"]["code"].to_list()
 
     # List (filtered) datasets
@@ -127,7 +128,7 @@ def import_dataset():
             label="Choose a dataset",
             options=range(len(datasets)),
             format_func=lambda i: datasets[i],
-            key="selected_dataset",
+            key="_selected_dataset",
         )
         dataset_code_title = datasets[dataset_code_title]  # type: ignore
 
@@ -241,4 +242,4 @@ if __name__ == "__main__":
 
     dataset = import_dataset()
 
-    show_console()
+    session_console()

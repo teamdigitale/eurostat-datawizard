@@ -7,13 +7,13 @@ from plotly.graph_objects import Figure
 from sklearn.manifold import TSNE
 from streamlit_plotly_events import plotly_events
 from globals import DEMO_N_DATASET, get_last_index_update
-from widgets.console import show_console
+from widgets.console import session_console
 from widgets.download import download_dataframe_button
 from widgets.index import (
     load_codelist_reverse_index,
     load_table_of_contents,
 )
-from widgets.session import app_config
+from widgets.commons import app_config
 from widgets.stateful.selectbox import stateful_selectbox
 
 
@@ -140,7 +140,7 @@ if __name__ == "__main__":
                 label="Mark a dataset",
                 options=range(len(datasets)),
                 format_func=lambda i: datasets[i],
-                key="pinpoint",
+                key="_pinpoint",
             )
             mark = datasets[mark]
 
@@ -172,4 +172,4 @@ if __name__ == "__main__":
 
         download_dataframe_button(datasets2d, filename_prefix="clustermap")
 
-    show_console()
+    session_console()

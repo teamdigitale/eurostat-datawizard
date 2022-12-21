@@ -3,14 +3,14 @@ from importlib import import_module
 import pandas as pd
 import streamlit as st
 
-from widgets.console import show_console
+from widgets.console import session_console
 from widgets.dataframe import (
     empty_eurostat_dataframe,
     filter_dataset_replacing_NA,
     st_dataframe_with_index_and_rows_cols_count,
 )
 from widgets.download import download_dataframe_button
-from widgets.session import app_config
+from widgets.commons import app_config
 
 
 @st.experimental_memo(show_spinner=False)
@@ -97,4 +97,4 @@ if __name__ == "__main__":
 
     show_stash()
 
-    show_console()
+    session_console()

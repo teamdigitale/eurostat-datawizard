@@ -1,4 +1,4 @@
-from typing import Any, Iterable, MutableMapping, Optional
+from typing import Any, MutableMapping, Optional
 
 import streamlit as st
 from streamlit.delta_generator import DeltaGenerator
@@ -24,14 +24,17 @@ def stateful_selectbox(
     """
     A stateful selectbox that preserves index selection.
     """
+    if key not in session:
+        session[key] = None
 
     if f"{key}_index" not in session:
         session[f"{key}_index"] = index
 
-    return position.selectbox(
+    session[key] = position.selectbox(
         label=label,
         index=session[f"{key}_index"],
-        key=key,
+        key=None,  # NOTE: avoid collisions with session state API
         on_change=_on_change_factory(_update_index, session, key)(on_change),
         **kwargs,
     )
+    return session[key]

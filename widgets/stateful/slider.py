@@ -1,10 +1,10 @@
-from typing import Any, Iterable, MutableMapping, Optional
+from typing import Any, MutableMapping, Optional
 
 import streamlit as st
 from streamlit.delta_generator import DeltaGenerator
+from streamlit.elements.slider import SliderScalar, SliderValue
 from streamlit.runtime.state.session_state import WidgetCallback
 from streamlit.type_util import Key
-from streamlit.elements.slider import SliderScalar, SliderValue
 
 from widgets.stateful import _on_change_factory
 
@@ -27,6 +27,8 @@ def stateful_slider(
     """
     A stateful slider that preserves value selection.
     """
+    if key not in session:
+        session[key] = None
 
     if f"{key}_min_value" not in session:
         session[f"{key}_min_value"] = min_value
@@ -37,12 +39,13 @@ def stateful_slider(
     if f"{key}_value" not in session:
         session[f"{key}_value"] = value
 
-    return position.slider(
+    session[key] = position.slider(
         label=label,
         min_value=session[f"{key}_min_value"],
         max_value=session[f"{key}_max_value"],
         value=session[f"{key}_value"],
-        key=key,
+        key=None,  # NOTE: avoid collisions with session state API
         on_change=_on_change_factory(_update_value, session, key)(on_change),
         **kwargs,
     )
+    return session[key]

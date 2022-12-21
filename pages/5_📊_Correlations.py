@@ -1,23 +1,23 @@
+import io
 from functools import partial
 from importlib import import_module
-import io
+from typing import Tuple
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import streamlit as st
-from pingouin import rm_corr
-from globals import MAX_VARIABLES_PLOT
-
-from widgets.console import show_console
-from widgets.dataframe import empty_eurostat_dataframe
-from widgets.session import app_config
-import plotly.express as px
-from matplotlib.colors import LinearSegmentedColormap
-from src.utils import tuple2str, trim_code
-import matplotlib.pyplot as plt
 import seaborn as sns
+import streamlit as st
+from matplotlib.colors import LinearSegmentedColormap
+from pingouin import rm_corr
 
+from globals import MAX_VARIABLES_PLOT
+from src.utils import trim_code, tuple2str
+from widgets.commons import app_config
+from widgets.console import session_console
+from widgets.dataframe import empty_eurostat_dataframe
 from widgets.stateful.number_input import stateful_number_input
+from widgets.stateful.slider import stateful_slider
 
 sns.set()
 
@@ -42,7 +42,7 @@ def pandas_rm_corr_pval(x, y, subject):
     return rm_corr(data=data, x="x", y="y", subject="subject").pval.squeeze()
 
 
-@st.experimental_memo
+# @st.experimental_memo
 def compute_correlation(df: pd.DataFrame):
     corr = df.corr(
         method=partial(pandas_rm_corr, subject=df.index.get_level_values("geo"))  # type: ignore
@@ -53,26 +53,30 @@ def compute_correlation(df: pd.DataFrame):
     return corr, pval
 
 
-def RdWtBu():
-    p = [-1, -0.5, 0.5, 1]
-    f = lambda x: np.interp(x, p, [0, 0.5, 0.5, 1])
-    return LinearSegmentedColormap.from_list(
-        "RdWtBu", list(zip(np.linspace(0, 1), plt.cm.RdBu(f(np.linspace(-1, +1)))))  # type: ignore
-    )
+def OrBu():
+    colors = [
+        (1.0, 0.7, 0.0),  # Orange (#cc7a00)
+        (1.0, 0.9, 0.5),  # gradient
+        (1.0, 1.0, 1.0),  # White
+        (0.9, 0.9, 1.0),  # gradient
+        (0.0, 0.4, 0.8),  # Blue (#0066cc)
+    ]
+    return LinearSegmentedColormap.from_list("OrBu", colors)
 
 
-def plot_heatmap(corr: pd.DataFrame):
-    fig, ax = plt.subplots(figsize=(18, 16), dpi=150)
+def plot_heatmap(corr: pd.DataFrame, figsize: Tuple[int, int] = (18, 16)):
+    fig, ax = plt.subplots(figsize=figsize, dpi=150)
     plt.title("Correlation heatmap")
     ax = sns.heatmap(
         corr,
         annot=True,
         vmin=-1,
         vmax=+1,
-        cmap=RdWtBu(),
+        cmap=OrBu(),
         fmt=".2f",
         ax=ax,
     )
+    ax.set_facecolor("white")  # Background color (hence, NaN color)
     ax.set_xticklabels(ax.get_xticklabels(), rotation=45, horizontalalignment="right")
     return fig, ax
 
@@ -110,11 +114,21 @@ if __name__ == "__main__":
 
         with st.sidebar:
             pval_threshold = stateful_number_input(
-                "Adjust p-value threshold",
-                "pval_threshold",
+                label="Adjust p-value threshold",
+                key="_pval_threshold",
                 min_value=0.01,
                 max_value=1.0,
                 value=0.01,
+            )
+            fig_h = stateful_number_input(
+                label="Figure Height",
+                key="_fig_height",
+                value=16,
+            )
+            fig_w = stateful_number_input(
+                label="Figure Width",
+                key="_fig_width",
+                value=18,
             )
 
         # Correlations
@@ -129,9 +143,28 @@ if __name__ == "__main__":
                 tuple2str(map(trim_code, i), " • ")
                 for i in stash.columns.to_flat_index()
             ]
+            stash.columns = stash.columns.str.replace(" • ", "\n").str.replace(", ", "\n")  # type: ignore
             scores, pvals = compute_correlation(stash)  # type: ignore
             scores = scores.mask(pvals > pval_threshold)
-            f, ax = plot_heatmap(scores)
+
+            with st.sidebar:
+                trim_h = stateful_slider(
+                    label="Trim Height",
+                    key="_trim_height",
+                    min_value=0,
+                    max_value=scores.shape[1],
+                    value=(0, scores.shape[1]),
+                )
+                trim_w = stateful_slider(
+                    label="Trim Width",
+                    key="_trim_width",
+                    min_value=0,
+                    max_value=scores.shape[0],
+                    value=(0, scores.shape[0]),
+                )
+            scores = scores.iloc[trim_h[0] : trim_h[1], trim_w[0] : trim_w[1]]
+
+            f, ax = plot_heatmap(scores, figsize=(int(fig_w), int(fig_h)))
             with io.BytesIO() as buffer:
                 f.savefig(buffer, bbox_inches="tight")
                 buffer.seek(0)
@@ -146,4 +179,4 @@ if __name__ == "__main__":
                 """
             )
 
-    show_console()
+    session_console()
