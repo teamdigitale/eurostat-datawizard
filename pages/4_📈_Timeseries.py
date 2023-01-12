@@ -14,7 +14,7 @@ from src.utils import tuple2str, trim_code
 session = st.session_state
 
 
-def plot_column_idx(df, i):
+def plot_column_idx(df, i, annotate=False):
     fig = px.line(
         color=df.index.get_level_values("geo"),
         x=df.index.get_level_values("time"),
@@ -22,7 +22,10 @@ def plot_column_idx(df, i):
         hover_name=df["flag"].iloc[:, i].fillna(""),
         labels=dict(x="Time", y="Value", geo="Country"),
         markers=True,
+        text=df.index.get_level_values("geo") if annotate else None,
     )
+    if annotation:
+        fig.update_traces(textposition="middle right")
     return fig
 
 
@@ -45,6 +48,7 @@ if __name__ == "__main__":
         plot_height = stateful_number_input(
             "Adjust plot height [px]", value=500, step=100, key="_plot_height"
         )
+        annotation = st.checkbox("Annotation")
 
     if stash.empty:
         st.warning("No stash found. Select some data to plot.")
@@ -70,7 +74,7 @@ if __name__ == "__main__":
             # Cycle stash columns by flag, value pairs
             for i in range(n_variables):
                 fig.add_traces(
-                    plot_column_idx(stash, i)
+                    plot_column_idx(stash, i, annotate=annotation)
                     .update_traces(dict(showlegend=True if i < 1 else False))
                     .data,
                     rows=i + 1,
