@@ -146,6 +146,7 @@ if __name__ == "__main__":
 
         datasets2d = cluster_datasets()
 
+        # TODO updating streamlit breaks `plotly_events`: datapoints become black
         selection = plotly_events(
             plot_clustering(
                 datasets2d,
