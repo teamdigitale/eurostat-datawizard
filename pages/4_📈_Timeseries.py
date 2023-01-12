@@ -21,6 +21,7 @@ def plot_column_idx(df, i):
         y=df["value"].iloc[:, i],
         hover_name=df["flag"].iloc[:, i].fillna(""),
         labels=dict(x="Time", y="Value", geo="Country"),
+        markers=True,
     )
     return fig
 
