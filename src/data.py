@@ -1,7 +1,7 @@
 from datetime import timedelta
 from typing import Dict, List, Mapping, Tuple
 
-import eust
+import eurostat
 import pandas as pd
 import pandasdmx as sdmx
 
@@ -17,36 +17,9 @@ def eurostat_sdmx_request():
     )
 
 
-def fetch_table_of_contents() -> Tuple[pd.Series, pd.Series]:
+def fetch_table_of_contents() -> pd.DataFrame:
     """Returns dataset codes as keys and titles as values."""
-    # NOTE Access to txt seems quicker than a SDMX call:
-    # `dataflows = pandasdmx.to_pandas(eurostat_sdmx_request().dataflow())`
-    # Txt has dataset classifications and sdmx also returning more results
-    # than in the txt and that can't be found in bulk download.
-    txt = (
-        pd.read_table(
-            "https://ec.europa.eu/eurostat/estat-navtree-portlet-prod/BulkDownloadListing?file=table_of_contents_en.txt",
-            usecols=[0, 1, 2],
-            engine="c",
-        )
-        .transform(lambda x: x.str.strip())
-        .drop_duplicates()
-    )
-    toc = (
-        txt.query("type == 'dataset'")
-        .drop(columns=["type"])
-        .set_index("code")
-        .squeeze()
-        .sort_index()
-    )
-    meta = (
-        txt.query("type == 'folder'")
-        .drop(columns=["type"])
-        .set_index("code")
-        .squeeze()
-        .sort_index()
-    )
-    return toc, meta
+    return eurostat.get_toc_df()  # type: ignore
 
 
 def fetch_dataset_codelist(
@@ -65,14 +38,31 @@ def fetch_dataset_codelist(
     )
 
 
+def clean_dataset(df: pd.DataFrame) -> pd.DataFrame:
+    df = df.rename(columns={"geo\\TIME_PERIOD": "geo"})
+    indexes = df.columns[~df.columns.str.contains(r"value|flag")].tolist()
+    df = df.set_index(indexes)
+    values = df.filter(like="value")
+    values.columns = values.columns.str.replace("_value", "")
+    values.columns = pd.MultiIndex.from_product(
+        [["value"], values.columns.tolist()], names=[None, "time"]
+    )
+    flags = df.filter(like="flag")
+    flags.columns = flags.columns.str.replace("_flag", "")
+    flags.columns = pd.MultiIndex.from_product(
+        [["flag"], flags.columns.tolist()], names=[None, "time"]
+    )
+    flags = flags.applymap(lambda s: s.replace(":", "").strip()).replace("", None)
+    return pd.concat([values, flags], axis=1).stack("time", dropna=False)  # type: ignore
+
+
 def fetch_dataset_and_metadata(
     code: str,
 ) -> Tuple[pd.DataFrame, Mapping[str, pd.DataFrame]]:
-    eust.download_table(code)
-    # Datasets in long format happens to have a lot of NA
-    data = eust.read_table_data(code).dropna(how="all")
-    data.index = data.index.remove_unused_levels()  # type: ignore TODO Cannot access member
-    metadata = eust.read_table_metadata(code)
+    data = eurostat.get_data_df(code, flags=True)
+    data = clean_dataset(data)
+    # metadata = eust.read_table_metadata(code)
+    metadata = None  # TODO
     return data, metadata  # type: ignore TODO Type checking fails
 
 

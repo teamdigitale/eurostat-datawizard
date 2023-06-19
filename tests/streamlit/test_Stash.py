@@ -4,17 +4,17 @@ import numpy as np
 import pandas as pd
 from pandas.testing import assert_index_equal
 
-from tests.test_eurostat import (
+from tests.test_data import (
     dataset,
 )  # NOTE must be imported in order to let `mock_eust` work
-from tests.test_eurostat import (
+from tests.test_data import (
     metadata,
 )  # NOTE must be imported in order to let `mock_eust` work
-from tests.test_eurostat import mock_eust  # flake8: noqa
+from tests.test_data import mock_eurostat  # flake8: noqa
 
 
 # NOTE `mock_eust` must appear as parameter in order to be active
-def test_load_stash(mock_eust):  # flake8: noqa
+def test_load_stash(mock_eurostat):  # flake8: noqa
     stash = {
         "fake-code": {
             "indexes": {

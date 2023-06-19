@@ -15,6 +15,7 @@ plotly = "*"
 streamlit-plotly-events = "*"
 pingouin = "*"
 seaborn = "*"
+eurostat = "*"
 
 [dev-packages]
 pytest = "*"

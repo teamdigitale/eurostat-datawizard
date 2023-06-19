@@ -8,7 +8,7 @@ import streamlit as st
 from requests import ConnectionError, HTTPError
 
 from globals import VARS_INDEX_PATH
-from src.eurostat import (
+from data import (
     eurostat_sdmx_request,
     fetch_dataset_codelist,
     fetch_table_of_contents,
@@ -16,8 +16,8 @@ from src.eurostat import (
 
 
 @st.experimental_memo(show_spinner=False, ttl=timedelta(days=90))
-def load_table_of_contents() -> Tuple[pd.Series, pd.Series]:
-    toc, themes = fetch_table_of_contents()
+def load_table_of_contents() -> pd.DataFrame:
+    toc = fetch_table_of_contents()
     if os.environ["ENV"] == "demo":
         toc = toc.loc[
             [
@@ -30,7 +30,7 @@ def load_table_of_contents() -> Tuple[pd.Series, pd.Series]:
                 "isoc_sk_how_i",
             ]
         ]
-    return toc, themes
+    return toc
 
 
 def save_index_file():

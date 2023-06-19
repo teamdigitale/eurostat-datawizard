@@ -3,7 +3,7 @@ from typing import List
 import pandas as pd
 import streamlit as st
 from widgets.commons import app_config
-from src.eurostat import (
+from data import (
     cast_time_to_datetimeindex,
     fetch_dataset_and_metadata,
     split_dimensions_and_attributes_from,
@@ -72,7 +72,7 @@ def import_dataset():
     try:
         with st.sidebar:
             with st.spinner(text="Fetching table of contents"):
-                toc, _ = load_table_of_contents()
+                toc = load_table_of_contents()
     except Exception as e:
         st.sidebar.error(e)
         return empty_eurostat_dataframe()
