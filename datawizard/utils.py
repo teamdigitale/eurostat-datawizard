@@ -1,8 +1,9 @@
 import os
+from datetime import datetime
+from json import JSONEncoder
+
 import numpy
 import pandas as pd
-from json import JSONEncoder
-from datetime import datetime
 
 
 def concat_keys_to_values(d: dict, sep=" | "):
@@ -64,3 +65,7 @@ def trim_code(s):
         title = code_title[1] if len(code_title) > 1 else code_title[0]
         return title if isinstance(s, str) else None
     return None
+
+
+def quote_sanitizer(series: pd.Series) -> pd.Series:
+    return series.str.replace('"', "-").str.replace("'", "-")

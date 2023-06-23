@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 from typing import Dict, List
-from src.eurostat import filter_dataset
+from datawizard.data import filter_dataset
 
 
 def empty_eurostat_dataframe():

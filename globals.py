@@ -1,6 +1,7 @@
 import streamlit as st
 from datetime import datetime
-from src.utils import get_last_file_update
+from datawizard.utils import get_last_file_update
+from datawizard.definitions import CACHE_PATH
 
 PAGE_ICON = "🇪🇺"
 LAYOUT = "wide"
@@ -14,13 +15,13 @@ MENU_ITEMS = {
             Copyright (c) 2022 Presidenza del Consiglio dei Ministri.  
             """
 }
-VARS_INDEX_PATH = "cache/vars_index.pickle"
-CLUSTERING_PATH = "cache/clustermap.csv.gz"
+DIMS_INDEX_PATH = f"{CACHE_PATH}/dimension_index.pkl"
+CLUSTERING_PATH = f"{CACHE_PATH}/clustermap.csv.gz"
 MAX_VARIABLES_PLOT = 25
 
 
 def get_last_index_update() -> datetime | None:
-    return get_last_file_update(VARS_INDEX_PATH)
+    return get_last_file_update(DIMS_INDEX_PATH)
 
 
 def get_last_clustering_update() -> datetime | None:

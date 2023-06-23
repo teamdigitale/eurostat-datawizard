@@ -3,7 +3,7 @@ from typing import Mapping
 import pandas as pd
 import streamlit as st
 from datetime import datetime
-from src.utils import PandasJSONEncoder
+from datawizard.utils import PandasJSONEncoder
 
 
 def download_session_state():

@@ -3,42 +3,13 @@ from importlib import import_module
 import pandas as pd
 import streamlit as st
 
-from widgets.console import session_console
-from widgets.dataframe import (
+from st_widgets.commons import app_config, load_stash
+from st_widgets.console import session_console
+from st_widgets.dataframe import (
     empty_eurostat_dataframe,
-    filter_dataset_replacing_NA,
     st_dataframe_with_index_and_rows_cols_count,
 )
-from widgets.download import download_dataframe_button
-from widgets.commons import app_config
-
-
-@st.experimental_memo(show_spinner=False)
-def load_stash(stash: dict) -> pd.DataFrame:
-    data = empty_eurostat_dataframe()
-    for code, properties in stash.items():
-        indexes, flags, stash = (
-            properties["indexes"],
-            properties["flags"],
-            properties["stash"],
-        )
-        if stash:
-            df = import_module("pages.2_🗄️_Data").load_dataset(code)
-            df = filter_dataset_replacing_NA(
-                df,
-                indexes,
-                flags,
-            )
-            # Append dataset code to data as first level
-            df = pd.concat(
-                {code: df},
-                names=["dataset"],
-            )
-            # Merging with index resetted to preserve unique columns
-            data = pd.concat([data.reset_index(), df.reset_index()])
-            # Restore a global index based on current stash
-            data = data.set_index(data.columns.difference(["flag", "value"]).to_list())
-    return data
+from st_widgets.download import download_dataframe_button
 
 
 def show_stash():

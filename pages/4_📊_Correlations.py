@@ -11,13 +11,13 @@ import streamlit as st
 from matplotlib.colors import LinearSegmentedColormap
 from pingouin import rm_corr
 
+from datawizard.utils import trim_code, tuple2str
 from globals import MAX_VARIABLES_PLOT
-from src.utils import trim_code, tuple2str
-from widgets.commons import app_config
-from widgets.console import session_console
-from widgets.dataframe import empty_eurostat_dataframe
-from widgets.stateful.number_input import stateful_number_input
-from widgets.stateful.slider import stateful_slider
+from st_widgets.commons import app_config, load_stash
+from st_widgets.console import session_console
+from st_widgets.dataframe import empty_eurostat_dataframe
+from st_widgets.stateful.number_input import stateful_number_input
+from st_widgets.stateful.slider import stateful_slider
 
 sns.set()
 
@@ -42,7 +42,7 @@ def pandas_rm_corr_pval(x, y, subject):
     return rm_corr(data=data, x="x", y="y", subject="subject").pval.squeeze()
 
 
-# @st.experimental_memo
+# @st.cache_data
 def compute_correlation(df: pd.DataFrame):
     corr = df.corr(
         method=partial(pandas_rm_corr, subject=df.index.get_level_values("geo"))  # type: ignore
@@ -88,9 +88,7 @@ if __name__ == "__main__":
     try:
         with st.spinner(text="Fetching data"):
             if "history" in st.session_state:
-                stash = import_module("pages.3_🛒_Stash").load_stash(
-                    st.session_state.history
-                )
+                stash = load_stash(st.session_state.history)
             else:
                 st.warning("No stash found. Select some data to plot.")
     except ValueError as ve:

@@ -3,11 +3,11 @@ from typing import Any, MutableMapping, Optional, Union
 import streamlit as st
 from streamlit.delta_generator import DeltaGenerator
 from streamlit.elements.number_input import Number
-from streamlit.runtime.state.session_state import WidgetCallback
+from streamlit.runtime.state import WidgetCallback
 from streamlit.runtime.state.widgets import NoValue
 from streamlit.type_util import Key
 
-from widgets.stateful import _on_change_factory
+from st_widgets.stateful import _on_change_factory
 
 
 def _update_value(session: MutableMapping[Key, Any], key: str):
