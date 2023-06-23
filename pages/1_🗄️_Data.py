@@ -1,60 +1,36 @@
 from threading import Lock
-from typing import List
+from typing import List, Mapping
+
 import pandas as pd
 import streamlit as st
-from widgets.commons import app_config
-from data import (
-    cast_time_to_datetimeindex,
-    fetch_dataset_and_metadata,
-    split_dimensions_and_attributes_from,
-)
-from src.utils import concat_keys_to_values
-from widgets.console import session_console
-from widgets.dataframe import empty_eurostat_dataframe
-from widgets.stateful.multiselect import stateful_multiselect
-from widgets.stateful.selectbox import stateful_selectbox
-from widgets.stateful.slider import stateful_slider
-from widgets.index import load_table_of_contents, load_codelist_reverse_index
+
+from datawizard.data import fetch_table_of_contents
+from st_widgets.commons import app_config, global_download_lock, load_dataset
+from st_widgets.console import session_console
+from st_widgets.dataframe import empty_eurostat_dataframe
+from st_widgets.stateful.multiselect import stateful_multiselect
+from st_widgets.stateful.selectbox import stateful_selectbox
+from st_widgets.stateful.slider import stateful_slider
 
 session = st.session_state
 
 
-@st.experimental_singleton(show_spinner=False)
-def eust_lock():
-    """A shared lock amongst sessions to prevent concurrent dataset write."""
-    # NOTE Because it can't be assessed from outside `eust` package if fetching
-    # is coming from internet (and so writing a file) or internal cache.
-    return Lock()
+@st.experimental_memo()
+def fetch_toc() -> pd.Series:
+    # Return a series with datasets code as index and descriptions as values.
+    # ex: key:EI_BSCO_M  - value: Consumers ...
+    with global_download_lock():
+        toc = fetch_table_of_contents()
+    toc = toc["title"].squeeze()
+    return toc  # type: ignore
 
 
-def quote_sanitizer(series: pd.Series) -> pd.Series:
-    return series.str.replace('"', "-").str.replace("'", "-")
-
-
-@st.experimental_memo(show_spinner=False)
-def load_dataset(code: str) -> pd.DataFrame:
-    with eust_lock():
-        data, meta = fetch_dataset_and_metadata(code)
-    dims, attrs = split_dimensions_and_attributes_from(meta, code)
-    data = cast_time_to_datetimeindex(data)
-    dims = concat_keys_to_values(quote_sanitizer(dims).to_dict())
-    data = data.rename(index=dims).sort_index()
-    data = data.assign(flag=data.flag.map(attrs.to_dict()))
-    # `flag` shown before `value` to make it more readable as filterable
-    return data[["flag", "value"]]
-
-
-@st.experimental_memo(show_spinner=False)
+@st.experimental_memo()
 def build_toc_list(toc: pd.Series) -> List[str]:
-    # ex: I_IUIF | Internet use: ...
+    # Return a list concatenating dataset code and description.
+    # ex: EI_BSCO_M | Consumers ...
     toc = toc.index + " | " + toc.values  # type: ignore
     return ["Scroll options or start typing"] + toc.to_list()
-
-
-@st.experimental_memo(show_spinner=False)
-def build_dimension_list(dimensions: pd.Series) -> List[str]:
-    # ex: ei_bsco_m | Consumers ...
-    return ["Scroll options or start typing"] + dimensions.index.to_list()
 
 
 def reset_user_selections():
@@ -68,62 +44,20 @@ def reset_user_selections():
         session["_selected_map_selection"] = False
 
 
-def import_dataset():
+def load_dataset_codes_and_descriptions():
     try:
         with st.sidebar:
             with st.spinner(text="Fetching table of contents"):
-                toc = load_table_of_contents()
+                return fetch_toc()
     except Exception as e:
         st.sidebar.error(e)
-        return empty_eurostat_dataframe()
 
-    try:
-        with st.sidebar:
-            with st.spinner(text="Fetching index"):
-                codelist = load_codelist_reverse_index()
-    except Exception as e:
-        codelist = None
 
-    tab1, tab2 = st.sidebar.tabs(["Filter datasets by variable", "Map Selection"])
-
-    with tab1:
-        if codelist is None:
-            dataset_codes = None
-            st.sidebar.warning(
-                "Filter datasets by variable not available without index."
-            )
-        else:
-            with st.sidebar:
-                with st.spinner(text="Fetching index"):
-                    variables = build_dimension_list(codelist)
-            selected_variable = stateful_selectbox(
-                label="Filter datasets by variable",
-                options=range(len(variables)),
-                format_func=lambda i: variables[i],
-                key="_selected_variable",
-                on_change=reset_user_selections,
-            )
-            selected_variable = variables[selected_variable]  # type: ignore
-
-            # Get a toc subsets or the entire toc list
-            dataset_codes = codelist.get(selected_variable, default=None)
-
-    with tab2:
-        if tab2.checkbox(
-            "Filter datasets by selection",
-            key="_selected_map_selection",
-            disabled="map_selection" not in session or session["map_selection"].empty,
-        ):
-            if "map_selection" in session:
-                session["_selected_dataset_index"] = 0
-                dataset_codes = session["map_selection"]["code"].to_list()
-
-    # List (filtered) datasets
-    datasets = build_toc_list(
-        toc.loc[toc.index.intersection(dataset_codes)] if dataset_codes else toc  # type: ignore
-    )
+def save_datasets_to_stash():
+    toc = load_dataset_codes_and_descriptions()
 
     with st.sidebar:
+        datasets = build_toc_list(toc)  # type: ignore
         dataset_code_title = stateful_selectbox(
             label="Choose a dataset",
             options=range(len(datasets)),
@@ -211,12 +145,8 @@ def import_dataset():
                                 key=f"_{dataset_code}.indexes.{name}",
                             )
 
-                return dataset
-
         except (ValueError, AssertionError, NotImplementedError) as e:
             st.error(e)
-
-    return empty_eurostat_dataframe()
 
 
 def page_init():
@@ -224,10 +154,7 @@ def page_init():
         session["history"] = dict()
 
 
-if __name__ == "__main__":
-    app_config("Data Import")
-    page_init()
-
+def change_font_size():
     st.markdown(
         """
     <style>
@@ -240,6 +167,10 @@ if __name__ == "__main__":
         unsafe_allow_html=True,
     )
 
-    dataset = import_dataset()
 
+if __name__ == "__main__":
+    app_config("Data Import")
+    page_init()
+    change_font_size()
+    save_datasets_to_stash()
     session_console()

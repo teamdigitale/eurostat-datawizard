@@ -4,9 +4,8 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-eust = "*"
 pandas = "*"
-streamlit = "==1.15.1"
+streamlit = "==1.15.1" # TODO breaking changes in widget function
 requests-cache = "*"
 watchdog = "*"
 pandasdmx = "*"
@@ -16,6 +15,8 @@ streamlit-plotly-events = "*"
 pingouin = "*"
 seaborn = "*"
 eurostat = "*"
+datawizard = {editable = true, path = "."}
+altair = "<5"  # TODO Needed until streamlit is not updated
 
 [dev-packages]
 pytest = "*"
