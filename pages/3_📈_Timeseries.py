@@ -1,5 +1,3 @@
-from importlib import import_module
-
 import plotly.express as px
 import streamlit as st
 from plotly.subplots import make_subplots
@@ -12,6 +10,7 @@ from st_widgets.dataframe import empty_eurostat_dataframe
 from st_widgets.stateful.number_input import stateful_number_input
 
 session = st.session_state
+app_config("Timeseries")
 
 
 def plot_column_idx(df, i, annotate=False):
@@ -30,8 +29,6 @@ def plot_column_idx(df, i, annotate=False):
 
 
 if __name__ == "__main__":
-    app_config("Timeseries")
-
     stash = empty_eurostat_dataframe()
     try:
         with st.spinner(text="Fetching data"):

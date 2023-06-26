@@ -1,5 +1,4 @@
-from threading import Lock
-from typing import List, Mapping
+from typing import List
 
 import pandas as pd
 import streamlit as st
@@ -7,15 +6,15 @@ import streamlit as st
 from datawizard.data import fetch_table_of_contents
 from st_widgets.commons import app_config, global_download_lock, load_dataset
 from st_widgets.console import session_console
-from st_widgets.dataframe import empty_eurostat_dataframe
 from st_widgets.stateful.multiselect import stateful_multiselect
 from st_widgets.stateful.selectbox import stateful_selectbox
 from st_widgets.stateful.slider import stateful_slider
 
 session = st.session_state
+app_config("Data Import")
 
 
-@st.experimental_memo()
+@st.cache_data()
 def fetch_toc() -> pd.Series:
     # Return a series with datasets code as index and descriptions as values.
     # ex: key:EI_BSCO_M  - value: Consumers ...
@@ -25,7 +24,7 @@ def fetch_toc() -> pd.Series:
     return toc  # type: ignore
 
 
-@st.experimental_memo()
+@st.cache_data()
 def build_toc_list(toc: pd.Series) -> List[str]:
     # Return a list concatenating dataset code and description.
     # ex: EI_BSCO_M | Consumers ...
@@ -149,11 +148,6 @@ def save_datasets_to_stash():
             st.error(e)
 
 
-def page_init():
-    if "history" not in session:
-        session["history"] = dict()
-
-
 def change_font_size():
     st.markdown(
         """
@@ -169,8 +163,6 @@ def change_font_size():
 
 
 if __name__ == "__main__":
-    app_config("Data Import")
-    page_init()
     change_font_size()
     save_datasets_to_stash()
     session_console()

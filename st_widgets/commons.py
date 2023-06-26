@@ -12,7 +12,7 @@ from globals import INITIAL_SIDEBAR_STATE, LAYOUT, MENU_ITEMS, PAGE_ICON
 from st_widgets.dataframe import empty_eurostat_dataframe, filter_dataset_replacing_NA
 
 
-@st.experimental_singleton
+@st.cache_resource
 def global_download_lock():
     """Lock any further execution of downloading."""
     return Lock()
@@ -28,11 +28,11 @@ def app_config(title: str):
         menu_items=MENU_ITEMS,  # type: ignore
     )
 
-    if "user" not in st.session_state:
-        st.session_state.user = dict(st.experimental_user)
+    if "history" not in st.session_state:
+        st.session_state["history"] = dict()
 
 
-@st.experimental_memo()
+@st.cache_data()
 def load_dataset(code: str) -> pd.DataFrame:
     # Return desiderd dataset by code in `long-format` (time as index)
     with global_download_lock():
@@ -43,7 +43,7 @@ def load_dataset(code: str) -> pd.DataFrame:
     return data[["flag", "value"]]
 
 
-@st.experimental_memo()
+@st.cache_data()
 def load_stash(stash: dict) -> pd.DataFrame:
     data = empty_eurostat_dataframe()
     for code, properties in stash.items():

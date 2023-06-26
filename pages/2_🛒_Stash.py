@@ -1,6 +1,3 @@
-from importlib import import_module
-
-import pandas as pd
 import streamlit as st
 
 from st_widgets.commons import app_config, load_stash
@@ -10,6 +7,8 @@ from st_widgets.dataframe import (
     st_dataframe_with_index_and_rows_cols_count,
 )
 from st_widgets.download import download_dataframe_button
+
+app_config("Stash")
 
 
 def show_stash():
@@ -64,8 +63,5 @@ def show_stash():
 
 
 if __name__ == "__main__":
-    app_config("Stash")
-
     show_stash()
-
     session_console()

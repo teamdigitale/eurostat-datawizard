@@ -5,7 +5,7 @@ name = "pypi"
 
 [packages]
 pandas = "*"
-streamlit = "==1.15.1" # TODO breaking changes in widget function
+streamlit = "*"
 requests-cache = "*"
 watchdog = "*"
 pandasdmx = "*"
@@ -16,7 +16,6 @@ pingouin = "*"
 seaborn = "*"
 eurostat = "*"
 datawizard = {editable = true, path = "."}
-altair = "<5"  # TODO Needed until streamlit is not updated
 
 [dev-packages]
 pytest = "*"

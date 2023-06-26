@@ -1,6 +1,5 @@
 import io
 from functools import partial
-from importlib import import_module
 from typing import Tuple
 
 import matplotlib.pyplot as plt
@@ -20,6 +19,8 @@ from st_widgets.stateful.number_input import stateful_number_input
 from st_widgets.stateful.slider import stateful_slider
 
 sns.set()
+
+app_config("Correlations")
 
 
 def pandas_rm_corr(x, y, subject):
@@ -82,8 +83,6 @@ def plot_heatmap(corr: pd.DataFrame, figsize: Tuple[int, int] = (18, 16)):
 
 
 if __name__ == "__main__":
-    app_config("Correlations")
-
     stash = empty_eurostat_dataframe()
     try:
         with st.spinner(text="Fetching data"):
