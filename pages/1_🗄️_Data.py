@@ -1,36 +1,23 @@
-from threading import Lock
-from typing import List, Mapping
+import logging
 
 import pandas as pd
 import streamlit as st
 
 from datawizard.data import fetch_table_of_contents
-from st_widgets.commons import app_config, global_download_lock, load_dataset
+from st_widgets.commons import (
+    app_config,
+    get_logger,
+    global_download_lock,
+    load_dataset,
+)
 from st_widgets.console import session_console
-from st_widgets.dataframe import empty_eurostat_dataframe
 from st_widgets.stateful.multiselect import stateful_multiselect
 from st_widgets.stateful.selectbox import stateful_selectbox
 from st_widgets.stateful.slider import stateful_slider
 
+logging = get_logger(__name__)
 session = st.session_state
-
-
-@st.experimental_memo()
-def fetch_toc() -> pd.Series:
-    # Return a series with datasets code as index and descriptions as values.
-    # ex: key:EI_BSCO_M  - value: Consumers ...
-    with global_download_lock():
-        toc = fetch_table_of_contents()
-    toc = toc["title"].squeeze()
-    return toc  # type: ignore
-
-
-@st.experimental_memo()
-def build_toc_list(toc: pd.Series) -> List[str]:
-    # Return a list concatenating dataset code and description.
-    # ex: EI_BSCO_M | Consumers ...
-    toc = toc.index + " | " + toc.values  # type: ignore
-    return ["Scroll options or start typing"] + toc.to_list()
+app_config("Data Import")
 
 
 def reset_user_selections():
@@ -44,31 +31,35 @@ def reset_user_selections():
         session["_selected_map_selection"] = False
 
 
-def load_dataset_codes_and_descriptions():
+@st.cache_data()
+def load_toc() -> pd.Series | None:
+    # Return a series with datasets code as index and descriptions as values.
+    # ex: key: EI_BSCO_M  - value: Consumers ...
     try:
         with st.sidebar:
             with st.spinner(text="Fetching table of contents"):
-                return fetch_toc()
+                with global_download_lock():
+                    toc = fetch_table_of_contents()
+                toc = toc["title"]
+                return toc
     except Exception as e:
         st.sidebar.error(e)
 
 
 def save_datasets_to_stash():
-    toc = load_dataset_codes_and_descriptions()
+    toc = load_toc()
 
-    with st.sidebar:
-        datasets = build_toc_list(toc)  # type: ignore
-        dataset_code_title = stateful_selectbox(
-            label="Choose a dataset",
-            options=range(len(datasets)),
-            format_func=lambda i: datasets[i],
-            key="_selected_dataset",
-        )
-        dataset_code_title = datasets[dataset_code_title]  # type: ignore
+    if toc is not None:
+        with st.sidebar:
+            dataset_code = stateful_selectbox(
+                label="Choose a dataset",
+                options=toc.index,
+                format_func=lambda i: i + " | " + toc.loc[i],
+                key="_selected_dataset",
+            )
+            logging.info(f"Selectbox selection: {dataset_code}")
 
-    if dataset_code_title and dataset_code_title != "Scroll options or start typing":
-        dataset_code = dataset_code_title.split(" | ", maxsplit=1)[0]
-        try:
+        if dataset_code is not None:
             with st.spinner(text="Downloading data"):
                 dataset = load_dataset(dataset_code)
 
@@ -82,7 +73,9 @@ def save_datasets_to_stash():
                     value=history["stash"] if "stash" in history else False,
                 )
 
-                st.subheader(f"Variable selection: {dataset_code_title}")
+                st.subheader(
+                    f"Variable selection: {dataset_code + ' | ' + toc.loc[dataset_code]}"
+                )
 
                 # Flags management
                 flags = dataset.flag.fillna("<NA>").unique().tolist()
@@ -145,14 +138,6 @@ def save_datasets_to_stash():
                                 key=f"_{dataset_code}.indexes.{name}",
                             )
 
-        except (ValueError, AssertionError, NotImplementedError) as e:
-            st.error(e)
-
-
-def page_init():
-    if "history" not in session:
-        session["history"] = dict()
-
 
 def change_font_size():
     st.markdown(
@@ -169,8 +154,6 @@ def change_font_size():
 
 
 if __name__ == "__main__":
-    app_config("Data Import")
-    page_init()
     change_font_size()
     save_datasets_to_stash()
     session_console()
