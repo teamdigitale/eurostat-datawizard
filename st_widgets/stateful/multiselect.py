@@ -1,3 +1,4 @@
+from functools import partial
 from typing import Any, MutableMapping, Optional
 
 import streamlit as st
@@ -31,6 +32,6 @@ def stateful_multiselect(
         label=label,
         default=session[f"{key}_default"],
         key=key,
-        on_change=_on_change_factory(_update_default, session, key)(on_change),
+        on_change=_on_change_factory(partial(_update_default, session, key))(on_change),
         **kwargs,
     )

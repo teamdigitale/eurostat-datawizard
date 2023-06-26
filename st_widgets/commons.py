@@ -1,3 +1,5 @@
+import logging
+import os
 from threading import Lock
 
 import pandas as pd
@@ -8,14 +10,9 @@ from datawizard.data import (
     cast_time_to_datetimeindex,
     fetch_dataset_and_metadata,
 )
+from datawizard.definitions import LOGGING_FORMAT
 from globals import INITIAL_SIDEBAR_STATE, LAYOUT, MENU_ITEMS, PAGE_ICON
 from st_widgets.dataframe import empty_eurostat_dataframe, filter_dataset_replacing_NA
-
-
-@st.cache_resource
-def global_download_lock():
-    """Lock any further execution of downloading."""
-    return Lock()
 
 
 def app_config(title: str):
@@ -30,6 +27,33 @@ def app_config(title: str):
 
     if "history" not in st.session_state:
         st.session_state["history"] = dict()
+
+
+def get_logger(name: str):
+    # logging.DEBUG level is polluted by streamlit events
+    log_level = logging.INFO if os.environ["ENV"] == "dev" else logging.WARNING
+
+    logger = logging.getLogger(name)
+    logger.setLevel(log_level)
+
+    # Create a console handler and set its log level
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(log_level)
+
+    # Create a formatter and add it to the console handler
+    formatter = logging.Formatter(LOGGING_FORMAT)
+    console_handler.setFormatter(formatter)
+
+    # Add the console handler to the logger
+    logger.addHandler(console_handler)
+
+    return logger
+
+
+@st.cache_resource
+def global_download_lock():
+    """Lock any further execution of downloading."""
+    return Lock()
 
 
 @st.cache_data()
