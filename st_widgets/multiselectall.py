@@ -1,9 +1,23 @@
+from typing import Any, MutableMapping, Optional
+
 import streamlit as st
+from streamlit.delta_generator import DeltaGenerator
+from streamlit.runtime.state import WidgetCallback
+from streamlit.type_util import Key, OptionSequence, T
 
 from st_widgets.stateful.multiselect import stateful_multiselect
 
 
-def multiselectall(options, key: str, label: str, session=st.session_state):
+def multiselectall(
+    label: str,
+    options: OptionSequence[T],
+    key: str,
+    default: Optional[Any] = None,
+    position: DeltaGenerator = st._main,
+    session: MutableMapping[Key, Any] = st.session_state,
+    on_change: Optional[WidgetCallback] = None,
+    **kwargs,
+):
     container = st.container()
 
     if st.button(
@@ -15,8 +29,9 @@ def multiselectall(options, key: str, label: str, session=st.session_state):
 
     with container:
         return stateful_multiselect(
-            label=f"{label} ({len(session[key]) if key in session else len(options)}/{len(options)})",
+            label=f"{label} ({len(session[key]) if key in session else len(options)}/{len(options)})",  # type: ignore
             options=options,
-            default=options,
+            default=default,
             key=key,
+            **kwargs,
         )

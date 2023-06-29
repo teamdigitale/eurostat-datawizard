@@ -4,7 +4,7 @@ from typing import Any, MutableMapping, Optional
 import streamlit as st
 from streamlit.delta_generator import DeltaGenerator
 from streamlit.runtime.state import WidgetCallback
-from streamlit.type_util import Key
+from streamlit.type_util import Key, OptionSequence, T
 
 from st_widgets.stateful import _on_change_factory
 
@@ -15,6 +15,7 @@ def _update_default(session: MutableMapping[Key, Any], key: str):
 
 def stateful_multiselect(
     label: str,
+    options: OptionSequence[T],
     key: str,
     default: Optional[Any] = None,
     position: DeltaGenerator = st._main,
@@ -30,6 +31,7 @@ def stateful_multiselect(
 
     return position.multiselect(
         label=label,
+        options=options,
         default=session[f"{key}_default"],
         key=key,
         on_change=_on_change_factory(partial(_update_default, session, key))(on_change),

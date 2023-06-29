@@ -82,12 +82,23 @@ def save_datasets_to_stash():
                 )
 
             with tab2:
+                # TODO Experiment with input methods
                 # with st.spinner(text="Downloading metadata"):
                 tab2.markdown(
                     """ 🚧 Work in progress 🚧  
                     Select only dimensions of interest to filter the dataset list in the previous tab"""
                 )
-                tab2.dataframe(load_dimension2dataset().reset_index())
+                dimension_index = load_dimension2dataset()
+                dimensions = (
+                    dimension_index.index.get_level_values("dimension")
+                    .unique()
+                    .tolist()
+                )
+                multiselectall(
+                    "Select DIMENSIONS",
+                    dimensions,
+                    key="_selected_dimensions",
+                )
 
         # Dataset filtering criteria
         if dataset_code is not None:
@@ -100,7 +111,7 @@ def save_datasets_to_stash():
             # Flags filtering handles
             flags = dataset.flag.fillna("<NA>").unique().tolist()
             history["flags"] = multiselectall(
-                flags, key=f"_{dataset_code}.flags", label="Select FLAG"
+                "Select FLAG", flags, default=flags, key=f"_{dataset_code}.flags"
             )
 
             # Indexes filtering handles (all the available dimensions)
@@ -127,9 +138,10 @@ def save_datasets_to_stash():
                     )
                 else:
                     history["indexes"][name] = multiselectall(
+                        f"Select {name.upper()}",
                         indexes[name],
+                        default=indexes[name],
                         key=f"_{dataset_code}.indexes.{name}",
-                        label=f"Select {name.upper()}",
                     )
 
 
