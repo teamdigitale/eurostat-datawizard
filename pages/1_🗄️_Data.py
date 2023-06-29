@@ -4,12 +4,12 @@ import pandas as pd
 import streamlit as st
 
 from datawizard.data import (
+    fetch_codelist,
+    fetch_metabase,
     fetch_table_of_contents,
     get_cached_session,
-    fetch_metabase,
-    fetch_codelist,
-    parse_codelist,
     metabase2datasets,
+    parse_codelist,
 )
 from st_widgets.commons import (
     app_config,
@@ -18,24 +18,13 @@ from st_widgets.commons import (
     load_dataset,
 )
 from st_widgets.console import session_console
-from st_widgets.stateful.multiselect import stateful_multiselect
+from st_widgets.multiselectall import multiselectall
 from st_widgets.stateful.selectbox import stateful_selectbox
 from st_widgets.stateful.slider import stateful_slider
 
 logging = get_logger(__name__)
 session = st.session_state
 app_config("Data Import")
-
-
-def reset_user_selections():
-    # NOTE Because datasets list change, reset the selected idx
-    if "_selected_dataset_options" in session:
-        session.pop("_selected_dataset_options")
-    if "_selected_dataset_index" in session:
-        session.pop("_selected_dataset_index")
-    # NOTE Override "Filter datasets by (map) selection"
-    if "_selected_map_selection" in session:
-        session["_selected_map_selection"] = False
 
 
 @st.cache_data()
@@ -60,25 +49,6 @@ def load_dimension2dataset() -> pd.DataFrame:
     metabase = fetch_metabase(req)
     codelist = parse_codelist(fetch_codelist(req))
     return metabase2datasets(metabase, codelist)
-
-
-def build_multiselect_with_selectall_button(options, key: str, label: str):
-    container = st.container()
-
-    if st.button(
-        "Select all",
-        key=f"{key}_all",
-    ):
-        del session[f"{key}_default"]
-        st.experimental_rerun()
-
-    with container:
-        return stateful_multiselect(
-            label=f"{label} ({len(session[key]) if key in session else len(options)}/{len(options)})",
-            options=options,
-            default=options,
-            key=key,
-        )
 
 
 def save_datasets_to_stash():
@@ -126,7 +96,7 @@ def save_datasets_to_stash():
 
             # Flags filtering handles
             flags = dataset.flag.fillna("<NA>").unique().tolist()
-            history["flags"] = build_multiselect_with_selectall_button(
+            history["flags"] = multiselectall(
                 flags, key=f"_{dataset_code}.flags", label="Select FLAG"
             )
 
@@ -153,7 +123,7 @@ def save_datasets_to_stash():
                         key=f"_{dataset_code}.indexes.time",
                     )
                 else:
-                    history["indexes"][name] = build_multiselect_with_selectall_button(
+                    history["indexes"][name] = multiselectall(
                         indexes[name],
                         key=f"_{dataset_code}.indexes.{name}",
                         label=f"Select {name.upper()}",
