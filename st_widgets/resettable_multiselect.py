@@ -8,7 +8,7 @@ from streamlit.type_util import Key, OptionSequence, T
 from st_widgets.stateful.multiselect import stateful_multiselect
 
 
-def multiselectall(
+def resettable_multiselect(
     label: str,
     options: OptionSequence[T],
     key: str,
@@ -21,8 +21,8 @@ def multiselectall(
     container = st.container()
 
     if st.button(
-        "Select all",
-        key=f"{key}_all",
+        "Reset",
+        key=f"{key}_reset",
     ):
         del session[f"{key}_default"]
         st.experimental_rerun()
