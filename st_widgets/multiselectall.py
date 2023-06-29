@@ -29,7 +29,7 @@ def multiselectall(
 
     with container:
         return stateful_multiselect(
-            label=f"{label} ({len(session[key]) if key in session else len(options)}/{len(options)})",  # type: ignore
+            label=f"{label} ({len(session[key]) if key in session else len(default) if default else 0}/{len(options)})",  # type: ignore
             options=options,
             default=default,
             key=key,
