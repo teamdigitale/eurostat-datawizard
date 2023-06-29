@@ -36,6 +36,9 @@ def load_toc() -> pd.Series | None:
             with st.spinner(text="Fetching table of contents"):
                 with global_download_lock():
                     toc = fetch_table_of_contents()
+                    # TODO Derived dataset are not found:
+                    # HTTPError: 404 Client Error: Not Found for url: ...
+                    toc = toc[~toc.index.str.contains("$", regex=False)]
                 toc = toc["title"]
                 return toc
     except Exception as e:
@@ -84,15 +87,15 @@ def save_datasets_to_stash():
                     """ 🚧 Work in progress 🚧  
                     Select only dimensions of interest to filter the dataset list in the previous tab"""
                 )
-                tab2.data_editor(load_dimension2dataset().reset_index())
+                tab2.dataframe(load_dimension2dataset().reset_index())
 
         # Dataset filtering criteria
         if dataset_code is not None:
-            dataset = load_dataset(dataset_code)
-
             st.subheader(
                 f"Variable selection: {dataset_code + ' | ' + toc.loc[dataset_code]}"
             )
+
+            dataset = load_dataset(dataset_code)
 
             # Flags filtering handles
             flags = dataset.flag.fillna("<NA>").unique().tolist()
