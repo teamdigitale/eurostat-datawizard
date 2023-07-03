@@ -1,5 +1,3 @@
-import logging
-
 import pandas as pd
 import streamlit as st
 
@@ -16,9 +14,10 @@ from st_widgets.commons import (
     get_logger,
     global_download_lock,
     load_dataset,
+    reduce_multiselect_font_size,
 )
 from st_widgets.console import session_console
-from st_widgets.resettable_multiselect import resettable_multiselect
+from st_widgets.stateful.multiselect import stateful_multiselect
 from st_widgets.stateful.selectbox import stateful_selectbox
 from st_widgets.stateful.slider import stateful_slider
 
@@ -45,70 +44,29 @@ def load_toc() -> pd.Series | None:
         st.sidebar.error(e)
 
 
-@st.cache_data()
-def load_metabase2datasets() -> pd.DataFrame:
-    # Return an index of code + dimension and a list of datasets using them
-    req = get_cached_session()
-    metabase = fetch_metabase(req)
-    codelist = parse_codelist(fetch_codelist(req))
-    return metabase2datasets(metabase, codelist)
-
-
-@st.cache_data()
-def load_dimensions(metabase2datasets: pd.DataFrame) -> pd.Series:
-    # Arrage metabase as an index of dimensions + descriptions
-    codes_dims = metabase2datasets.reset_index()[
-        ["dimension", "code", "dimension_label", "code_label"]
-    ].set_index(["dimension", "code"])
-    codes_dims = codes_dims["dimension_label"].str.cat(
-        codes_dims["code_label"], sep=": "
-    )
-    return codes_dims
-
-
 def save_datasets_to_stash():
     toc = load_toc()
 
     # Datasets search criteria
     if toc is not None:
         with st.sidebar:
-            tab1, tab2 = st.tabs(["Datasets", "Dimensions"])
+            dataset_code = stateful_selectbox(
+                label="Select dataset (type to search)",
+                options=toc.index,
+                format_func=lambda i: i + " | " + toc.loc[i],
+                key="_selected_dataset",
+            )
+            logging.info(f"Selectbox selection: {dataset_code}")
 
-            with tab1:
-                dataset_code = stateful_selectbox(
-                    label="Select dataset (type to search)",
-                    options=toc.index,
-                    format_func=lambda i: i + " | " + toc.loc[i],
-                    key="_selected_dataset",
-                )
-                logging.info(f"Selectbox selection: {dataset_code}")
+            # Create or reuse a filtering history for this code
+            if dataset_code not in session["history"]:
+                session["history"][dataset_code] = dict()
+            history = session["history"][dataset_code]
 
-                # Create or reuse a filtering history for this code
-                if dataset_code not in session["history"]:
-                    session["history"][dataset_code] = dict()
-                history = session["history"][dataset_code]
-
-                history["stash"] = tab1.checkbox(
-                    "Save into Stash",
-                    value=history["stash"] if "stash" in history else False,
-                )
-
-            with tab2:
-                # TODO All the combinations are too heavy to load!
-                # Moreover, because streamlit always reload itself, it gets painful to add dimensions
-                tab2.markdown(
-                    """ 🚧 Work in progress 🚧  
-                    Select only dimensions of interest to filter the dataset list in the previous tab"""
-                )
-                meta = load_metabase2datasets()
-                codes_dims = load_dimensions(meta)
-                codes_dims_list = codes_dims.index.tolist()
-                resettable_multiselect(
-                    "Select dimensions (type to search)",
-                    options=codes_dims_list,
-                    key="_selected_codes",
-                    format_func=lambda code_dim: f"{code_dim[0]}, {code_dim[1]} | {codes_dims.loc[code_dim]}",
-                )
+            history["stash"] = st.checkbox(
+                "Save into Stash",
+                value=history["stash"] if "stash" in history else False,
+            )
 
         # Dataset filtering criteria
         if dataset_code is not None:
@@ -120,7 +78,7 @@ def save_datasets_to_stash():
 
             # Flags filtering handles
             flags = dataset.flag.fillna("<NA>").unique().tolist()
-            history["flags"] = resettable_multiselect(
+            history["flags"] = stateful_multiselect(
                 "Select FLAG", flags, default=flags, key=f"_{dataset_code}.flags"
             )
 
@@ -147,7 +105,7 @@ def save_datasets_to_stash():
                         key=f"_{dataset_code}.indexes.time",
                     )
                 else:
-                    history["indexes"][name] = resettable_multiselect(
+                    history["indexes"][name] = stateful_multiselect(
                         f"Select {name.upper()}",
                         indexes[name],
                         default=indexes[name],
@@ -155,21 +113,7 @@ def save_datasets_to_stash():
                     )
 
 
-def change_font_size():
-    st.markdown(
-        """
-    <style>
-        .stMultiSelect [data-baseweb=select] span{
-            max-width: 500px;
-            font-size: 0.8rem;
-        }
-    </style>
-    """,
-        unsafe_allow_html=True,
-    )
-
-
 if __name__ == "__main__":
-    change_font_size()
+    reduce_multiselect_font_size()
     save_datasets_to_stash()
     session_console()

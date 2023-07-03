@@ -1,6 +1,6 @@
 import streamlit as st
 
-from st_widgets.commons import app_config, load_stash
+from st_widgets.commons import app_config, load_stash, read_stash_from_history
 from st_widgets.console import session_console
 from st_widgets.dataframe import (
     empty_eurostat_dataframe,
@@ -13,7 +13,7 @@ app_config("Stash")
 
 def show_stash():
     if "history" in st.session_state:
-        stash = st.session_state.history
+        stash = read_stash_from_history(st.session_state.history)
         dataset = empty_eurostat_dataframe()
 
         remove_code = st.sidebar.selectbox(

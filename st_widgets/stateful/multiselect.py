@@ -26,14 +26,26 @@ def stateful_multiselect(
     """
     A stateful multiselect that preserves default selection.
     """
+    container = st.container()
+
     if f"{key}_default" not in session:
         session[f"{key}_default"] = default
 
-    return position.multiselect(
-        label=label,
-        options=options,
-        default=session[f"{key}_default"],
-        key=key,
-        on_change=_on_change_factory(partial(_update_default, session, key))(on_change),
-        **kwargs,
-    )
+    if st.button(
+        "Reset",
+        key=f"{key}_reset",
+    ):
+        del session[f"{key}_default"]
+        st.experimental_rerun()
+
+    with container:
+        return position.multiselect(
+            label=f"{label} ({len(session[key]) if key in session else len(default) if default else 0}/{len(options)})",  # type: ignore
+            options=options,
+            default=session[f"{key}_default"],
+            key=key,
+            on_change=_on_change_factory(partial(_update_default, session, key))(
+                on_change
+            ),
+            **kwargs,
+        )
