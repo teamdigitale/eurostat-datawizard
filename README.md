@@ -1,4 +1,4 @@
-# Eurostat Data Wizard
+# 🇪🇺 Eurostat Data Wizard
 A straightforward webapp to export easily multiple Eurostat datasets.
 
 ## Data
