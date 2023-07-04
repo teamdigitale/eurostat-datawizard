@@ -40,7 +40,7 @@ def stateful_multiselect(
         st.experimental_rerun()
 
     with container:
-        return position.multiselect(
+        position.multiselect(
             label=f"{label} ({len(session[key]) if key in session else len(default) if default else 0}/{len(options)})",  # type: ignore
             options=options,
             default=session[f"{key}_default"],
@@ -50,3 +50,5 @@ def stateful_multiselect(
             ),
             **kwargs,
         )
+
+        return session[f"{key}_default"]

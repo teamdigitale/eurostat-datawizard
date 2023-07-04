@@ -1,6 +1,6 @@
 from st_widgets.commons import get_logger
 from functools import partial
-from typing import Any, MutableMapping, Optional
+from typing import Any, List, MutableMapping, Optional
 
 import pandas as pd
 import streamlit as st
@@ -23,7 +23,7 @@ def _update_index(
 
 def stateful_selectbox(
     label: str,
-    options: OptionSequence[T],
+    options: List,
     key: str,
     index: int = 0,
     position: DeltaGenerator = st._main,
@@ -34,12 +34,20 @@ def stateful_selectbox(
     """
     A stateful selectbox that preserves index selection.
     """
+    if f"{key}_options" not in session:
+        session[f"{key}_options"] = options
+
     if f"{key}_index" not in session:
         session[f"{key}_index"] = index
 
-    return position.selectbox(
+    if list(options) != list(session[f"{key}_options"]):
+        # If options change, reset also the index
+        session[f"{key}_options"] = options
+        session[f"{key}_index"] = index
+
+    position.selectbox(
         label=label,
-        options=options,
+        options=session[f"{key}_options"],
         index=session[f"{key}_index"],
         key=key,
         on_change=_on_change_factory(partial(_update_index, session, key, options))(
@@ -47,3 +55,7 @@ def stateful_selectbox(
         ),
         **kwargs,
     )
+
+    options = session[f"{key}_options"]
+    index = session[f"{key}_index"]
+    return options[index]

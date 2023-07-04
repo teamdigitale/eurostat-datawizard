@@ -30,10 +30,12 @@ def stateful_number_input(
     if f"{key}_value" not in session:
         session[f"{key}_value"] = value
 
-    return position.number_input(
+    position.number_input(
         label,
         value=session[f"{key}_value"],
         key=key,
         on_change=_on_change_factory(partial(_update_value, session, key))(on_change),
         **kwargs,
     )
+
+    return session[f"{key}_value"]

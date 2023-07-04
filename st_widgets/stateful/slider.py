@@ -37,7 +37,7 @@ def stateful_slider(
     if f"{key}_value" not in session:
         session[f"{key}_value"] = value
 
-    return position.slider(
+    position.slider(
         label=label,
         min_value=session[f"{key}_min_value"],
         max_value=session[f"{key}_max_value"],
@@ -46,3 +46,5 @@ def stateful_slider(
         on_change=_on_change_factory(partial(_update_value, session, key))(on_change),
         **kwargs,
     )
+
+    return session[f"{key}_value"]
