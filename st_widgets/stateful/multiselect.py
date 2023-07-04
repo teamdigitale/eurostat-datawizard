@@ -25,6 +25,7 @@ def stateful_multiselect(
 ):
     """
     A stateful multiselect that preserves default selection.
+    Can be reset to default state.
     """
     container = st.container()
 

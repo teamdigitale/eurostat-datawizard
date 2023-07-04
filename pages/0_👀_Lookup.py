@@ -9,7 +9,7 @@ from st_widgets.commons import (
     reduce_multiselect_font_size,
 )
 from st_widgets.console import session_console
-from st_widgets.stateful.multiselect import stateful_multiselect
+from st_widgets.stateful.data_editor import stateful_data_editor
 
 logging = get_logger(__name__)
 session = st.session_state
@@ -31,18 +31,33 @@ def load_dimensions(metabase2datasets: pd.DataFrame) -> pd.Series:
 if __name__ == "__main__":
     reduce_multiselect_font_size()
     st.markdown(
-        """ 🚧 Work in progress 🚧  
-        Select only dimensions of interest to filter the dataset list in the `Data` page. Click anywhere in the table and type `CMD/CTRL+F` to search."""
+        """ Select only dimensions of interest to filter the dataset list in the `Data` page. Click anywhere in the table and type `CMD+F` or `CTRL+F` to search."""
     )
     meta = load_metabase2datasets()
     codes = load_dimensions_and_codes(meta)
-    st.data_editor(
-        codes.reset_index().assign(selected=True),
-        disabled=["code", "dimension", "description"],
-        use_container_width=True,
-        key="_selected_codes",
-    )
+    codes = codes.reset_index().assign(selected=False)
 
-    # TODO subset meta["dataset"] based on selected dimensions
+    col1, col2 = st.columns([0.8, 0.2])
+
+    with col1:
+        selected_codes = stateful_data_editor(
+            codes,
+            disabled=["code", "dimension", "description"],
+            use_container_width=True,
+            key="_selected_codes",
+        )
+
+    with col2:
+        selected_codes_mask = selected_codes.set_index(["code", "dimension"])[
+            "selected"
+        ].values
+        dataset_counts = (
+            meta[selected_codes_mask]["dataset"].explode("dataset").value_counts()
+        )
+        st.dataframe(dataset_counts)
+
+    session["selected_dataset"] = (
+        dataset_counts.index.str.upper().tolist() if not dataset_counts.empty else None
+    )
 
     session_console()

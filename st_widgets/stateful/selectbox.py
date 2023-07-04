@@ -37,8 +37,6 @@ def stateful_selectbox(
     if f"{key}_index" not in session:
         session[f"{key}_index"] = index
 
-    logger.info(f"session[f'{key}_index'] = {session[f'{key}_index']}")
-
     return position.selectbox(
         label=label,
         options=options,

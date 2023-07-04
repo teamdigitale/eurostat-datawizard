@@ -52,7 +52,9 @@ def save_datasets_to_stash():
         with st.sidebar:
             dataset_code = stateful_selectbox(
                 label="Select dataset (type to search)",
-                options=toc.index,
+                options=session["selected_dataset"]
+                if "selected_dataset" in session and session["selected_dataset"]
+                else toc.index,
                 format_func=lambda i: i + " | " + toc.loc[i],
                 key="_selected_dataset",
             )
