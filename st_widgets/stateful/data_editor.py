@@ -1,7 +1,6 @@
 from st_widgets.commons import get_logger
 from functools import partial
 from typing import Any, MutableMapping, Optional
-import pandas as pd
 import pyarrow as pa
 import streamlit as st
 from streamlit.delta_generator import DeltaGenerator
@@ -37,7 +36,7 @@ def stateful_data_editor(
         session[f"{key}_data"] = data
 
     position.data_editor(
-        session[f"{key}_data"],
+        data=session[f"{key}_data"],
         key=key,
         on_change=_on_change_factory(partial(_update_data, session, key))(on_change),
         **kwargs,
