@@ -1,6 +1,6 @@
 from st_widgets.commons import get_logger
 from functools import partial
-from typing import Any, List, MutableMapping, Optional
+from typing import Any, MutableMapping, Optional
 
 import pandas as pd
 import streamlit as st
@@ -18,12 +18,13 @@ def _update_index(
 ):
     # Retrieve the index out of any `options` type
     options = pd.Series(options)
-    session[f"{key}_index"] = int(options[options == session[key]].index[0])
+    index = int(options[options == session[key]].index[0])
+    session[f"{key}_index"] = index
 
 
 def stateful_selectbox(
     label: str,
-    options: List,
+    options: OptionSequence[T],
     key: str,
     index: int = 0,
     position: DeltaGenerator = st._main,
@@ -34,21 +35,17 @@ def stateful_selectbox(
     """
     A stateful selectbox that preserves index selection.
     """
-    if f"{key}_options" not in session:
-        session[f"{key}_options"] = options
-
     if f"{key}_index" not in session:
         session[f"{key}_index"] = index
 
-    if list(options) != list(session[f"{key}_options"]):
-        # If options change, reset also the index
-        session[f"{key}_options"] = options
-        session[f"{key}_index"] = index
+    # Prevent the following when options are changed:
+    # `streamlit.errors.StreamlitAPIException: Selectbox index must be between 0 and length of options`
+    index = session[f"{key}_index"] if 0 < session[f"{key}_index"] < len(options) else 0  # type: ignore
 
     position.selectbox(
         label=label,
-        options=session[f"{key}_options"],
-        index=session[f"{key}_index"],
+        options=options,
+        index=index,
         key=key,
         on_change=_on_change_factory(partial(_update_index, session, key, options))(
             on_change
@@ -56,6 +53,4 @@ def stateful_selectbox(
         **kwargs,
     )
 
-    options = session[f"{key}_options"]
-    index = session[f"{key}_index"]
-    return options[index]
+    return options[index]  # type: ignore
