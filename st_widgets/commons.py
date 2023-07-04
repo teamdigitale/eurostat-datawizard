@@ -8,7 +8,12 @@ import streamlit as st
 from datawizard.data import (
     append_code_descriptions,
     cast_time_to_datetimeindex,
+    fetch_codelist,
     fetch_dataset_and_metadata,
+    fetch_metabase,
+    get_cached_session,
+    metabase2datasets,
+    parse_codelist,
 )
 from datawizard.definitions import LOGGING_FORMAT
 from globals import INITIAL_SIDEBAR_STATE, LAYOUT, MENU_ITEMS, PAGE_ICON
@@ -57,6 +62,28 @@ def global_download_lock():
 
 
 @st.cache_data()
+def load_metabase2datasets() -> pd.DataFrame:
+    # Return an index of code + dimension and a list of datasets using them
+    req = get_cached_session()
+    metabase = fetch_metabase(req)
+    codelist = parse_codelist(fetch_codelist(req))
+    return metabase2datasets(metabase, codelist)
+
+
+@st.cache_data()
+def load_dimensions_and_codes(metabase2datasets: pd.DataFrame) -> pd.Series:
+    # Arrage metabase as an index of dimensions + descriptions
+    codes_dims = metabase2datasets.reset_index()[
+        ["dimension", "code", "dimension_label", "code_label"]
+    ].set_index(["dimension", "code"])
+    codes_dims = codes_dims["dimension_label"].str.cat(
+        codes_dims["code_label"], sep=": "
+    )
+    codes_dims.name = "description"
+    return codes_dims
+
+
+@st.cache_data()
 def load_dataset(code: str) -> pd.DataFrame:
     # Return desiderd dataset by code in `long-format` (time as index)
     with global_download_lock():
@@ -93,3 +120,22 @@ def load_stash(stash: dict) -> pd.DataFrame:
             # Restore a global index based on current stash
             data = data.set_index(data.columns.difference(["flag", "value"]).to_list())
     return data
+
+
+def read_stash_from_history(history):
+    # Filter stash dataset only
+    return {k: v for k, v in history.items() if v["stash"]}
+
+
+def reduce_multiselect_font_size():
+    st.markdown(
+        """
+    <style>
+        .stMultiSelect [data-baseweb=select] span{
+            max-width: 500px;
+            font-size: 0.8rem;
+        }
+    </style>
+    """,
+        unsafe_allow_html=True,
+    )

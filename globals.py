@@ -17,7 +17,7 @@ MENU_ITEMS = {
 }
 DIMS_INDEX_PATH = f"{CACHE_PATH}/dimension_index.pkl"
 CLUSTERING_PATH = f"{CACHE_PATH}/clustermap.csv.gz"
-MAX_VARIABLES_PLOT = 25
+MAX_VARIABLES_PLOT = 120
 
 
 def get_last_index_update() -> datetime | None:

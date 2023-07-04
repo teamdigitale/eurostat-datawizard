@@ -221,3 +221,16 @@ def fetch_metabase(session) -> pd.DataFrame:
         names=["dataset", "dimension", "code"],
     )
     return df
+
+
+def metabase2datasets(metabase: pd.DataFrame, codelist: pd.DataFrame) -> pd.DataFrame:
+    metabase = metabase.set_index(["dimension", "code"])
+    metabase = metabase.join(codelist)
+    metabase = (
+        metabase.groupby(["code", "code_label", "dimension", "dimension_label"])[
+            "dataset"
+        ]
+        .apply(list)
+        .to_frame()
+    )
+    return metabase

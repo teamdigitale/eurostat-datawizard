@@ -34,6 +34,9 @@ def upload_session_state(widget):
             py_dict["time"] = pd.to_datetime(py_dict["time"])
         if "map_selection" in py_dict:
             py_dict["map_selection"] = pd.read_json(py_dict["map_selection"])
+        # TODO can't set UI element here. Clean every UI update
+        # BUT if you load session as 1st, streamlit will throw an error that "_selected_dataset" is not set.
+        # py_dict.pop("_selected_dataset")
         st.session_state.clear()
         st.session_state.update(py_dict)
         widget.json(st.session_state, expanded=True)

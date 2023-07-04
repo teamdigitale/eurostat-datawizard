@@ -13,6 +13,7 @@ from datawizard.data import (
     filter_dataset,
     parse_codelist,
     preprocess_dataset,
+    metabase2datasets,
 )
 
 
@@ -168,10 +169,87 @@ def weekly_dataset():
     return df
 
 
-@pytest.fixture()
+@pytest.fixture
+def codelist_response():
+    return {
+        "version": "2.0",
+        "class": "collection",
+        "updated": "2023-06-21T09:49:08.027Z",
+        "link": {
+            "item": [
+                {
+                    "class": "dimension",
+                    "source": "ESTAT",
+                    "category": {
+                        "label": {
+                            "M12": "Last 12 months",
+                            "Y5": "Last 5 years",
+                            "ADLH": "Adulthood",
+                        },
+                        "index": ["M12", "Y5", "ADLH"],
+                    },
+                    "label": "Occurence",
+                    "extension": {"lang": "EN", "id": "OCCUR", "version": "1.1"},
+                }
+            ]
+        },
+    }
+
+
+@pytest.fixture
 def codelist():
-    # Emulate a processed codelist
-    meta = pd.DataFrame(
+    return pd.DataFrame.from_dict(
+        {
+            "index": [("occur", "ADLH"), ("occur", "M12"), ("occur", "Y5")],
+            "columns": ["dimension_label", "code_label"],
+            "data": [
+                ["Occurence", "Adulthood"],
+                ["Occurence", "Last 12 months"],
+                ["Occurence", "Last 5 years"],
+            ],
+            "index_names": ["dimension", "code"],
+            "column_names": [None],
+        },
+        orient="tight",
+    )
+
+
+@pytest.fixture
+def metabase():
+    return pd.DataFrame.from_dict(
+        {
+            "dataset": {
+                414853: "gbv_any_occ",
+                414854: "gbv_any_occ",
+                414855: "gbv_any_occ",
+                414903: "gbv_dv_occ",
+                414904: "gbv_dv_occ",
+                414905: "gbv_dv_occ",
+            },
+            "dimension": {
+                414853: "occur",
+                414854: "occur",
+                414855: "occur",
+                414903: "occur",
+                414904: "occur",
+                414905: "occur",
+            },
+            "code": {
+                414853: "M12",
+                414854: "Y5",
+                414855: "ADLH",
+                414903: "M12",
+                414904: "Y5",
+                414905: "ADLH",
+            },
+        }
+    )
+
+
+@pytest.fixture()
+def dataset_codelist():
+    # Emulate a processed dataset codelist
+    codes = pd.DataFrame(
         {
             "label": {
                 (
@@ -191,8 +269,31 @@ def codelist():
             }
         }
     )
-    meta.index = meta.index.set_names(["dimension", "code"])
-    return meta
+    codes.index = codes.index.set_names(["dimension", "code"])
+    return codes
+
+
+@pytest.fixture
+def reverse_index():
+    # Emulate metabase2dataset output (a metabase enriched with descriptions)
+    return pd.DataFrame.from_dict(
+        {
+            "index": [
+                ("ADLH", "Adulthood", "occur", "Occurence"),
+                ("M12", "Last 12 months", "occur", "Occurence"),
+                ("Y5", "Last 5 years", "occur", "Occurence"),
+            ],
+            "columns": ["dataset"],
+            "data": [
+                [["gbv_any_occ", "gbv_dv_occ"]],
+                [["gbv_any_occ", "gbv_dv_occ"]],
+                [["gbv_any_occ", "gbv_dv_occ"]],
+            ],
+            "index_names": ["code", "code_label", "dimension", "dimension_label"],
+            "column_names": [None],
+        },
+        orient="tight",
+    )
 
 
 def test_fetch_table_of_contents(mocker, raw_table_of_contents):
@@ -231,14 +332,14 @@ def test_preprocess_dataset(mocker, raw_dataset, dataset):
     assert_frame_equal(data, dataset)
 
 
-def test_fetch_dataset_and_metadata(mocker, raw_dataset, codelist):
+def test_fetch_dataset_and_metadata(mocker, raw_dataset, dataset_codelist):
     mocker.patch(
         "datawizard.data.fetch_dataset",
         return_value=raw_dataset,
     )
     mocker.patch(
         "datawizard.data.fetch_dataset_codelist",
-        return_value=codelist,
+        return_value=dataset_codelist,
     )
     data, metadata = fetch_dataset_and_metadata("fake-code")
     assert isinstance(data, pd.DataFrame)
@@ -268,8 +369,8 @@ def test_cast_time_to_datetimeindex(
         cast_time_to_datetimeindex(weekly_dataset)
 
 
-def test_append_code_descriptions(dataset, codelist):
-    df = append_code_descriptions(dataset, codelist)
+def test_append_code_descriptions(dataset, dataset_codelist):
+    df = append_code_descriptions(dataset, dataset_codelist)
     assert_index_equal(
         df.index.get_level_values("geo"),
         pd.Index(
@@ -309,69 +410,11 @@ def test_filter_dataset(dataset):
     assert dataset.index.names == ["geo", "time"]
 
 
-@pytest.fixture
-def codelist_response():
-    return {
-        "version": "2.0",
-        "class": "collection",
-        "updated": "2023-06-21T09:49:08.027Z",
-        "link": {
-            "item": [
-                {
-                    "class": "dimension",
-                    "source": "ESTAT",
-                    "category": {
-                        "label": {
-                            "M12": "Last 12 months",
-                            "Y5": "Last 5 years",
-                            "ADLH": "Adulthood",
-                        },
-                        "index": ["M12", "Y5", "ADLH"],
-                    },
-                    "label": "Occurence",
-                    "extension": {"lang": "EN", "id": "OCCUR", "version": "1.1"},
-                }
-            ]
-        },
-    }
-
-
-@pytest.fixture
-def metabase():
-    return pd.DataFrame.from_dict(
-        {
-            "index": [8603, 309796, 580303, 904900, 1145375],
-            "columns": ["dataset", "dimension", "code"],
-            "data": [
-                ["aei_ps_inp", "geo", "PL22"],
-                ["ef_olsecsreg", "geo", "SK03"],
-                ["irt_lt_mcby_d", "time", "1997M07D17"],
-                ["rail_tf_ns15_ch", "net_seg15", "CHS20146_TEN"],
-                ["tps00194", "time", "2015"],
-            ],
-            "index_names": [None],
-            "column_names": [None],
-        },
-        orient="tight",
-    )
-
-
-def test_parse_codelist(codelist_response):
+def test_parse_codelist(codelist_response, codelist):
     df = parse_codelist(codelist_response)
-    expected = pd.DataFrame.from_dict(
-        {
-            "index": [("occur", "ADLH"), ("occur", "M12"), ("occur", "Y5")],
-            "columns": ["dimension_label", "code_label"],
-            "data": [
-                ["Occurence", "Adulthood"],
-                ["Occurence", "Last 12 months"],
-                ["Occurence", "Last 5 years"],
-            ],
-            "index_names": ["dimension", "code"],
-            "column_names": [None],
-        },
-        orient="tight",
-    )
-    print(df)
-    print(expected)
-    assert_frame_equal(df, expected)
+    assert_frame_equal(df, codelist)
+
+
+def test_metabase2datasets(metabase, codelist, reverse_index):
+    meta = metabase2datasets(metabase, codelist)
+    assert_frame_equal(meta, reverse_index)
