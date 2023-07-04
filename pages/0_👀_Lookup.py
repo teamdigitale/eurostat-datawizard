@@ -37,26 +37,22 @@ if __name__ == "__main__":
     codes = load_dimensions_and_codes(meta)
     codes = codes.reset_index().assign(selected=False)
 
-    col1, col2 = st.columns([0.8, 0.2])
+    selected_codes = stateful_data_editor(
+        codes,
+        disabled=["code", "dimension", "description"],
+        use_container_width=True,
+        key="_selected_codes",
+    )
 
-    with col1:
-        selected_codes = stateful_data_editor(
-            codes,
-            disabled=["code", "dimension", "description"],
-            use_container_width=True,
-            key="_selected_codes",
-        )
+    selected_codes_mask = selected_codes.set_index(["code", "dimension"])[
+        "selected"
+    ].values
+    dataset_counts = (
+        meta[selected_codes_mask]["dataset"].explode("dataset").value_counts()
+    )
+    st.sidebar.dataframe(dataset_counts)
 
-    with col2:
-        selected_codes_mask = selected_codes.set_index(["code", "dimension"])[
-            "selected"
-        ].values
-        dataset_counts = (
-            meta[selected_codes_mask]["dataset"].explode("dataset").value_counts()
-        )
-        st.dataframe(dataset_counts)
-
-    session["selected_dataset"] = (
+    session["lookup_datasets"] = (
         dataset_counts.index.str.upper().tolist() if not dataset_counts.empty else None
     )
 
