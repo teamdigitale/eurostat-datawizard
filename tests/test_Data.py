@@ -8,7 +8,7 @@ from datawizard.data import (
     append_code_descriptions,
     cast_time_to_datetimeindex,
     fetch_dataset,
-    fetch_dataset_and_metadata,
+    fetch_and_preprocess_dataset,
     fetch_table_of_contents,
     filter_dataset,
     parse_codelist,
@@ -341,7 +341,7 @@ def test_fetch_dataset_and_metadata(mocker, raw_dataset, dataset_codelist):
         "datawizard.data.fetch_dataset_codelist",
         return_value=dataset_codelist,
     )
-    data, metadata = fetch_dataset_and_metadata("fake-code")
+    data, metadata = fetch_and_preprocess_dataset("fake-code")
     assert isinstance(data, pd.DataFrame)
     assert isinstance(metadata, pd.DataFrame)
 

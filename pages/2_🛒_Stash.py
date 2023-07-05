@@ -1,3 +1,4 @@
+import pandas as pd
 import streamlit as st
 
 from st_widgets.commons import app_config, load_stash, read_stash_from_history
@@ -13,7 +14,25 @@ app_config("Stash")
 
 def show_stash():
     if "history" in st.session_state:
-        stash = read_stash_from_history(st.session_state.history)
+        history = st.session_state.history
+        history_frame = (
+            pd.Series(
+                {
+                    dataset_code: values["stash"]
+                    for dataset_code, values in history.items()
+                },
+            )
+            .to_frame("stash")
+            .reset_index()
+            .rename(columns={"index": "dataset"})
+        )
+        st.sidebar.data_editor(
+            history_frame,
+            disabled=["dataset"],
+            use_container_width=True,
+        )
+
+        stash = read_stash_from_history(history)
         dataset = empty_eurostat_dataframe()
 
         remove_code = st.sidebar.selectbox(

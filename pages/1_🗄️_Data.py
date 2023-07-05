@@ -13,6 +13,7 @@ from st_widgets.commons import (
     app_config,
     get_logger,
     global_download_lock,
+    load_codelist,
     load_dataset,
     reduce_multiselect_font_size,
 )
@@ -72,7 +73,8 @@ def save_datasets_to_stash():
                 f"Variable selection: {dataset_code + ' | ' + toc.loc[dataset_code]}"
             )
 
-            dataset = load_dataset(dataset_code)
+            codelist = load_codelist()
+            dataset = load_dataset(dataset_code, codelist)
 
             # Flags filtering handles
             flags = dataset.flag.fillna("<NA>").unique().tolist()
