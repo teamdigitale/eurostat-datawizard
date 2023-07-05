@@ -50,7 +50,6 @@ def save_datasets_to_stash():
     # Datasets search criteria
     if toc is not None:
         with st.sidebar:
-            # TODO Switching from lookup or no filter, must reset index
             using_lookup = "lookup_datasets" in session and session["lookup_datasets"]
             dataset_code = stateful_selectbox(
                 label=f"Select dataset {'from `lookup` page ' if using_lookup else ''}(type to search)",
@@ -60,7 +59,6 @@ def save_datasets_to_stash():
                 format_func=lambda i: i + " | " + toc.loc[i],
                 key="_selected_dataset",
             )
-            logging.info(f"Selectbox selection: {dataset_code}")
 
             # Create or reuse a filtering history for this code
             if dataset_code not in session["history"]:
