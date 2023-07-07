@@ -26,11 +26,12 @@ def show_stash():
             .reset_index()
             .rename(columns={"index": "dataset"})
         )
-        st.sidebar.data_editor(
-            history_frame,
-            disabled=["dataset"],
-            use_container_width=True,
-        )
+        # TODO Allow unselect stashed dataset
+        # st.sidebar.data_editor(
+        #     history_frame,
+        #     disabled=["dataset"],
+        #     use_container_width=True,
+        # )
 
         stash = read_stash_from_history(history)
         dataset = empty_eurostat_dataframe()
