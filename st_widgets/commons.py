@@ -73,9 +73,13 @@ def load_metabase2datasets() -> pd.DataFrame:
 @st.cache_data()
 def load_dimensions_and_codes(metabase2datasets: pd.DataFrame) -> pd.Series:
     # Arrage metabase as an index of dimensions + descriptions
-    codes_dims = metabase2datasets.reset_index()[
-        ["dimension", "code", "dimension_label", "code_label"]
-    ].set_index(["dimension", "code"])
+    codes_dims = (
+        metabase2datasets.reset_index()[
+            ["dimension", "code", "dimension_label", "code_label"]
+        ]
+        .set_index(["dimension", "code"])
+        .sort_index()
+    )
     codes_dims = codes_dims["dimension_label"].str.cat(
         codes_dims["code_label"], sep=": "
     )
