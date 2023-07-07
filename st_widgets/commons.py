@@ -9,7 +9,7 @@ from datawizard.data import (
     append_code_descriptions,
     cast_time_to_datetimeindex,
     fetch_codelist,
-    fetch_dataset_and_metadata,
+    fetch_and_preprocess_dataset,
     fetch_metabase,
     get_cached_session,
     metabase2datasets,
@@ -73,9 +73,13 @@ def load_metabase2datasets() -> pd.DataFrame:
 @st.cache_data()
 def load_dimensions_and_codes(metabase2datasets: pd.DataFrame) -> pd.Series:
     # Arrage metabase as an index of dimensions + descriptions
-    codes_dims = metabase2datasets.reset_index()[
-        ["dimension", "code", "dimension_label", "code_label"]
-    ].set_index(["dimension", "code"])
+    codes_dims = (
+        metabase2datasets.reset_index()[
+            ["dimension", "code", "dimension_label", "code_label"]
+        ]
+        .set_index(["dimension", "code"])
+        .sort_index()
+    )
     codes_dims = codes_dims["dimension_label"].str.cat(
         codes_dims["code_label"], sep=": "
     )
@@ -84,12 +88,19 @@ def load_dimensions_and_codes(metabase2datasets: pd.DataFrame) -> pd.Series:
 
 
 @st.cache_data()
-def load_dataset(code: str) -> pd.DataFrame:
+def load_codelist() -> pd.DataFrame:
+    req = get_cached_session()
+    codelist = parse_codelist(fetch_codelist(req))
+    return codelist
+
+
+@st.cache_data()
+def load_dataset(code: str, codelist: pd.DataFrame) -> pd.DataFrame:
     # Return desiderd dataset by code in `long-format` (time as index)
     with global_download_lock():
-        data, meta = fetch_dataset_and_metadata(code)
+        data = fetch_and_preprocess_dataset(code)
     data = cast_time_to_datetimeindex(data)
-    data = append_code_descriptions(data, meta)
+    data = append_code_descriptions(data, codelist)
     # `flag` shown before `value` to be near others filter key
     return data[["flag", "value"]]
 
@@ -104,7 +115,8 @@ def load_stash(stash: dict) -> pd.DataFrame:
             properties["stash"],
         )
         if stash:
-            df = load_dataset(code)
+            codelist = load_codelist()
+            df = load_dataset(code, codelist)
             df = filter_dataset_replacing_NA(
                 df,
                 indexes,

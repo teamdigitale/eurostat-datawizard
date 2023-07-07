@@ -71,22 +71,6 @@ def fetch_dataset(code: str, caching_days: int = 7) -> pd.DataFrame:
     return dataset
 
 
-def fetch_dataset_codelist(request: sdmx.Request, dataset: str) -> pd.DataFrame:
-    """Returns codelist found from eurostat"""
-    metadata = request.datastructure(dataset)
-    codelist = pd.DataFrame()
-    for codes in metadata.codelist.values():  # type: ignore
-        codes = sdmx.to_pandas(codes)
-        codelist = pd.concat([codelist, codes])
-    codelist.index.name = "code"
-    if codelist.empty:
-        return pd.DataFrame()
-    codelist = codelist.rename(columns={"name": "label", "parent": "dimension"})
-    codelist["dimension"] = codelist["dimension"].str.lower()
-    codelist = codelist.set_index("dimension", append=True).swaplevel()
-    return codelist
-
-
 def preprocess_dataset(df: pd.DataFrame) -> pd.DataFrame:
     """Preprocess dataset by mangling it in a convenient DataFrame."""
     df = df.rename(columns={"geo\\TIME_PERIOD": "geo"})
@@ -106,14 +90,13 @@ def preprocess_dataset(df: pd.DataFrame) -> pd.DataFrame:
     return pd.concat([values, flags], axis=1).stack("time", dropna=False)[["value", "flag"]].dropna(how="all", axis=0)  # type: ignore
 
 
-def fetch_dataset_and_metadata(
+def fetch_and_preprocess_dataset(
     code: str,
-) -> Tuple[pd.DataFrame, pd.DataFrame]:
+) -> pd.DataFrame:
     # TODO remove dependency from `eurostat_sdmx_request``
     data = fetch_dataset(code)
     data = None if data is None else preprocess_dataset(data)
-    metadata = fetch_dataset_codelist(eurostat_sdmx_request(), code)
-    return data, metadata  # type: ignore TODO Type checking fails
+    return data  # type: ignore TODO Type checking fails
 
 
 def cast_time_to_datetimeindex(data: pd.DataFrame):
@@ -135,18 +118,15 @@ def cast_time_to_datetimeindex(data: pd.DataFrame):
 
 
 def append_code_descriptions(data: pd.DataFrame, codelist: pd.DataFrame):
-    df = data.reset_index()
     cols_to_transform = data.index.names.difference(["time"]).union(["flag"])  # type: ignore
+    df = data.reset_index()
+    code2level = codelist["code_label"]
     for dimension in cols_to_transform:
         if dimension == "flag":
             # `flag` is served with a different name in codelist
-            code2description = quote_sanitizer(
-                codelist.squeeze().loc["obs_flag"]
-            ).to_dict()
+            code2description = quote_sanitizer(code2level.loc["obs_flag"]).to_dict()
         else:
-            code2description = quote_sanitizer(
-                codelist.squeeze().loc[dimension]
-            ).to_dict()
+            code2description = quote_sanitizer(code2level.loc[dimension]).to_dict()
         code2code_pipe_description = concat_keys_to_values(code2description)
         df[dimension] = df[dimension].map(code2code_pipe_description)
     data = df.set_index(data.index.names)

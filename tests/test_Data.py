@@ -8,7 +8,7 @@ from datawizard.data import (
     append_code_descriptions,
     cast_time_to_datetimeindex,
     fetch_dataset,
-    fetch_dataset_and_metadata,
+    fetch_and_preprocess_dataset,
     fetch_table_of_contents,
     filter_dataset,
     parse_codelist,
@@ -190,7 +190,70 @@ def codelist_response():
                     },
                     "label": "Occurence",
                     "extension": {"lang": "EN", "id": "OCCUR", "version": "1.1"},
-                }
+                },
+                {
+                    "class": "dimension",
+                    "source": "ESTAT",
+                    "category": {
+                        "label": {
+                            "CB_EU_FOR": "Individuals who are born in another EU Member State",
+                        },
+                        "index": ["CB_EU_FOR"],
+                    },
+                    "label": "Individual type",
+                    "extension": {"lang": "EN", "id": "IND_TYPE", "version": "1.1"},
+                },
+                {
+                    "class": "dimension",
+                    "source": "ESTAT",
+                    "category": {
+                        "label": {
+                            "I_IUG_DKPC": "Individuals used the internet on a desktop computer",
+                        },
+                        "index": ["I_IUG_DKPC"],
+                    },
+                    "label": "Information society indicator",
+                    "extension": {"lang": "EN", "id": "INDIC_IS", "version": "1.1"},
+                },
+                {
+                    "class": "dimension",
+                    "source": "ESTAT",
+                    "category": {
+                        "label": {
+                            "PC_IND": "Percentage of individuals",
+                        },
+                        "index": ["PC_IND"],
+                    },
+                    "label": "Unit of measure",
+                    "extension": {"lang": "EN", "id": "UNIT", "version": "1.1"},
+                },
+                {
+                    "class": "dimension",
+                    "source": "ESTAT",
+                    "category": {
+                        "label": {
+                            "AL": "Albania",
+                            "IT": "Italy",
+                        },
+                        "index": ["AL", "IT"],
+                    },
+                    "label": "Geopolitical entity (reporting)",
+                    "extension": {"lang": "EN", "id": "GEO", "version": "1.1"},
+                },
+                {
+                    "class": "dimension",
+                    "source": "ESTAT",
+                    "category": {
+                        "label": {
+                            "d": "definition differs, see metadata",
+                            "f": "forecast",
+                            "u": "low reliability",
+                        },
+                        "index": ["d", "f", "u"],
+                    },
+                    "label": "Observation status (Flag)",
+                    "extension": {"lang": "EN", "id": "OBS_FLAG", "version": "1.1"},
+                },
             ]
         },
     }
@@ -198,14 +261,47 @@ def codelist_response():
 
 @pytest.fixture
 def codelist():
+    # TODO order alphabetically
     return pd.DataFrame.from_dict(
         {
-            "index": [("occur", "ADLH"), ("occur", "M12"), ("occur", "Y5")],
+            "index": [
+                ("geo", "AL"),
+                ("geo", "IT"),
+                (
+                    "ind_type",
+                    "CB_EU_FOR",
+                ),
+                (
+                    "indic_is",
+                    "I_IUG_DKPC",
+                ),
+                ("obs_flag", "d"),
+                ("obs_flag", "f"),
+                ("obs_flag", "u"),
+                ("occur", "ADLH"),
+                ("occur", "M12"),
+                ("occur", "Y5"),
+                ("unit", "PC_IND"),
+            ],
             "columns": ["dimension_label", "code_label"],
             "data": [
+                ["Geopolitical entity (reporting)", "Albania"],
+                ["Geopolitical entity (reporting)", "Italy"],
+                [
+                    "Individual type",
+                    "Individuals who are born in another EU Member State",
+                ],
+                [
+                    "Information society indicator",
+                    "Individuals used the internet on a desktop computer",
+                ],
+                ["Observation status (Flag)", "definition differs, see metadata"],
+                ["Observation status (Flag)", "forecast"],
+                ["Observation status (Flag)", "low reliability"],
                 ["Occurence", "Adulthood"],
                 ["Occurence", "Last 12 months"],
                 ["Occurence", "Last 5 years"],
+                ["Unit of measure", "Percentage of individuals"],
             ],
             "index_names": ["dimension", "code"],
             "column_names": [None],
@@ -244,33 +340,6 @@ def metabase():
             },
         }
     )
-
-
-@pytest.fixture()
-def dataset_codelist():
-    # Emulate a processed dataset codelist
-    codes = pd.DataFrame(
-        {
-            "label": {
-                (
-                    "ind_type",
-                    "CB_EU_FOR",
-                ): "Individuals who are born in another EU Member State",
-                (
-                    "indic_is",
-                    "I_IUG_DKPC",
-                ): "Individuals used the internet on a desktop computer",
-                ("unit", "PC_IND"): "Percentage of individuals",
-                ("geo", "AL"): "Albania",
-                ("geo", "IT"): "Italy",
-                ("obs_flag", "f"): "forecast",
-                ("obs_flag", "u"): "low reliability",
-                ("obs_flag", "d"): "definition differs, see metadata",
-            }
-        }
-    )
-    codes.index = codes.index.set_names(["dimension", "code"])
-    return codes
 
 
 @pytest.fixture
@@ -332,18 +401,13 @@ def test_preprocess_dataset(mocker, raw_dataset, dataset):
     assert_frame_equal(data, dataset)
 
 
-def test_fetch_dataset_and_metadata(mocker, raw_dataset, dataset_codelist):
+def test_fetch_and_preprocess_dataset(mocker, raw_dataset):
     mocker.patch(
         "datawizard.data.fetch_dataset",
         return_value=raw_dataset,
     )
-    mocker.patch(
-        "datawizard.data.fetch_dataset_codelist",
-        return_value=dataset_codelist,
-    )
-    data, metadata = fetch_dataset_and_metadata("fake-code")
+    data = fetch_and_preprocess_dataset("fake-code")
     assert isinstance(data, pd.DataFrame)
-    assert isinstance(metadata, pd.DataFrame)
 
 
 def test_cast_time_to_datetimeindex(
@@ -369,8 +433,8 @@ def test_cast_time_to_datetimeindex(
         cast_time_to_datetimeindex(weekly_dataset)
 
 
-def test_append_code_descriptions(dataset, dataset_codelist):
-    df = append_code_descriptions(dataset, dataset_codelist)
+def test_append_code_descriptions(dataset, codelist):
+    df = append_code_descriptions(dataset, codelist)
     assert_index_equal(
         df.index.get_level_values("geo"),
         pd.Index(

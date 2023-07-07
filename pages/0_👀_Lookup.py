@@ -44,11 +44,20 @@ if __name__ == "__main__":
         key="_selected_codes",
     )
 
-    selected_codes_mask = selected_codes.set_index(["code", "dimension"])[
-        "selected"
-    ].values
+    selected_codes_mask = selected_codes["selected"].values
+
+    st.markdown("Selected dimension overview:")
+    selected_datasets_by_code = meta.reset_index()[selected_codes_mask]
+    st.dataframe(
+        selected_datasets_by_code[
+            ["dimension", "dimension_label", "code", "code_label", "dataset"]
+        ],
+        hide_index=False,
+        use_container_width=True,
+    )
+
     dataset_counts = (
-        meta[selected_codes_mask]["dataset"].explode("dataset").value_counts()
+        selected_datasets_by_code["dataset"].explode("dataset").value_counts()
     )
     st.sidebar.dataframe(dataset_counts)
 

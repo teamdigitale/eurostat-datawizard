@@ -1,6 +1,8 @@
 # 🇪🇺 Eurostat Data Wizard
 A straightforward webapp to export easily multiple Eurostat datasets.
 
+## Lookup
+1. Search and select all variables that you find interesting: dataset containing them will be available in the `Data` page.
 ## Data
 1. Choose an Eurostat dataset of interest (or start typing dataset code or title).
 2. After loading, you can inspect the dataset and filter indexes, flags and time-span with the controls provided in the sidebar.

@@ -1,3 +1,4 @@
+import pandas as pd
 import streamlit as st
 
 from st_widgets.commons import app_config, load_stash, read_stash_from_history
@@ -13,16 +14,33 @@ app_config("Stash")
 
 def show_stash():
     if "history" in st.session_state:
-        stash = read_stash_from_history(st.session_state.history)
-        dataset = empty_eurostat_dataframe()
-
-        remove_code = st.sidebar.selectbox(
-            "Remove a dataset",
-            ["-"] + [code for code, p in stash.items() if p["stash"]],
+        history = st.session_state.history
+        history_frame = (
+            pd.Series(
+                {
+                    dataset_code: values["stash"]
+                    for dataset_code, values in history.items()
+                },
+            )
+            .to_frame("stash")
+            .reset_index()
+            .rename(columns={"index": "dataset"})
         )
-        if remove_code != "-":
-            stash.pop(remove_code)
-            st.experimental_rerun()
+
+        # TODO Refresh twice fix needed
+        history_frame = st.sidebar.data_editor(
+            history_frame,
+            disabled=["dataset"],
+            use_container_width=True,
+        )
+
+        for dataset_code, is_stashed in (
+            history_frame.set_index("dataset")["stash"].to_dict().items()
+        ):
+            history[dataset_code]["stash"] = is_stashed
+
+        stash = read_stash_from_history(history)
+        dataset = empty_eurostat_dataframe()
 
         try:
             with st.spinner(text="Fetching data"):
