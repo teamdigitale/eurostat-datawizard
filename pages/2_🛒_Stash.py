@@ -26,23 +26,21 @@ def show_stash():
             .reset_index()
             .rename(columns={"index": "dataset"})
         )
-        # TODO Allow unselect stashed dataset
-        # st.sidebar.data_editor(
-        #     history_frame,
-        #     disabled=["dataset"],
-        #     use_container_width=True,
-        # )
+
+        # TODO Refresh twice fix needed
+        history_frame = st.sidebar.data_editor(
+            history_frame,
+            disabled=["dataset"],
+            use_container_width=True,
+        )
+
+        for dataset_code, is_stashed in (
+            history_frame.set_index("dataset")["stash"].to_dict().items()
+        ):
+            history[dataset_code]["stash"] = is_stashed
 
         stash = read_stash_from_history(history)
         dataset = empty_eurostat_dataframe()
-
-        remove_code = st.sidebar.selectbox(
-            "Remove a dataset",
-            ["-"] + [code for code, p in stash.items() if p["stash"]],
-        )
-        if remove_code != "-":
-            stash.pop(remove_code)
-            st.experimental_rerun()
 
         try:
             with st.spinner(text="Fetching data"):
