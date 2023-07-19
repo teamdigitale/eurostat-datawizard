@@ -45,10 +45,11 @@ if __name__ == "__main__":
         key="_selected_codes",
         multiedit=True,
     )
-    if selected_codes is not None:
-        selected_codes_mask = selected_codes["selected"].values
-    else:
-        selected_codes_mask = codes["selected"].values
+    selected_codes_mask = (
+        codes["selected"].values
+        if "_selected_codes_data" not in session
+        else session["_selected_codes_data"]["selected"].values
+    )
 
     # TODO  Retrieve selected dimension after page change
     st.markdown("Selected dimension overview:")
