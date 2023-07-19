@@ -15,8 +15,7 @@ from globals import MAX_VARIABLES_PLOT
 from st_widgets.commons import app_config, load_stash, read_stash_from_history
 from st_widgets.console import session_console
 from st_widgets.dataframe import empty_eurostat_dataframe
-from st_widgets.stateful.number_input import stateful_number_input
-from st_widgets.stateful.slider import stateful_slider
+from st_widgets.stateful import stateful_number_input, stateful_slider
 
 sns.set()
 

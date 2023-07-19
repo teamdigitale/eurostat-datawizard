@@ -9,7 +9,7 @@ from streamlit.type_util import Key
 from streamlit.elements.data_editor import DataTypes, _apply_dataframe_edits
 from streamlit.elements.lib.column_config_utils import determine_dataframe_schema
 
-from st_widgets.stateful import _on_change_factory
+from st_widgets.stateful.base import _on_change_factory
 
 logger = get_logger(__name__)
 

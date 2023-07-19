@@ -6,7 +6,7 @@ from streamlit.delta_generator import DeltaGenerator
 from streamlit.runtime.state import WidgetCallback
 from streamlit.type_util import Key, OptionSequence, T
 
-from st_widgets.stateful import _on_change_factory
+from st_widgets.stateful.base import _on_change_factory
 
 
 def _update_default(session: MutableMapping[Key, Any], key: str):

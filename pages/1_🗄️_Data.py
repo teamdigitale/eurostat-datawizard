@@ -18,9 +18,11 @@ from st_widgets.commons import (
     reduce_multiselect_font_size,
 )
 from st_widgets.console import session_console
-from st_widgets.stateful.multiselect import stateful_multiselect
-from st_widgets.stateful.selectbox import stateful_selectbox
-from st_widgets.stateful.slider import stateful_slider
+from st_widgets.stateful import (
+    stateful_multiselect,
+    stateful_selectbox,
+    stateful_slider,
+)
 
 logging = get_logger(__name__)
 session = st.session_state

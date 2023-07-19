@@ -58,6 +58,7 @@ if __name__ == "__main__":
         else:
             selected_codes_mask = codes["selected"].values
 
+    # TODO  Retrieve selected dimension after page change
     st.markdown("Selected dimension overview:")
     selected_datasets_by_code = meta.reset_index()[selected_codes_mask]
     st.dataframe(
@@ -68,9 +69,7 @@ if __name__ == "__main__":
         use_container_width=True,
     )
 
-    dataset_counts = (
-        selected_datasets_by_code["dataset"].explode("dataset").value_counts()
-    )
+    dataset_counts = selected_datasets_by_code["dataset"].explode().value_counts()
     st.sidebar.dataframe(dataset_counts)
 
     session["lookup_datasets"] = (
