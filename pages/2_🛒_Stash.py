@@ -8,6 +8,9 @@ from st_widgets.dataframe import (
     st_dataframe_with_index_and_rows_cols_count,
 )
 from st_widgets.download import download_dataframe_button
+from st_widgets.stateful import stateful_data_editor
+
+# from st_widgets.stateful import stateful_data_editor
 
 app_config("Stash")
 
@@ -27,12 +30,13 @@ def show_stash():
             .rename(columns={"index": "dataset"})
         )
 
-        # TODO Refresh twice fix needed
-        history_frame = st.sidebar.data_editor(
-            history_frame,
-            disabled=["dataset"],
-            use_container_width=True,
-        )
+        with st.sidebar:
+            history_frame = stateful_data_editor(
+                history_frame,
+                disabled=["dataset"],
+                use_container_width=True,
+                key="_selected_history_dataset",
+            )
 
         for dataset_code, is_stashed in (
             history_frame.set_index("dataset")["stash"].to_dict().items()

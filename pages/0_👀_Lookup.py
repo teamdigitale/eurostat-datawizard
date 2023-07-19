@@ -9,7 +9,8 @@ from st_widgets.commons import (
     reduce_multiselect_font_size,
 )
 from st_widgets.console import session_console
-from st_widgets.stateful.data_editor import stateful_data_editor
+from st_widgets.stateful import stateful_data_editor
+from st_widgets.stateful.data_editor import _update_data
 
 logging = get_logger(__name__)
 session = st.session_state
@@ -42,10 +43,14 @@ if __name__ == "__main__":
         disabled=["code", "dimension", "description"],
         use_container_width=True,
         key="_selected_codes",
+        multiedit=True,
     )
+    if selected_codes is not None:
+        selected_codes_mask = selected_codes["selected"].values
+    else:
+        selected_codes_mask = codes["selected"].values
 
-    selected_codes_mask = selected_codes["selected"].values
-
+    # TODO  Retrieve selected dimension after page change
     st.markdown("Selected dimension overview:")
     selected_datasets_by_code = meta.reset_index()[selected_codes_mask]
     st.dataframe(
@@ -56,9 +61,7 @@ if __name__ == "__main__":
         use_container_width=True,
     )
 
-    dataset_counts = (
-        selected_datasets_by_code["dataset"].explode("dataset").value_counts()
-    )
+    dataset_counts = selected_datasets_by_code["dataset"].explode().value_counts()
     st.sidebar.dataframe(dataset_counts)
 
     session["lookup_datasets"] = (

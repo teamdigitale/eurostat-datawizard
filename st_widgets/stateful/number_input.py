@@ -8,7 +8,7 @@ from streamlit.runtime.state import WidgetCallback
 from streamlit.runtime.state.widgets import NoValue
 from streamlit.type_util import Key
 
-from st_widgets.stateful import _on_change_factory
+from st_widgets.stateful.base import _on_change_factory
 
 
 def _update_value(session: MutableMapping[Key, Any], key: str):
