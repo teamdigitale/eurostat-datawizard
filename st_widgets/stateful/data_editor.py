@@ -16,9 +16,10 @@ logger = get_logger(__name__)
 
 def _update_data(session: MutableMapping[Key, Any], key: str):
     data = session[f"{key}_data"]
-    edited_rows = session[key]
-    data_schema = determine_dataframe_schema(data, pa.Table.from_pandas(data))
-    _apply_dataframe_edits(data, edited_rows, data_schema)
+    if key in session:  # means that `data_editor` has `edited_rows` to be applied
+        edited_rows = session[key]
+        data_schema = determine_dataframe_schema(data, pa.Table.from_pandas(data))
+        _apply_dataframe_edits(data, edited_rows, data_schema)
 
 
 def stateful_data_editor(

@@ -9,7 +9,7 @@ from st_widgets.commons import (
     reduce_multiselect_font_size,
 )
 from st_widgets.console import session_console
-from st_widgets.stateful.data_editor import stateful_data_editor
+from st_widgets.stateful.data_editor import _update_data, stateful_data_editor
 
 logging = get_logger(__name__)
 session = st.session_state
@@ -37,14 +37,26 @@ if __name__ == "__main__":
     codes = load_dimensions_and_codes(meta)
     codes = codes.reset_index().assign(selected=False)
 
-    selected_codes = stateful_data_editor(
-        codes,
-        disabled=["code", "dimension", "description"],
-        use_container_width=True,
-        key="_selected_codes",
-    )
+    with st.form("_selected_codes_form"):
+        key = "_selected_codes"
 
-    selected_codes_mask = selected_codes["selected"].values
+        if f"{key}_data" not in session:
+            session[f"{key}_data"] = codes
+
+        st.data_editor(
+            session[f"{key}_data"],
+            disabled=["code", "dimension", "description"],
+            use_container_width=True,
+            key=key,
+            on_change=_update_data(session, key),
+        )
+
+        submitted = st.form_submit_button("Add")
+        if submitted:
+            selected_codes = session[f"{key}_data"]
+            selected_codes_mask = selected_codes["selected"].values
+        else:
+            selected_codes_mask = codes["selected"].values
 
     st.markdown("Selected dimension overview:")
     selected_datasets_by_code = meta.reset_index()[selected_codes_mask]
