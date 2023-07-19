@@ -51,7 +51,6 @@ if __name__ == "__main__":
         else session["_selected_codes_data"]["selected"].values
     )
 
-    # TODO  Retrieve selected dimension after page change
     st.markdown("Selected dimension overview:")
     selected_datasets_by_code = meta.reset_index()[selected_codes_mask]
     st.dataframe(
