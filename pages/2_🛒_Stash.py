@@ -10,14 +10,15 @@ from st_widgets.dataframe import (
 from st_widgets.download import download_dataframe_button
 from st_widgets.stateful import stateful_data_editor
 
-# from st_widgets.stateful import stateful_data_editor
-
 app_config("Stash")
+session = st.session_state
 
 
 def show_stash():
-    if "history" in st.session_state:
-        history = st.session_state.history
+    if "history" in session:
+        history = session.history
+
+        # Prepare history view on stash vars only
         history_frame = (
             pd.Series(
                 {
@@ -30,18 +31,27 @@ def show_stash():
             .rename(columns={"index": "dataset"})
         )
 
+        # Forget previous modification
+        if "_selected_history_data" in session:
+            del session["_selected_history_data"]
+
+        def _update_history():
+            # Reflect changes on saved history
+            history_frame = session["_selected_history_data"]
+            for dataset_code, is_stashed in (
+                history_frame.set_index("dataset")["stash"].to_dict().items()
+            ):
+                history[dataset_code]["stash"] = is_stashed
+
+        # Show history view
         with st.sidebar:
             history_frame = stateful_data_editor(
                 history_frame,
                 disabled=["dataset"],
                 use_container_width=True,
-                key="_selected_history_dataset",
+                key="_selected_history",
+                on_change=_update_history,
             )
-
-        for dataset_code, is_stashed in (
-            history_frame.set_index("dataset")["stash"].to_dict().items()
-        ):
-            history[dataset_code]["stash"] = is_stashed
 
         stash = read_stash_from_history(history)
         dataset = empty_eurostat_dataframe()
