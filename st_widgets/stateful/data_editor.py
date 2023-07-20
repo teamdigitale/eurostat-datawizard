@@ -29,6 +29,7 @@ def stateful_data_editor(
     session: MutableMapping[Key, Any] = st.session_state,
     on_change: Optional[WidgetCallback] = None,
     multiedit: bool = False,
+    button_label: str = "Submit",
     **kwargs,
 ):
     """
@@ -51,7 +52,7 @@ def stateful_data_editor(
                 **kwargs,
             )
 
-            submitted = position.form_submit_button("Edit")
+            submitted = position.form_submit_button(button_label)
             if submitted:
                 return session[f"{key}_data"]
 
