@@ -53,4 +53,4 @@ def stateful_selectbox(
         **kwargs,
     )
 
-    return options[index]  # type: ignore
+    return session[key]
