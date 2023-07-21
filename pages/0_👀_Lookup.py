@@ -52,6 +52,12 @@ if __name__ == "__main__":
     )
 
     st.markdown("Selected dimension overview:")
+
+    def reset_selected_codes():
+        del session[f"_selected_codes_data"]
+
+    st.button("Reset", on_click=reset_selected_codes)
+
     selected_datasets_by_code = meta.reset_index()[selected_codes_mask]
     st.dataframe(
         selected_datasets_by_code[
