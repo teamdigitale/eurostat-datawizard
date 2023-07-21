@@ -8,6 +8,7 @@ app_config("Home")
 
 if __name__ == "__main__":
     with open("README.md", "r") as readme:
-        app_description = "".join([next(readme) for _ in range(18)])
+        app_description = "".join(readme).split("# Installation")[0]
+
     st.markdown(app_description)
     session_console()
