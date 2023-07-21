@@ -1,14 +1,15 @@
-from st_widgets.commons import get_logger
 from functools import partial
 from typing import Any, MutableMapping, Optional
+
 import pyarrow as pa
 import streamlit as st
 from streamlit.delta_generator import DeltaGenerator
-from streamlit.runtime.state import WidgetCallback
-from streamlit.type_util import Key
 from streamlit.elements.data_editor import DataTypes, _apply_dataframe_edits
 from streamlit.elements.lib.column_config_utils import determine_dataframe_schema
+from streamlit.runtime.state import WidgetCallback
+from streamlit.type_util import Key
 
+from st_widgets.commons import get_logger
 from st_widgets.stateful.base import _on_change_factory
 
 logger = get_logger(__name__)
@@ -29,12 +30,14 @@ def stateful_data_editor(
     session: MutableMapping[Key, Any] = st.session_state,
     on_change: Optional[WidgetCallback] = None,
     multiedit: bool = False,
-    button_label: str = "Submit",
+    submit_label: str = "Submit",
     **kwargs,
 ):
     """
     A stateful data editor that preserves modification.
     Can be configured to accept multiple editing before reload (performed on button click).
+
+    multiedit: bool - Do not refresh at every change but wait for `Submit` click.
     """
     if f"{key}_data" not in session:
         session[f"{key}_data"] = data
@@ -52,7 +55,8 @@ def stateful_data_editor(
                 **kwargs,
             )
 
-            submitted = position.form_submit_button(button_label)
+            submitted = position.form_submit_button(submit_label)
+
             if submitted:
                 return session[f"{key}_data"]
 
